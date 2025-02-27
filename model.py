@@ -56,9 +56,4 @@ class Model(nn.Module):
         if (debug): 
             print(f"output.shape: {output.shape}")
 
-        # Apply sigmoid activation to constrain output between 0 and 1
-        output = torch.sigmoid(output)
-        if (debug): 
-            print(f"output after sigmoid.shape: {output.shape}")
-
         return output
