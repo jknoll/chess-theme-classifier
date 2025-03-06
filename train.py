@@ -97,6 +97,7 @@ def main():
             print(f"  Epoch: {checkpoint['epoch']}")
             print(f"  Global Step: {global_step}")
             print(f"  Loss: {checkpoint['loss']:.8f}")
+            print(f"  Jaccard Loss: {checkpoint['jaccard_loss']:.8f}")
             print(f"  Steps per epoch: {steps_per_epoch}")
             print(f"  Completed epochs: {completed_epochs}")
             print(f"  Resuming from epoch: {start_epoch}")
