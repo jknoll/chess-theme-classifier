@@ -10,6 +10,7 @@ import datetime
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
+from metrics import jaccard_similarity
 
 timer = TimestampedTimer("Imported TimestampedTimer")
 
@@ -20,22 +21,6 @@ from model import Model
 
 # Create logs directory if it doesn't exist
 os.makedirs('logs', exist_ok=True)
-
-def jaccard_similarity(tensor1, tensor2):
-    """
-    Compute Jaccard similarity between two binary tensors.
-    
-    Args:
-        tensor1: Binary PyTorch tensor
-        tensor2: Binary PyTorch tensor of the same shape as tensor1
-    
-    Returns:
-        Jaccard similarity score (float between 0 and 1)
-    """
-    intersection = torch.logical_and(tensor1, tensor2).sum()
-    union = torch.logical_or(tensor1, tensor2).sum()
-    
-    return intersection.float() / (union.float() + 1e-8)  # add small epsilon to avoid division by zero
 
 # Initialize distributed process group
 def init_distributed():
@@ -77,6 +62,45 @@ def main():
     model = model.to(device)
     model = DDP(model, device_ids=[local_rank])
 
+    # Define the loss function and optimizer before loading checkpoint
+    criterion = torch.nn.BCEWithLogitsLoss()
+    optimizer = torch.optim.Adam(model.parameters())
+
+    # Initialize starting epoch and global step
+    start_epoch = 0
+    global_step = 0
+
+    # Check for checkpoint file
+    checkpoint_path = "checkpoint_resume.pth"
+    if os.path.exists(checkpoint_path):
+        if local_rank == 0:
+            print(f"Loading checkpoint from {checkpoint_path}")
+        
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        model.module.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        global_step = checkpoint.get('global_step', 0)  # Get global_step if exists, else 0
+        
+        # Calculate if we completed the previous epoch
+        dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
+        train_size = int(0.8 * len(dataset))  # Same split as in training
+        steps_per_epoch = train_size // 4  # batch_size=4
+        completed_epochs = global_step // steps_per_epoch
+        
+        start_epoch = checkpoint['epoch']
+        if global_step >= (start_epoch + 1) * steps_per_epoch:
+            # We completed this epoch, start the next one
+            start_epoch += 1
+        
+        if local_rank == 0:
+            print(f"Resumed from checkpoint:")
+            print(f"  Epoch: {checkpoint['epoch']}")
+            print(f"  Global Step: {global_step}")
+            print(f"  Loss: {checkpoint['loss']:.8f}")
+            print(f"  Steps per epoch: {steps_per_epoch}")
+            print(f"  Completed epochs: {completed_epochs}")
+            print(f"  Resuming from epoch: {start_epoch}")
+
     dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
 
     # Split the dataset into train and test sets
@@ -95,14 +119,10 @@ def main():
     if local_rank == 0:
         timer.report("Prepared dataloaders")
 
-    # Define the loss function and optimizer
-    criterion = torch.nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters())
-
     # Track global step for TensorBoard
     global_step = 0
 
-    for epoch in range(10):
+    for epoch in range(start_epoch, 10):
         train_sampler.set_epoch(epoch)  # Important for proper shuffling
         
         for i, data in enumerate(train_dataloader, 0):
@@ -117,9 +137,10 @@ def main():
 
             outputs = model(inputs)
             loss = criterion(outputs, labels)
+            
             # Apply sigmoid to get probabilities for Jaccard calculation
             output_probs = torch.sigmoid(outputs)
-            jaccard_loss = jaccard_similarity(output_probs, labels)
+            jaccard_loss = jaccard_similarity(output_probs, labels, threshold=0.5)
 
             loss.backward()
             optimizer.step()
@@ -135,14 +156,16 @@ def main():
                     writer.add_scalar('Loss/train', running_loss, global_step)
                     writer.add_scalar('Jaccard/train', running_jaccard_index, global_step)
                 
-                if i % 100000 == 0:
-                    timestamp = time.strftime("%Y%m%d%H%M%S")
+                if i % 100000 == 0 and i > 0:
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
                     checkpoint_filename = f"checkpoint_{timestamp}_{i}.pth"
                     torch.save({
                         'epoch': epoch,
                         'model_state_dict': model.module.state_dict(),  # Save the inner model's state
                         'optimizer_state_dict': optimizer.state_dict(),
                         'loss': loss,
+                        'global_step': global_step,
+                        'jaccard_loss': jaccard_loss,
                     }, checkpoint_filename)
                     
                     if writer is not None:
