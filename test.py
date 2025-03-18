@@ -6,6 +6,10 @@ from metrics import jaccard_similarity, compute_multilabel_confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# Configuration parameters
+num_samples = 20000
+prediction_threshold = 0.3  # Threshold for converting probabilities to binary predictions
+
 # Create model instance
 model = Model()
 
@@ -30,8 +34,8 @@ confusion_stats = {
 }
 
 # Process samples
-num_samples = 100  # Increased from 10
 for i in range(num_samples):
+    print(f"Processing sample {i+1} of {num_samples}")
     sample = dataset[i]
     input = sample['board'].unsqueeze(0).unsqueeze(0)
     target = sample['themes']
@@ -41,16 +45,39 @@ for i in range(num_samples):
         out = torch.sigmoid(out)  # Convert logits to probabilities
 
     # Calculate Jaccard index on the raw probabilities vs thresholded predictions
-    raw_jaccard = jaccard_similarity(out.squeeze(), target, threshold=0.5)
+    raw_jaccard = jaccard_similarity(out.squeeze(), target, threshold=prediction_threshold)
+
+    # Get predicted themes (where probability > threshold)
+    predicted_probs, predicted_indices = torch.where(out > prediction_threshold, out, torch.zeros_like(out)).squeeze().sort(descending=True)
+    predicted_themes = [(theme_names[idx], f"{predicted_probs[i]:.3f}") for i, idx in enumerate(predicted_indices) if predicted_probs[i] > prediction_threshold]
+    
+    # Get the theme names only from predicted themes (without probabilities)
+    predicted_theme_names = [theme for theme, _ in predicted_themes]
+
+    # Get actual themes
+    actual_themes = [theme_names[i] for i, is_theme in enumerate(target) if is_theme == 1]
 
     # Debug print for first few samples
     if i < 3:
         print(f"\nDebug - Sample {i+1}:")
         print(f"Target sum: {target.sum().item()}")
-        print(f"Predictions > 0.5: {(out.squeeze() > 0.5).sum().item()}")
+        print(f"Predictions > {prediction_threshold}: {(out.squeeze() > prediction_threshold).sum().item()}")
+        
+        # Print predicted themes with their probabilities
+        print("\nPredicted themes (probability):")
+        for theme, prob in predicted_themes:
+            print(f"  {theme}: {prob}")
+            
+        # Print actual themes
+        print("\nActual themes:")
+        print("  " + ", ".join(actual_themes))
+        
+        print("\nPosition FEN:")
+        print(f"  {sample['fen']}")
+        print("-" * 80)
 
     # Compute confusion matrix statistics for this sample
-    stats = compute_multilabel_confusion_matrix(out.squeeze(), target)
+    stats = compute_multilabel_confusion_matrix(out.squeeze(), target, threshold=prediction_threshold)
     
     # Debug print for first few samples
     if i < 3:
@@ -63,33 +90,8 @@ for i in range(num_samples):
     for key in confusion_stats:
         confusion_stats[key] += stats[key]
 
-    # Get predicted themes (where probability > 0.5)
-    predicted_probs, predicted_indices = torch.where(out > 0.5, out, torch.zeros_like(out)).squeeze().sort(descending=True)
-    predicted_themes = [(theme_names[idx], f"{predicted_probs[i]:.3f}") for i, idx in enumerate(predicted_indices) if predicted_probs[i] > 0.5]
-    
-    # Get the theme names only from predicted themes (without probabilities)
-    predicted_theme_names = [theme for theme, _ in predicted_themes]
-
-    # Get actual themes
-    actual_themes = [theme_names[i] for i, is_theme in enumerate(target) if is_theme == 1]
-
     # Calculate Jaccard index using string lists (should match raw_jaccard)
     name_jaccard = jaccard_similarity(predicted_theme_names, actual_themes)
-
-    print(f"\n=== Sample {i+1} ===")
-    print(f"\nJaccard Index (using thresholded probabilities): {raw_jaccard:.3f}")
-    print(f"Jaccard Index (using theme name lists): {name_jaccard:.3f}")
-
-    print("\nPredicted themes (probability):")
-    for theme, prob in predicted_themes:
-        print(f"{theme}: {prob}")
-
-    print("\nActual themes:")
-    print(", ".join(actual_themes))
-
-    print("\nPosition FEN:")
-    print(sample['fen'])
-    print("="*50)
 
 # Print confusion matrix statistics
 print("\n=== Overall Confusion Matrix Statistics ===")
@@ -180,7 +182,7 @@ for i in range(num_samples):
     
     # Get actual and predicted themes
     actual_themes = [theme_names[i] for i, is_theme in enumerate(target) if is_theme == 1]
-    pred_binary = (out.squeeze() > 0.5).float()
+    pred_binary = (out.squeeze() > prediction_threshold).float()
     predicted_themes = [theme_names[i] for i, is_pred in enumerate(pred_binary) if is_pred == 1]
     
     # Update co-occurrence matrix
@@ -194,8 +196,8 @@ for i in range(num_samples):
 actual_counts = cooccurrence.sum(axis=1, keepdims=True)
 normalized_matrix = np.where(actual_counts > 0, cooccurrence / actual_counts, 0)
 
-# Create heatmap
-plt.figure(figsize=(15, 12))
+# Create heatmap with improved legibility
+plt.figure(figsize=(20, 16))  # Increased figure size
 sns.heatmap(normalized_matrix, 
             xticklabels=active_themes,
             yticklabels=active_themes,
@@ -203,22 +205,25 @@ sns.heatmap(normalized_matrix,
             vmin=0,
             vmax=1,
             annot=True,
-            fmt='.2f',
-            square=True)
+            fmt='.1f',  # Reduced decimal places
+            square=True,
+            annot_kws={'size': 8},  # Smaller font for numbers
+            cbar_kws={'shrink': .8})  # Smaller colorbar
 
-plt.title('Theme Co-occurrence Matrix\n(Row: Actual, Column: Predicted, Values: P(Predicted|Actual))')
-plt.xlabel('Predicted Theme')
-plt.ylabel('Actual Theme')
+plt.title('Theme Co-occurrence Matrix\n(Row: Actual, Column: Predicted, Values: P(Predicted|Actual))', 
+         pad=20, size=14)  # Added padding to title
+plt.xlabel('Predicted Theme', size=12, labelpad=10)
+plt.ylabel('Actual Theme', size=12, labelpad=10)
 
 # Rotate x-axis labels for better readability
-plt.xticks(rotation=45, ha='right')
-plt.yticks(rotation=0)
+plt.xticks(rotation=45, ha='right', size=10)  # Increased font size
+plt.yticks(rotation=0, size=10)  # Increased font size
 
-# Adjust layout to prevent label cutoff
+# Adjust layout to prevent label cutoff and add more spacing
 plt.tight_layout()
 
-# Save the plot
-plt.savefig('theme_confusion_matrix.png', dpi=300, bbox_inches='tight')
+# Save the plot with higher resolution
+plt.savefig('theme_confusion_matrix.png', dpi=300, bbox_inches='tight', pad_inches=0.5)
 plt.close()
 
 print("Visual confusion matrix saved as 'theme_confusion_matrix.png'")
