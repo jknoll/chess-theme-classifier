@@ -10,8 +10,12 @@ import matplotlib.pyplot as plt
 num_samples = 20000
 prediction_threshold = 0.3  # Threshold for converting probabilities to binary predictions
 
-# Create model instance
-model = Model()
+# Create dataset first to get number of labels
+dataset = ChessPuzzleDataset("lichess_db_puzzle.csv")
+num_labels = len(dataset.get_theme_names())
+
+# Create model instance with correct number of output labels
+model = Model(num_labels=num_labels)
 
 # Load the checkpoint and extract just the model state dict
 checkpoint = torch.load("checkpoint_resume.pth", weights_only=True)
@@ -20,17 +24,15 @@ model.load_state_dict(checkpoint['model_state_dict'])
 # Set model to evaluation mode
 model.eval()
 
-dataset = ChessPuzzleDataset("lichess_db_puzzle.csv")
-
-# Get theme names
-theme_names = dataset.get_theme_names()
+# Get all label names (themes + opening tags)
+label_names = dataset.get_theme_names()
 
 # Initialize confusion matrix accumulators
 confusion_stats = {
-    'true_positive': np.zeros(len(theme_names)),
-    'false_positive': np.zeros(len(theme_names)),
-    'false_negative': np.zeros(len(theme_names)),
-    'true_negative': np.zeros(len(theme_names))
+    'true_positive': np.zeros(len(label_names)),
+    'false_positive': np.zeros(len(label_names)),
+    'false_negative': np.zeros(len(label_names)),
+    'true_negative': np.zeros(len(label_names))
 }
 
 # Process samples
@@ -49,13 +51,13 @@ for i in range(num_samples):
 
     # Get predicted themes (where probability > threshold)
     predicted_probs, predicted_indices = torch.where(out > prediction_threshold, out, torch.zeros_like(out)).squeeze().sort(descending=True)
-    predicted_themes = [(theme_names[idx], f"{predicted_probs[i]:.3f}") for i, idx in enumerate(predicted_indices) if predicted_probs[i] > prediction_threshold]
+    predicted_themes = [(label_names[idx], f"{predicted_probs[i]:.3f}") for i, idx in enumerate(predicted_indices) if predicted_probs[i] > prediction_threshold]
     
     # Get the theme names only from predicted themes (without probabilities)
     predicted_theme_names = [theme for theme, _ in predicted_themes]
 
     # Get actual themes
-    actual_themes = [theme_names[i] for i, is_theme in enumerate(target) if is_theme == 1]
+    actual_themes = [label_names[i] for i, is_theme in enumerate(target) if is_theme == 1]
 
     # Debug print for first few samples
     if i < 3:
@@ -99,7 +101,7 @@ print("\nPer-theme statistics:")
 print(f"{'Theme':<30} {'TP':>6} {'FP':>6} {'FN':>6} {'TN':>6} {'Precision':>9} {'Recall':>9} {'F1':>9}")
 print("-" * 85)
 
-for i, theme in enumerate(theme_names):
+for i, theme in enumerate(label_names):
     tp = confusion_stats['true_positive'][i]
     fp = confusion_stats['false_positive'][i]
     fn = confusion_stats['false_negative'][i]
@@ -117,7 +119,7 @@ print("\nMacro-averaged metrics:")
 
 # Calculate per-theme metrics first
 theme_metrics = []
-for i, theme in enumerate(theme_names):
+for i, theme in enumerate(label_names):
     tp = confusion_stats['true_positive'][i]
     fp = confusion_stats['false_positive'][i]
     fn = confusion_stats['false_negative'][i]
@@ -181,9 +183,9 @@ for i in range(num_samples):
         out = torch.sigmoid(out)
     
     # Get actual and predicted themes
-    actual_themes = [theme_names[i] for i, is_theme in enumerate(target) if is_theme == 1]
+    actual_themes = [label_names[i] for i, is_theme in enumerate(target) if is_theme == 1]
     pred_binary = (out.squeeze() > prediction_threshold).float()
-    predicted_themes = [theme_names[i] for i, is_pred in enumerate(pred_binary) if is_pred == 1]
+    predicted_themes = [label_names[i] for i, is_pred in enumerate(pred_binary) if is_pred == 1]
     
     # Update co-occurrence matrix
     for actual in actual_themes:

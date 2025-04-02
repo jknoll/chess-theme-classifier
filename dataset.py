@@ -11,13 +11,24 @@ class ChessPuzzleDataset(Dataset):
             csv_file (str): Path to the CSV file with chess puzzles
         """
         self.puzzle_data = pd.read_csv(csv_file)
-        # Get unique themes across all puzzles
+        # Get unique themes and opening tags across all puzzles
         self.all_themes = set()
+        self.all_opening_tags = set()
+        
+        # Process themes
         for themes_str in self.puzzle_data['Themes']:
             themes_list = themes_str.split()
             self.all_themes.update(themes_list)
-        self.all_themes = sorted(list(self.all_themes))
-        self.theme_to_idx = {theme: idx for idx, theme in enumerate(self.all_themes)}
+            
+        # Process opening tags
+        for tags_str in self.puzzle_data['OpeningTags']:
+            if pd.notna(tags_str):  # Handle potential NaN values
+                tags_list = tags_str.split()
+                self.all_opening_tags.update(tags_list)
+        
+        # Combine and sort all labels
+        self.all_labels = sorted(list(self.all_themes) + list(self.all_opening_tags))
+        self.label_to_idx = {label: idx for idx, label in enumerate(self.all_labels)}
         
     def __len__(self):
         return len(self.puzzle_data)
@@ -26,14 +37,19 @@ class ChessPuzzleDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
             
-        # Get FEN and themes for the puzzle
+        # Get FEN, themes, and opening tags for the puzzle
         fen = self.puzzle_data.iloc[idx]['FEN']
         themes = self.puzzle_data.iloc[idx]['Themes'].split()
+        opening_tags = []
+        if pd.notna(self.puzzle_data.iloc[idx]['OpeningTags']):
+            opening_tags = self.puzzle_data.iloc[idx]['OpeningTags'].split()
         
-        # Create one-hot encoding for themes
-        theme_vector = torch.zeros(len(self.all_themes), dtype=torch.float32)
+        # Create one-hot encoding for all labels (themes + opening tags)
+        label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
         for theme in themes:
-            theme_vector[self.theme_to_idx[theme]] = 1
+            label_vector[self.label_to_idx[theme]] = 1
+        for tag in opening_tags:
+            label_vector[self.label_to_idx[tag]] = 1
             
         # Convert FEN to board representation
         board = Board(fen)
@@ -42,7 +58,7 @@ class ChessPuzzleDataset(Dataset):
         
         return {
             'board': board_tensor,
-            'themes': theme_vector,
+            'themes': label_vector,
             'fen': fen  # Include original FEN for reference
         }
     
@@ -92,7 +108,7 @@ class ChessPuzzleDataset(Dataset):
         return tensor
     
     def get_theme_names(self):
-        """Return the list of all possible themes."""
-        return self.all_themes
+        """Return the list of all possible labels (themes and opening tags)."""
+        return self.all_labels
 
     
