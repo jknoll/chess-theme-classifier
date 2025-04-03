@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 class Model(nn.Module):
 
-    def __init__(self, num_labels=62):  # Default to original size for backward compatibility
+    def __init__(self, num_labels=62):  # Default to original size (just themes) for backward compatibility
         super(Model, self).__init__()
         # 1 input image channel, 32 output channels, 3x3 convolution
         self.conv1 = nn.Conv2d(1, 32, 3)

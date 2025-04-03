@@ -1,14 +1,27 @@
 import torch
 import numpy as np
+import argparse
 from dataset import ChessPuzzleDataset
 from model import Model
 from metrics import jaccard_similarity, compute_multilabel_confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Configuration parameters
-num_samples = 2000
-prediction_threshold = 0.3  # Threshold for converting probabilities to binary predictions
+# Parse command line arguments
+def parse_args():
+    parser = argparse.ArgumentParser(description='Test chess puzzle classifier and generate confusion matrices')
+    parser.add_argument('--num_samples', type=int, default=1000,
+                        help='Number of samples to test (default: 1000)')
+    parser.add_argument('--threshold', type=float, default=0.3,
+                        help='Prediction threshold for binary classification (default: 0.3)')
+    return parser.parse_args()
+
+# Get command line arguments
+args = parse_args()
+num_samples = args.num_samples
+prediction_threshold = args.threshold  # Threshold for converting probabilities to binary predictions
+
+print(f"Testing with {num_samples} samples and prediction threshold of {prediction_threshold}")
 
 # Create dataset first to get number of labels
 dataset = ChessPuzzleDataset("lichess_db_puzzle.csv")
@@ -173,6 +186,16 @@ def create_cooccurrence_matrix(labels, label_type, active_themes=None):
         # If no active themes provided, use all themes that have non-zero metrics
         active_themes = [m['theme'] for m in theme_metrics if label_filter(m['theme'])]
     
+    # For large matrices, limit to the top labels by F1 score
+    max_themes = 75  # Maximum number of themes to show in a matrix
+    if len(active_themes) > max_themes:
+        print(f"Too many labels ({len(active_themes)}) for a readable matrix, limiting to top {max_themes} by F1 score")
+        # Find metrics for the active themes
+        filtered_metrics = [m for m in theme_metrics if m['theme'] in active_themes]
+        # Sort by F1 score and take top max_themes
+        filtered_metrics.sort(key=lambda x: x['f1'], reverse=True)
+        active_themes = [m['theme'] for m in filtered_metrics[:max_themes]]
+        
     n_themes = len(active_themes)
     if n_themes == 0:
         print(f"No active {label_type}s found with non-zero metrics")
@@ -208,19 +231,57 @@ def create_cooccurrence_matrix(labels, label_type, active_themes=None):
     actual_counts = cooccurrence.sum(axis=1, keepdims=True)
     normalized_matrix = np.where(actual_counts > 0, cooccurrence / actual_counts, 0)
     
+    # Determine appropriate figure size and settings based on number of themes
+    if n_themes > 50:
+        fig_size = (40, 30)
+        tick_font_size = 5
+        annot = False  # Turn off cell annotations for very large matrices
+        linewidths = 0.1
+    elif n_themes > 30:
+        fig_size = (35, 25)
+        tick_font_size = 6
+        annot = True
+        linewidths = 0.2
+    elif n_themes > 20:
+        fig_size = (30, 20)
+        tick_font_size = 7
+        annot = True
+        linewidths = 0.3
+    else:
+        fig_size = (24, 18)
+        tick_font_size = 8
+        annot = True
+        linewidths = 0.5
+    
+    # Create figure with custom size
+    plt.figure(figsize=fig_size)
+    
+    # Create custom annotations to reduce clutter
+    if annot:
+        # Only show values above a threshold to reduce visual noise
+        annotations = np.where(normalized_matrix < 0.2, "", 
+                            np.round(normalized_matrix, 1).astype(str))
+    else:
+        annotations = False
+    
     # Create heatmap with improved legibility
-    plt.figure(figsize=(20, 16))  # Increased figure size
-    sns.heatmap(normalized_matrix, 
+    ax = sns.heatmap(normalized_matrix, 
                 xticklabels=active_themes,
                 yticklabels=active_themes,
                 cmap='YlOrRd',
                 vmin=0,
                 vmax=1,
-                annot=True,
-                fmt='.1f',  # Reduced decimal places
+                annot=annotations,
+                fmt='',  # Using empty format for custom annotations
                 square=True,
-                annot_kws={'size': 8},  # Smaller font for numbers
-                cbar_kws={'shrink': .8})  # Smaller colorbar
+                linewidths=linewidths,
+                linecolor='gray',
+                annot_kws={'size': tick_font_size-1} if annot else {},
+                cbar_kws={'shrink': .5})
+    
+    # Improve tick label formatting
+    plt.setp(ax.get_xticklabels(), fontsize=tick_font_size, rotation=45, ha='right', rotation_mode='anchor')
+    plt.setp(ax.get_yticklabels(), fontsize=tick_font_size)
     
     plt.title(f'{label_type.capitalize()} Co-occurrence Matrix (threshold={prediction_threshold})\n(Row: Actual, Column: Predicted, Values: P(Predicted|Actual))', 
              pad=20, size=14)  # Added padding to title
@@ -231,15 +292,25 @@ def create_cooccurrence_matrix(labels, label_type, active_themes=None):
     plt.xticks(rotation=45, ha='right', size=10)  # Increased font size
     plt.yticks(rotation=0, size=10)  # Increased font size
     
-    # Adjust layout to prevent label cutoff and add more spacing
-    plt.tight_layout()
+    # Add more padding around the plot for better label visibility
+    plt.tight_layout(pad=2.0)
+    
+    # Save the matrix info to a text file
+    info_filename = f'{label_type}_matrix_info_{prediction_threshold}.txt'
+    with open(info_filename, 'w') as f:
+        f.write(f"{label_type.capitalize()} co-occurrence matrix with threshold={prediction_threshold}\n")
+        f.write(f"Number of labels: {n_themes}\n\n")
+        f.write("Labels included in the matrix:\n")
+        for i, theme in enumerate(active_themes, 1):
+            f.write(f"{i}. {theme}\n")
     
     # Save the plot with higher resolution and include threshold in filename
     output_filename = f'{label_type}_confusion_matrix_{prediction_threshold}.png'
-    plt.savefig(output_filename, dpi=300, bbox_inches='tight', pad_inches=0.5)
+    plt.savefig(output_filename, dpi=300, bbox_inches='tight', pad_inches=1.0)
     plt.close()
     
     print(f"{label_type.capitalize()} confusion matrix saved as '{output_filename}'")
+    print(f"Label information saved to '{info_filename}'")
     return normalized_matrix
 
 # 1. Generate matrix for all labels (both themes and openings)
