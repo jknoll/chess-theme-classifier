@@ -110,5 +110,21 @@ class ChessPuzzleDataset(Dataset):
     def get_theme_names(self):
         """Return the list of all possible labels (themes and opening tags)."""
         return self.all_labels
+        
+    def get_themes_only(self):
+        """Return only the puzzle themes (without opening tags)."""
+        return sorted(list(self.all_themes))
+        
+    def get_openings_only(self):
+        """Return only the opening tags."""
+        return sorted(list(self.all_opening_tags))
+        
+    def is_opening_tag(self, label):
+        """Check if a label is an opening tag."""
+        return label in self.all_opening_tags
+        
+    def is_theme(self, label):
+        """Check if a label is a puzzle theme."""
+        return label in self.all_themes
 
     

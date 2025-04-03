@@ -46,10 +46,15 @@ def main():
     writer = SummaryWriter(log_dir)
     timer.report(f"Created TensorBoard writer at {log_dir}")
 
-    model = Model()
-    model = model.to(device)
-
     dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
+    
+    # Get the number of labels from the dataset
+    num_labels = len(dataset.get_theme_names())
+    print(f"Number of unique labels (themes + opening tags): {num_labels}")
+    
+    # Create model with the correct number of labels
+    model = Model(num_labels=num_labels)
+    model = model.to(device)
 
     # Get a single item
     sample = dataset[0]

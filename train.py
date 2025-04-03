@@ -5,6 +5,7 @@
 from cycling_utils import TimestampedTimer
 import time
 import os
+import argparse
 from torch.utils.tensorboard import SummaryWriter
 import datetime
 import torch.distributed as dist
@@ -43,7 +44,16 @@ def init_distributed():
     torch.cuda.set_device(local_rank)
     return local_rank
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Train chess puzzle classifier')
+    parser.add_argument('--checkpoint_steps', type=int, default=50000,
+                        help='Number of steps between checkpoints (default: 50000)')
+    return parser.parse_args()
+
 def main():
+    # Parse command line arguments
+    args = parse_args()
+    
     # Initialize distributed training
     local_rank = init_distributed()
     device = torch.device(f'cuda:{local_rank}')
@@ -58,18 +68,26 @@ def main():
     if local_rank == 0:
         timer.report(f"Created TensorBoard writer at {log_dir}")
 
-    model = Model()
-    model = model.to(device)
-    model = DDP(model, device_ids=[local_rank])
-
-    # Define the loss function and optimizer before loading checkpoint
-    criterion = torch.nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters())
-
     # Initialize starting epoch and global step
     start_epoch = 0
     global_step = 0
 
+    dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
+    
+    # Get the number of labels from the dataset
+    num_labels = len(dataset.all_labels)
+    if local_rank == 0:
+        print(f"Number of unique labels (themes + opening tags): {num_labels}")
+    
+    # Create model with the correct number of labels
+    model = Model(num_labels=num_labels)
+    model = model.to(device)
+    model = DDP(model, device_ids=[local_rank])
+    
+    # Define the loss function and optimizer
+    criterion = torch.nn.BCEWithLogitsLoss()
+    optimizer = torch.optim.Adam(model.parameters())
+    
     # Check for checkpoint file
     checkpoint_path = "checkpoint_resume.pth"
     if os.path.exists(checkpoint_path):
@@ -82,7 +100,6 @@ def main():
         global_step = checkpoint.get('global_step', 0)  # Get global_step if exists, else 0
         
         # Calculate if we completed the previous epoch
-        dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
         train_size = int(0.8 * len(dataset))  # Same split as in training
         steps_per_epoch = train_size // 4  # batch_size=4
         completed_epochs = global_step // steps_per_epoch
@@ -102,8 +119,6 @@ def main():
             print(f"  Completed epochs: {completed_epochs}")
             print(f"  Resuming from epoch: {start_epoch}")
 
-    dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
-
     # Split the dataset into train and test sets
     random_generator = torch.Generator().manual_seed(42)
     train_dataset, test_dataset = random_split(dataset, [0.8, 0.2], generator=random_generator)
@@ -119,9 +134,6 @@ def main():
     test_dataloader = DataLoader(test_dataset, batch_size=4, sampler=test_sampler)
     if local_rank == 0:
         timer.report("Prepared dataloaders")
-
-    # Track global step for TensorBoard
-    global_step = 0
 
     for epoch in range(start_epoch, 10):
         train_sampler.set_epoch(epoch)  # Important for proper shuffling
@@ -157,7 +169,7 @@ def main():
                     writer.add_scalar('Loss/train', running_loss, global_step)
                     writer.add_scalar('Jaccard/train', running_jaccard_index, global_step)
                 
-                if i % 100000 == 0 and i > 0:
+                if i % args.checkpoint_steps == 0 and i > 0:
                     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
                     checkpoint_filename = f"checkpoint_{timestamp}_{i}.pth"
                     torch.save({
@@ -171,6 +183,7 @@ def main():
                     
                     if writer is not None:
                         writer.add_text('Checkpoint', f'Saved checkpoint: {checkpoint_filename}', global_step)
+                        print(f"Checkpoint saved at step {i} in {checkpoint_filename}")
             
             global_step += 1
     
