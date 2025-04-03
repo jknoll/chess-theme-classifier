@@ -8,4 +8,4 @@ unzstd lichess_db_puzzle.csv.zst
 For running in DistributedDataParallel mode, 
 `torchrun --nproc_per_node=NUM_GPUS train.py`
 
-For example: `torchrun --nproc_per_node=4 train.py`
+For example: `torchrun --nproc_per_node=4 train.py
