@@ -1,0 +1,11 @@
+isc_project_id = "d16dfd5a-21c4-4496-88f1-78461841765a"
+experiment_name = "chess-theme-classifier"
+gpus = 16
+output_path = "/root/outputs/chessThemeClassifier"
+dataset_id = "96f6d30d-3dec-474b-880e-d2fa3ba3756e"
+compute_mode = "cycle"
+command = '''
+source /root/.chess/bin/activate && 
+cd /root/chess-theme-classifier/ && 
+torchrun --nnodes=$NNODES --nproc-per-node=$N_PROC --master_addr=$MASTER_ADDR --master_port=$MASTER_PORT --node_rank=$RANK 
+train-isc.py'''

@@ -12,6 +12,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 from metrics import jaccard_similarity
+import wandb
 
 timer = TimestampedTimer("Imported TimestampedTimer")
 
@@ -48,6 +49,14 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train chess puzzle classifier')
     parser.add_argument('--checkpoint_steps', type=int, default=50000,
                         help='Number of steps between checkpoints (default: 50000)')
+    parser.add_argument('--test_mode', action='store_true',
+                        help='Run in test mode with a smaller dataset')
+    parser.add_argument('--wandb', action='store_true',
+                        help='Enable Weights & Biases logging')
+    parser.add_argument('--project', type=str, default='chess-theme-classifier',
+                        help='Weights & Biases project name')
+    parser.add_argument('--name', type=str, default=None,
+                        help='Weights & Biases run name')
     return parser.parse_args()
 
 def main():
@@ -63,6 +72,29 @@ def main():
     # Create a timestamp for the run
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     log_dir = os.path.join('logs', f'run_{timestamp}')
+    
+    # Initialize wandb on the main process if enabled
+    # The WANDB_API_KEY environment variable should be set before running
+    # or use `wandb login` command beforehand
+    if local_rank == 0 and args.wandb:
+        run_name = args.name if args.name else f"run_{timestamp}"
+        wandb.init(
+            project=args.project,
+            name=run_name,
+            config={
+                "optimizer": "Lamb",
+                "learning_rate": 0.001,
+                "weight_decay": 0.01,
+                "warmup_steps": 1000,
+                "architecture": "CNN with attention and residual blocks",
+                "dataset": "lichess_db_puzzle.csv" if not args.test_mode else "lichess_db_puzzle_test.csv",
+                "epochs": 3 if args.test_mode else 10,
+                "batch_size": 4,
+                "test_mode": args.test_mode,
+            }
+        )
+        print(f"Initialized Weights & Biases for project {args.project}, run {run_name}")
+    
     # Only create writer on main process
     writer = SummaryWriter(log_dir) if local_rank == 0 else None
     if local_rank == 0:
@@ -72,7 +104,13 @@ def main():
     start_epoch = 0
     global_step = 0
 
-    dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
+    # Use a smaller dataset if in test mode
+    if args.test_mode:
+        dataset = ChessPuzzleDataset('lichess_db_puzzle_test.csv')
+        if local_rank == 0:
+            print("Running in test mode with smaller dataset (1000 samples)")
+    else:
+        dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
     
     # Get the number of labels from the dataset
     num_labels = len(dataset.all_labels)
@@ -80,13 +118,31 @@ def main():
         print(f"Number of unique labels (themes + opening tags): {num_labels}")
     
     # Create model with the correct number of labels
-    model = Model(num_labels=num_labels)
+    # Original hacakthon-winner-3 model config with default nlayers=2.
+    # model = Model(num_labels=num_labels)
+    model = Model(num_labels=num_labels, nlayers=5, embed_dim=64, inner_dim=320, attention_dim=64, use_1x1conv=True, dropout=0.5)
     model = model.to(device)
     model = DDP(model, device_ids=[local_rank])
     
     # Define the loss function and optimizer
     criterion = torch.nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters())
+    
+    # Use Lamb optimizer with settings from chess-hackathon
+    # Instead of Adam as was used previously
+    lr = 0.001
+    weight_decay = 0.01
+    warmup_steps = 1000
+    
+    if local_rank == 0:
+        print(f"Using Lamb optimizer with lr={lr}, weight_decay={weight_decay}, warmup_steps={warmup_steps}")
+    
+    from model import Lamb, get_lr_with_warmup
+    optimizer = Lamb(model.parameters(), lr=lr, weight_decay=weight_decay)
+    
+    # Get current learning rate (for logging)
+    def get_lr(optimizer):
+        for param_group in optimizer.param_groups:
+            return param_group['lr']
     
     # Check for checkpoint file
     checkpoint_path = "checkpoint_resume.pth"
@@ -115,6 +171,7 @@ def main():
             print(f"  Global Step: {global_step}")
             print(f"  Loss: {checkpoint['loss']:.8f}")
             print(f"  Jaccard Loss: {checkpoint['jaccard_loss']:.8f}")
+            print(f"  Learning Rate: {checkpoint.get('learning_rate', get_lr(optimizer)):.8f}")
             print(f"  Steps per epoch: {steps_per_epoch}")
             print(f"  Completed epochs: {completed_epochs}")
             print(f"  Resuming from epoch: {start_epoch}")
@@ -135,7 +192,9 @@ def main():
     if local_rank == 0:
         timer.report("Prepared dataloaders")
 
-    for epoch in range(start_epoch, 10):
+    # Use fewer epochs in test mode
+    max_epochs = 3 if args.test_mode else 10
+    for epoch in range(start_epoch, max_epochs):
         train_sampler.set_epoch(epoch)  # Important for proper shuffling
         
         for i, data in enumerate(train_dataloader, 0):
@@ -148,7 +207,19 @@ def main():
 
             optimizer.zero_grad()
 
-            outputs = model(inputs)
+            # Apply learning rate warmup
+            # Calculate total steps since the start of training
+            total_step = global_step
+            # Apply learning rate scheduler function
+            lr_factor = min(total_step / warmup_steps, 1.0)
+            current_lr = lr_factor * lr
+            # Update learning rate
+            for g in optimizer.param_groups:
+                g['lr'] = current_lr
+
+            # Use debug mode for the first batch of the first epoch
+            debug_mode = (epoch == start_epoch and i == 0)
+            outputs = model(inputs, debug=debug_mode)
             loss = criterion(outputs, labels)
             
             # Apply sigmoid to get probabilities for Jaccard calculation
@@ -163,11 +234,23 @@ def main():
             running_jaccard_index = jaccard_loss.item()
             
             if local_rank == 0:  # Only log on main process
-                print(f"epoch: {epoch} loss: {running_loss:.8f} jaccard index: {running_jaccard_index:.8f} steps: {i+1}")
+                current_lr = get_lr(optimizer)
+                print(f"epoch: {epoch}/{max_epochs-1} step: {i+1} lr: {current_lr:.8f} loss: {running_loss:.8f} jaccard index: {running_jaccard_index:.8f}")
                 
                 if writer is not None:
                     writer.add_scalar('Loss/train', running_loss, global_step)
                     writer.add_scalar('Jaccard/train', running_jaccard_index, global_step)
+                    writer.add_scalar('Learning_rate', current_lr, global_step)
+                
+                # Log to wandb if enabled
+                if args.wandb:
+                    wandb.log({
+                        "loss": running_loss,
+                        "jaccard_index": running_jaccard_index,
+                        "learning_rate": current_lr,
+                        "epoch": epoch,
+                        "global_step": global_step
+                    })
                 
                 if i % args.checkpoint_steps == 0 and i > 0:
                     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -179,6 +262,7 @@ def main():
                         'loss': loss,
                         'global_step': global_step,
                         'jaccard_loss': jaccard_loss,
+                        'learning_rate': current_lr,
                     }, checkpoint_filename)
                     
                     if writer is not None:
@@ -191,6 +275,12 @@ def main():
     if writer is not None:
         writer.close()
         timer.report("Closed TensorBoard writer")
+    
+    # Close wandb run if it was used
+    if local_rank == 0 and args.wandb:
+        wandb.finish()
+        print("Closed Weights & Biases run")
+        
     dist.destroy_process_group()
 
 if __name__ == "__main__":

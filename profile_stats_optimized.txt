@@ -1,0 +1,58 @@
+         303184 function calls (300378 primitive calls) in 10.851 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1436 to 50 due to restriction <50>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.014    0.014   10.764   10.764 /root/chess-theme-classifier/test.py:43(run_test)
+        1    0.000    0.000    9.159    9.159 /root/chess-theme-classifier/dataset.py:11(__init__)
+        1    0.000    0.000    9.157    9.157 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/io/parsers/readers.py:848(read_csv)
+        1    0.119    0.119    9.157    9.157 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/io/parsers/readers.py:574(_read)
+        1    0.000    0.000    9.037    9.037 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/io/parsers/readers.py:1732(read)
+        1    0.021    0.021    8.223    8.223 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/io/parsers/c_parser_wrapper.py:222(read)
+        1    7.838    7.838    7.896    7.896 {method 'read_low_memory' of 'pandas._libs.parsers.TextReader' objects}
+        1    0.000    0.000    0.814    0.814 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/frame.py:665(__init__)
+        1    0.000    0.000    0.814    0.814 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/internals/construction.py:423(dict_to_mgr)
+        1    0.122    0.122    0.813    0.813 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/internals/construction.py:96(arrays_to_mgr)
+        1    0.000    0.000    0.690    0.690 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/internals/managers.py:2068(create_block_manager_from_column_arrays)
+        9    0.000    0.000    0.510    0.057 /usr/lib/python3.10/multiprocessing/connection.py:917(wait)
+        9    0.000    0.000    0.510    0.057 /usr/lib/python3.10/selectors.py:403(select)
+        9    0.510    0.057    0.510    0.057 {method 'poll' of 'select.poll' objects}
+        1    0.000    0.000    0.484    0.484 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/internals/managers.py:1744(_consolidate_inplace)
+        1    0.000    0.000    0.484    0.484 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/internals/managers.py:2207(_consolidate)
+        2    0.301    0.151    0.484    0.242 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/internals/managers.py:2224(_merge_blocks)
+        4    0.000    0.000    0.430    0.107 /root/.chess-theme-classifier/lib/python3.10/site-packages/tqdm/std.py:1160(__iter__)
+        3    0.000    0.000    0.429    0.143 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/utils/data/dataloader.py:625(__next__)
+        3    0.000    0.000    0.428    0.143 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/utils/data/dataloader.py:1297(_next_data)
+        5    0.000    0.000    0.428    0.086 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/utils/data/dataloader.py:1264(_get_data)
+        5    0.000    0.000    0.428    0.086 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/utils/data/dataloader.py:1118(_try_get_data)
+        5    0.000    0.000    0.428    0.086 /usr/lib/python3.10/multiprocessing/queues.py:98(get)
+        5    0.000    0.000    0.424    0.085 /usr/lib/python3.10/multiprocessing/connection.py:253(poll)
+        5    0.000    0.000    0.424    0.085 /usr/lib/python3.10/multiprocessing/connection.py:423(_poll)
+        1    0.000    0.000    0.311    0.311 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/utils/data/dataloader.py:427(__iter__)
+        1    0.000    0.000    0.311    0.311 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/utils/data/dataloader.py:383(_get_iterator)
+        1    0.000    0.000    0.311    0.311 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/utils/data/dataloader.py:989(__init__)
+        1    0.097    0.097    0.305    0.305 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/io/parsers/c_parser_wrapper.py:355(_concatenate_chunks)
+    188/2    0.000    0.000    0.287    0.143 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/nn/modules/module.py:1549(_wrapped_call_impl)
+    188/2    0.001    0.000    0.287    0.143 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/nn/modules/module.py:1555(_call_impl)
+        2    0.000    0.000    0.287    0.143 /root/chess-theme-classifier/model.py:251(forward)
+        1    0.000    0.000    0.235    0.235 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/serialization.py:889(load)
+        1    0.000    0.000    0.233    0.233 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/serialization.py:1414(_load)
+        1    0.074    0.074    0.233    0.233 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/_weights_only_unpickler.py:179(load)
+        4    0.000    0.000    0.231    0.058 /usr/lib/python3.10/multiprocessing/process.py:110(start)
+        4    0.000    0.000    0.231    0.058 /usr/lib/python3.10/multiprocessing/context.py:222(_Popen)
+        4    0.000    0.000    0.231    0.058 /usr/lib/python3.10/multiprocessing/context.py:278(_Popen)
+        4    0.000    0.000    0.230    0.058 /usr/lib/python3.10/multiprocessing/popen_fork.py:15(__init__)
+        4    0.000    0.000    0.230    0.058 /usr/lib/python3.10/multiprocessing/popen_fork.py:62(_launch)
+        2    0.000    0.000    0.224    0.112 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/nn/modules/container.py:217(forward)
+       10    0.207    0.021    0.207    0.021 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/dtypes/concat.py:52(concat_compat)
+        1    0.000    0.000    0.206    0.206 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/internals/managers.py:2137(_form_blocks)
+        3    0.144    0.048    0.206    0.069 /root/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/internals/managers.py:2194(_stack_arrays)
+       10    0.000    0.000    0.202    0.020 /root/chess-theme-classifier/model.py:197(forward)
+        1    0.182    0.182    0.182    0.182 /root/.chess-theme-classifier/lib/python3.10/site-packages/numpy/core/shape_base.py:219(vstack)
+       32    0.000    0.000    0.172    0.005 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/nn/modules/conv.py:457(forward)
+       32    0.000    0.000    0.172    0.005 /root/.chess-theme-classifier/lib/python3.10/site-packages/torch/nn/modules/conv.py:449(_conv_forward)
+       32    0.172    0.005    0.172    0.005 {built-in method torch.conv2d}
+        4    0.162    0.041    0.162    0.041 {built-in method posix.fork}
+
+

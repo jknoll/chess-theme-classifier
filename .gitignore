@@ -2,6 +2,10 @@
 *.pth
 *.zst
 events.out.tfevents.*
+wandb/
+
+# API keys and credentials
+.env
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -174,3 +178,4 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+lichess_db_puzzle.csv.openings.json

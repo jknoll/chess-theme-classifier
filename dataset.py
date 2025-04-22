@@ -3,6 +3,9 @@ from torch.utils.data import Dataset
 import pandas as pd
 from chess import Board
 import numpy as np
+import os
+import json
+import time
 
 class ChessPuzzleDataset(Dataset):
     def __init__(self, csv_file):
@@ -10,25 +13,62 @@ class ChessPuzzleDataset(Dataset):
         Args:
             csv_file (str): Path to the CSV file with chess puzzles
         """
+        self.csv_file = csv_file
         self.puzzle_data = pd.read_csv(csv_file)
-        # Get unique themes and opening tags across all puzzles
-        self.all_themes = set()
-        self.all_opening_tags = set()
         
-        # Process themes
-        for themes_str in self.puzzle_data['Themes']:
-            themes_list = themes_str.split()
-            self.all_themes.update(themes_list)
-            
-        # Process opening tags
-        for tags_str in self.puzzle_data['OpeningTags']:
-            if pd.notna(tags_str):  # Handle potential NaN values
-                tags_list = tags_str.split()
-                self.all_opening_tags.update(tags_list)
+        # Cache file paths
+        cache_dir = os.path.dirname(csv_file) or '.'
+        self.themes_cache_file = os.path.join(cache_dir, f"{os.path.basename(csv_file)}.themes.json")
+        self.openings_cache_file = os.path.join(cache_dir, f"{os.path.basename(csv_file)}.openings.json")
+        
+        # Load or create theme and opening tag caches
+        self._load_or_create_caches()
         
         # Combine and sort all labels
         self.all_labels = sorted(list(self.all_themes) + list(self.all_opening_tags))
         self.label_to_idx = {label: idx for idx, label in enumerate(self.all_labels)}
+    
+    def _load_or_create_caches(self):
+        """Load themes and opening tags from cache files if they exist and are newer than the CSV,
+        otherwise extract them from the CSV and save to cache files."""
+        
+        csv_mtime = os.path.getmtime(self.csv_file)
+        cache_is_valid = (
+            os.path.exists(self.themes_cache_file) and
+            os.path.exists(self.openings_cache_file) and
+            os.path.getmtime(self.themes_cache_file) > csv_mtime and
+            os.path.getmtime(self.openings_cache_file) > csv_mtime
+        )
+        
+        if cache_is_valid:
+            # Load from cache files
+            print(f"Loading themes and openings from cache files")
+            with open(self.themes_cache_file, 'r') as f:
+                self.all_themes = set(json.load(f))
+            with open(self.openings_cache_file, 'r') as f:
+                self.all_opening_tags = set(json.load(f))
+        else:
+            # Extract from CSV and save to cache
+            print(f"Extracting themes and openings from CSV and creating cache files")
+            self.all_themes = set()
+            self.all_opening_tags = set()
+            
+            # Process themes
+            for themes_str in self.puzzle_data['Themes']:
+                themes_list = themes_str.split()
+                self.all_themes.update(themes_list)
+                
+            # Process opening tags
+            for tags_str in self.puzzle_data['OpeningTags']:
+                if pd.notna(tags_str):  # Handle potential NaN values
+                    tags_list = tags_str.split()
+                    self.all_opening_tags.update(tags_list)
+            
+            # Save to cache files
+            with open(self.themes_cache_file, 'w') as f:
+                json.dump(sorted(list(self.all_themes)), f)
+            with open(self.openings_cache_file, 'w') as f:
+                json.dump(sorted(list(self.all_opening_tags)), f)
         
     def __len__(self):
         return len(self.puzzle_data)
