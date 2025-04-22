@@ -179,3 +179,4 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 lichess_db_puzzle.csv.openings.json
+lichess_db_puzzle.csv.themes.json
