@@ -25,8 +25,37 @@ from model import Model
 os.makedirs('logs', exist_ok=True)
 
 # Initialize distributed process group
-def init_distributed():
-    # Set default environment variables for single GPU training
+def init_distributed(distributed=None):
+    """
+    Initialize distributed process group based on environment variables or parameter.
+    
+    Args:
+        distributed: If explicitly provided as True/False, will override detection.
+                    If None, will auto-detect based on environment variables.
+    
+    Returns:
+        local_rank: The local rank of the process (0 if running in non-distributed mode)
+        is_distributed: Boolean indicating if running in distributed mode
+    """
+    # Check if we're running with torchrun based on environment variables
+    running_distributed = (
+        'LOCAL_RANK' in os.environ and 
+        'RANK' in os.environ and 
+        'WORLD_SIZE' in os.environ and 
+        int(os.environ.get('WORLD_SIZE', '1')) > 1
+    )
+    
+    # Override detection if explicitly specified
+    if distributed is not None:
+        running_distributed = distributed
+
+    # Initialize for single-process mode
+    if not running_distributed:
+        local_rank = 0
+        return local_rank, False
+    
+    # Running in distributed mode - set up process group
+    # Set default environment variables for distributed training if not already set
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = '0'
     if 'RANK' not in os.environ:
@@ -40,10 +69,14 @@ def init_distributed():
     
     local_rank = int(os.environ["LOCAL_RANK"])
     
+    # Check for GPUs
+    if not torch.cuda.is_available():
+        raise RuntimeError("Distributed training requires GPUs, but none were found.")
+    
     # Initialize the process group
     dist.init_process_group(backend="nccl")
     torch.cuda.set_device(local_rank)
-    return local_rank
+    return local_rank, True
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train chess puzzle classifier')
@@ -57,16 +90,36 @@ def parse_args():
                         help='Weights & Biases project name')
     parser.add_argument('--name', type=str, default=None,
                         help='Weights & Biases run name')
+    parser.add_argument('--distributed', action='store_true',
+                        help='Force distributed training mode (overrides auto-detection)')
+    parser.add_argument('--local', action='store_true',
+                        help='Force local training mode (overrides auto-detection)')
     return parser.parse_args()
 
 def main():
     # Parse command line arguments
     args = parse_args()
     
-    # Initialize distributed training
-    local_rank = init_distributed()
-    device = torch.device(f'cuda:{local_rank}')
-    print(f"Using device: {device} with local_rank: {local_rank}")
+    # Determine distributed mode based on command line args
+    distributed_override = None
+    if args.distributed and args.local:
+        print("Warning: Both --distributed and --local flags set. Using --distributed.")
+        distributed_override = True
+    elif args.distributed:
+        distributed_override = True
+    elif args.local:
+        distributed_override = False
+    
+    # Initialize distributed or local training
+    local_rank, is_distributed = init_distributed(distributed_override)
+    
+    # Set device
+    if is_distributed:
+        device = torch.device(f'cuda:{local_rank}')
+    else:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    print(f"Using device: {device} with local_rank: {local_rank} (Running in {'distributed' if is_distributed else 'local'} mode)")
     torch.autograd.set_detect_anomaly(True)
 
     # Create a timestamp for the run
@@ -122,7 +175,14 @@ def main():
     # model = Model(num_labels=num_labels)
     model = Model(num_labels=num_labels, nlayers=5, embed_dim=64, inner_dim=320, attention_dim=64, use_1x1conv=True, dropout=0.5)
     model = model.to(device)
-    model = DDP(model, device_ids=[local_rank])
+    
+    # Wrap model in DDP if running in distributed mode
+    if is_distributed:
+        model = DDP(model, device_ids=[local_rank])
+    # In local mode, we can use DataParallel if multiple GPUs are available
+    elif torch.cuda.device_count() > 1:
+        print(f"Using {torch.cuda.device_count()} GPUs with DataParallel")
+        model = torch.nn.DataParallel(model)
     
     # Define the loss function and optimizer
     criterion = torch.nn.BCEWithLogitsLoss()
@@ -151,7 +211,11 @@ def main():
             print(f"Loading checkpoint from {checkpoint_path}")
         
         checkpoint = torch.load(checkpoint_path, map_location=device)
-        model.module.load_state_dict(checkpoint['model_state_dict'])
+        # Load state dict properly depending on model type (DDP, DataParallel, or regular)
+        if is_distributed or isinstance(model, torch.nn.DataParallel):
+            model.module.load_state_dict(checkpoint['model_state_dict'])
+        else:
+            model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         global_step = checkpoint.get('global_step', 0)  # Get global_step if exists, else 0
         
@@ -182,13 +246,20 @@ def main():
     if local_rank == 0:
         timer.report(f"Initialized datasets with {len(train_dataset):,} training and {len(test_dataset):,} test board evaluations.")
 
-    # Create distributed samplers
-    train_sampler = DistributedSampler(train_dataset)
-    test_sampler = DistributedSampler(test_dataset)
-
-    # Use distributed samplers with DataLoader
-    train_dataloader = DataLoader(train_dataset, batch_size=4, sampler=train_sampler)
-    test_dataloader = DataLoader(test_dataset, batch_size=4, sampler=test_sampler)
+    # Create samplers based on distributed mode
+    if is_distributed:
+        train_sampler = DistributedSampler(train_dataset)
+        test_sampler = DistributedSampler(test_dataset)
+        
+        # Use distributed samplers with DataLoader
+        train_dataloader = DataLoader(train_dataset, batch_size=4, sampler=train_sampler)
+        test_dataloader = DataLoader(test_dataset, batch_size=4, sampler=test_sampler)
+    else:
+        # Use standard samplers for local training
+        train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+        test_dataloader = DataLoader(test_dataset, batch_size=4, shuffle=False)
+        # Define dummy sampler for local mode so we can call set_epoch without errors
+        train_sampler = type('DummySampler', (), {'set_epoch': lambda self, epoch: None})()
     if local_rank == 0:
         timer.report("Prepared dataloaders")
 
@@ -255,9 +326,15 @@ def main():
                 if i % args.checkpoint_steps == 0 and i > 0:
                     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
                     checkpoint_filename = f"checkpoint_{timestamp}_{i}.pth"
+                    # Save the model state dict properly depending on model type
+                    if is_distributed or isinstance(model, torch.nn.DataParallel):
+                        model_state = model.module.state_dict()
+                    else:
+                        model_state = model.state_dict()
+                        
                     torch.save({
                         'epoch': epoch,
-                        'model_state_dict': model.module.state_dict(),  # Save the inner model's state
+                        'model_state_dict': model_state,
                         'optimizer_state_dict': optimizer.state_dict(),
                         'loss': loss,
                         'global_step': global_step,
@@ -280,8 +357,10 @@ def main():
     if local_rank == 0 and args.wandb:
         wandb.finish()
         print("Closed Weights & Biases run")
-        
-    dist.destroy_process_group()
+    
+    # Clean up distributed process group if we were using it
+    if is_distributed:
+        dist.destroy_process_group()
 
 if __name__ == "__main__":
     main()

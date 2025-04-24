@@ -180,3 +180,6 @@ cython_debug/
 .pypirc
 lichess_db_puzzle.csv.openings.json
 lichess_db_puzzle.csv.themes.json
+lichess_db_puzzle_test.csv.openings.json
+lichess_db_puzzle_test.csv.themes.json
+lichess_db_puzzle.csv
