@@ -7,7 +7,7 @@ cd chess-theme-classifier
 
 ## Create Virtualenv
 ```bash
-python -m venv create .chess-theme-classifier
+python -m venv .chess-theme-classifier
 source .chess-theme-classifier/bin/activate
 ```
 

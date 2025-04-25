@@ -17,7 +17,8 @@ class ChessPuzzleDataset(Dataset):
         self.puzzle_data = pd.read_csv(csv_file)
         
         # Cache file paths
-        cache_dir = os.path.dirname(csv_file) or '.'
+        # cache_dir = os.path.dirname(csv_file) or '.'
+        cache_dir = '.' # /data/ is a read-only filesystem
         self.themes_cache_file = os.path.join(cache_dir, f"{os.path.basename(csv_file)}.themes.json")
         self.openings_cache_file = os.path.join(cache_dir, f"{os.path.basename(csv_file)}.openings.json")
         
