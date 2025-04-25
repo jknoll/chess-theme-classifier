@@ -35,6 +35,7 @@ def get_args_parser():
     parser.add_argument("--model-config", help="model config path", type=Path, default="/root/chess-theme-classifier/model_config.yaml")
     parser.add_argument("--save-dir", help="save checkpoint path", type=Path, default=os.environ.get("OUTPUT_PATH"))
     parser.add_argument("--load-path", help="path to checkpoint.pt file to resume from", type=Path, default="/root/chess-theme-classifier/recover/checkpoint.pt")
+    parser.add_argument("--dataset-id", help="dataset ID for constructing dataset path", type=str)
     parser.add_argument("--bs", help="batch size", type=int, default=64)
     parser.add_argument("--lr", help="learning rate", type=float, default=0.001)
     parser.add_argument("--wd", help="weight decay", type=float, default=0.01)
@@ -64,11 +65,21 @@ def main(args, timer):
 
     # Use a smaller dataset if in test mode
     if args.test_mode:
-        dataset = ChessPuzzleDataset('lichess_db_puzzle_test.csv')
+        if args.dataset_id:
+            dataset_path = f'/data/{args.dataset_id}/lichess_db_puzzle_test.csv'
+        else:
+            dataset_path = 'lichess_db_puzzle_test.csv'
+        dataset = ChessPuzzleDataset(dataset_path)
         if args.device_id == 0:
-            print("Running in test mode with smaller dataset")
+            print(f"Running in test mode with smaller dataset: {dataset_path}")
     else:
-        dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
+        if args.dataset_id:
+            dataset_path = f'/data/{args.dataset_id}/lichess_db_puzzle.csv'
+        else:
+            dataset_path = 'lichess_db_puzzle.csv'
+        dataset = ChessPuzzleDataset(dataset_path)
+        if args.device_id == 0:
+            print(f"Using dataset: {dataset_path}")
     
     # Get the number of labels from the dataset
     num_labels = len(dataset.all_labels)

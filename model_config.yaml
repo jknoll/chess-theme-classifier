@@ -6,3 +6,4 @@ inner_dim: 320
 attention_dim: 64
 use_1x1conv: true
 dropout: 0.5
+num_labels: 1616
