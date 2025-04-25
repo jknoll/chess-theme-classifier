@@ -108,16 +108,19 @@ def main():
     theme_freqs = dataset.get_theme_frequencies()
     opening_freqs = dataset.get_opening_frequencies()
     
+    # Create directory for histograms
+    os.makedirs('analysis/histograms', exist_ok=True)
+    
     # Generate file names
     base_name = os.path.basename(args.csv).split('.')[0]
-    themes_file = f"{base_name}_theme_histogram.png"
-    openings_file = f"{base_name}_opening_histogram.png"
-    combined_file = f"{base_name}_combined_histogram.png"
+    themes_file = f"analysis/histograms/{base_name}_theme_histogram.png"
+    openings_file = f"analysis/histograms/{base_name}_opening_histogram.png"
+    combined_file = f"analysis/histograms/{base_name}_combined_histogram.png"
     
     # Full histogram file names
-    full_themes_file = f"{base_name}_theme_histogram_full.png"
-    full_openings_file = f"{base_name}_opening_histogram_full.png"
-    full_combined_file = f"{base_name}_combined_histogram_full.png"
+    full_themes_file = f"analysis/histograms/{base_name}_theme_histogram_full.png"
+    full_openings_file = f"analysis/histograms/{base_name}_opening_histogram_full.png"
+    full_combined_file = f"analysis/histograms/{base_name}_combined_histogram_full.png"
     
     # Generate histograms
     print("Generating histograms...")

@@ -5,6 +5,7 @@ import time
 import cProfile
 import pstats
 import io
+import os
 from pstats import SortKey
 from dataset import ChessPuzzleDataset
 from model import Model
@@ -182,8 +183,11 @@ def create_cooccurrence_matrix(labels, label_type, dataset, model, device, activ
     # Add more padding around the plot for better label visibility
     plt.tight_layout(pad=2.0)
     
+    # Create directory path for matrices
+    os.makedirs('analysis/matrices', exist_ok=True)
+    
     # Save the matrix info to a text file
-    info_filename = f'{label_type}_matrix_info_{prediction_threshold}_{num_samples}.txt'
+    info_filename = f'analysis/matrices/{label_type}_matrix_info_{prediction_threshold}_{num_samples}.txt'
     with open(info_filename, 'w') as f:
         f.write(f"{label_type.capitalize()} co-occurrence matrix with threshold={prediction_threshold}, samples={num_samples}\n")
         f.write(f"Number of labels: {n_themes}\n\n")
@@ -192,7 +196,7 @@ def create_cooccurrence_matrix(labels, label_type, dataset, model, device, activ
             f.write(f"{i}. {theme}\n")
     
     # Save the plot with higher resolution and include threshold in filename
-    output_filename = f'{label_type}_confusion_matrix_{prediction_threshold}_{num_samples}.png'
+    output_filename = f'analysis/matrices/{label_type}_confusion_matrix_{prediction_threshold}_{num_samples}.png'
     plt.savefig(output_filename, dpi=300, bbox_inches='tight', pad_inches=1.0)
     plt.close()
     

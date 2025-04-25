@@ -45,9 +45,24 @@ class ChessPuzzleDataset(Dataset):
             # Load from cache files
             print(f"Loading themes and openings from cache files")
             with open(self.themes_cache_file, 'r') as f:
-                self.all_themes = set(json.load(f))
+                themes_data = json.load(f)
+                # Check if the format is a list of [name, count] lists or just a list of names
+                if themes_data and isinstance(themes_data[0], list):
+                    # Format is [[name, count], [name, count], ...]
+                    self.all_themes = set(item[0] for item in themes_data)
+                else:
+                    # Format is [name, name, ...]
+                    self.all_themes = set(themes_data)
+                    
             with open(self.openings_cache_file, 'r') as f:
-                self.all_opening_tags = set(json.load(f))
+                openings_data = json.load(f)
+                # Check if the format is a list of [name, count] lists or just a list of names
+                if openings_data and isinstance(openings_data[0], list):
+                    # Format is [[name, count], [name, count], ...]
+                    self.all_opening_tags = set(item[0] for item in openings_data)
+                else:
+                    # Format is [name, name, ...]
+                    self.all_opening_tags = set(openings_data)
         else:
             # Extract from CSV and save to cache
             print(f"Extracting themes and openings from CSV and creating cache files")
@@ -167,5 +182,29 @@ class ChessPuzzleDataset(Dataset):
     def is_theme(self, label):
         """Check if a label is a puzzle theme."""
         return label in self.all_themes
-
+    
+    def get_theme_frequencies(self):
+        """Return a list of theme frequencies sorted by count."""
+        theme_counts = {}
+        for idx in range(len(self.puzzle_data)):
+            themes = self.puzzle_data.iloc[idx]['Themes'].split()
+            for theme in themes:
+                theme_counts[theme] = theme_counts.get(theme, 0) + 1
+        
+        # Convert to list of (theme, count) tuples and sort by count in descending order
+        freq_list = sorted(theme_counts.items(), key=lambda x: x[1], reverse=True)
+        return freq_list
+    
+    def get_opening_frequencies(self):
+        """Return a list of opening tag frequencies sorted by count."""
+        opening_counts = {}
+        for idx in range(len(self.puzzle_data)):
+            if pd.notna(self.puzzle_data.iloc[idx]['OpeningTags']):
+                openings = self.puzzle_data.iloc[idx]['OpeningTags'].split()
+                for opening in openings:
+                    opening_counts[opening] = opening_counts.get(opening, 0) + 1
+        
+        # Convert to list of (opening, count) tuples and sort by count in descending order
+        freq_list = sorted(opening_counts.items(), key=lambda x: x[1], reverse=True)
+        return freq_list
     
