@@ -91,7 +91,7 @@ class ChessPuzzleDataset(Dataset):
         for tag in opening_tags:
             label_vector[self.label_to_idx[tag]] = 1
             
-        # Convert FEN to board representation
+        # Convert FEN to board 
         board = Board(fen)
         # Create an 8x8 tensor representation with piece values 0-12
         board_tensor = self._board_to_tensor(board).to(dtype=torch.float32)
