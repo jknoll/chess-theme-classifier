@@ -21,8 +21,9 @@ import torch
 from torch.utils.data import DataLoader, random_split
 from model import Model
 
-# Create logs directory if it doesn't exist
+# Create logs and checkpoints directories if they don't exist
 os.makedirs('logs', exist_ok=True)
+os.makedirs('checkpoints', exist_ok=True)
 
 # Initialize distributed process group
 def init_distributed(distributed=None):
@@ -205,7 +206,7 @@ def main():
             return param_group['lr']
     
     # Check for checkpoint file
-    checkpoint_path = "checkpoint_resume.pth"
+    checkpoint_path = "checkpoints/checkpoint_resume.pth"
     if os.path.exists(checkpoint_path):
         if local_rank == 0:
             print(f"Loading checkpoint from {checkpoint_path}")
@@ -325,7 +326,7 @@ def main():
                 
                 if i % args.checkpoint_steps == 0 and i > 0:
                     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                    checkpoint_filename = f"checkpoint_{timestamp}_{i}.pth"
+                    checkpoint_filename = f"checkpoints/checkpoint_{timestamp}_{i}.pth"
                     # Save the model state dict properly depending on model type
                     if is_distributed or isinstance(model, torch.nn.DataParallel):
                         model_state = model.module.state_dict()
@@ -341,6 +342,17 @@ def main():
                         'jaccard_loss': jaccard_loss,
                         'learning_rate': current_lr,
                     }, checkpoint_filename)
+                    
+                    # Also save a copy as the latest checkpoint for easy resuming
+                    torch.save({
+                        'epoch': epoch,
+                        'model_state_dict': model_state,
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'loss': loss,
+                        'global_step': global_step,
+                        'jaccard_loss': jaccard_loss,
+                        'learning_rate': current_lr,
+                    }, "checkpoints/checkpoint_resume.pth")
                     
                     if writer is not None:
                         writer.add_text('Checkpoint', f'Saved checkpoint: {checkpoint_filename}', global_step)

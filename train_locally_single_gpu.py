@@ -8,6 +8,10 @@ import os
 from torch.utils.tensorboard import SummaryWriter
 import datetime
 
+# Create logs and checkpoints directories if they don't exist
+os.makedirs('logs', exist_ok=True)
+os.makedirs('checkpoints', exist_ok=True)
+
 timer = TimestampedTimer("Imported TimestampedTimer")
 
 from dataset import ChessPuzzleDataset
@@ -146,13 +150,25 @@ def main():
             # Save checkpoint
             if i % 100000 == 0:
                 timestamp = time.strftime("%Y%m%d%H%M%S")
-                checkpoint_filename = f"checkpoint_{timestamp}_{i}.pth"
+                checkpoint_filename = f"checkpoints/checkpoint_{timestamp}_{i}.pth"
                 torch.save({
                     'epoch': epoch,
                     'model_state_dict': model.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
                     'loss': loss,
+                    'global_step': global_step,
+                    'jaccard_loss': jaccard_loss,
                 }, checkpoint_filename)
+                
+                # Also save a copy as the latest checkpoint for easy resuming
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'loss': loss,
+                    'global_step': global_step,
+                    'jaccard_loss': jaccard_loss,
+                }, "checkpoints/checkpoint_resume.pth")
                 
                 # Log model checkpoint to TensorBoard
                 writer.add_text('Checkpoint', f'Saved checkpoint: {checkpoint_filename}', global_step)

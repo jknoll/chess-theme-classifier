@@ -358,9 +358,14 @@ def run_test():
     print(f"Using device: {device}")
     model = model.to(device)
 
+    # Look for the checkpoint in the checkpoints directory first, then in the current directory
+    checkpoint_path = os.path.join("checkpoints", checkpoint_file)
+    if not os.path.exists(checkpoint_path):
+        checkpoint_path = checkpoint_file
+    
     # Load the checkpoint and extract just the model state dict
-    print(f"Using checkpoint: {checkpoint_file}")
-    checkpoint = torch.load(checkpoint_file, weights_only=True)
+    print(f"Using checkpoint: {checkpoint_path}")
+    checkpoint = torch.load(checkpoint_path, weights_only=True)
     model.load_state_dict(checkpoint['model_state_dict'])
 
     # Set model to evaluation mode
