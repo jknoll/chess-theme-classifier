@@ -3,6 +3,8 @@
 *.zst
 events.out.tfevents.*
 wandb/
+checkpoints/
+analysis/
 
 # API keys and credentials
 .env
