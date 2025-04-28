@@ -43,6 +43,13 @@ This is a PyTorch-based chess puzzle classifier that predicts themes from chess 
 - Test dataset: `lichess_db_puzzle_test.csv` (smaller dataset for testing)
 - Small sample: `lichess_db_puzzle_small.csv` (tiny dataset for quick tests)
 
+## Dataset Optimization
+- The ChessPuzzleDataset class in dataset.py uses tensor caching for improved performance
+- First access creates a cache file (.tensors.pt) that's used in subsequent runs
+- Cache validation checks the CSV modification time to ensure data consistency
+- Use the --optimized flag with test.py and other scripts to ensure all optimizations are enabled
+- Typical cache-enabled speedups are 2-3x for dataset access
+
 ## Testing
 - Unit tests in test_model_unittest.py verify model functionality
 - Test architecture includes:
