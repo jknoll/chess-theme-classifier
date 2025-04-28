@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 import pandas as pd
-from chess import Board
+from chess import Board, Piece, SQUARES
 import numpy as np
 import os
 import json
@@ -107,6 +107,8 @@ class ChessPuzzleDataset(Dataset):
         for tag in opening_tags:
             label_vector[self.label_to_idx[tag]] = 1
             
+        # I should profile and determine how much of a speedup I might get by doing this once to the whole dataset
+        # and caching the resulting board tensors.
         # Convert FEN to board 
         board = Board(fen)
         # Create an 8x8 tensor representation with piece values 0-12
@@ -207,4 +209,103 @@ class ChessPuzzleDataset(Dataset):
         # Convert to list of (opening, count) tuples and sort by count in descending order
         freq_list = sorted(opening_counts.items(), key=lambda x: x[1], reverse=True)
         return freq_list
+    
+    def create_reflected_boards(self, item):
+        """
+        Creates reflected versions of a chess board and validates them.
+        
+        Args:
+            item (dict): A dataset item containing 'board' tensor and 'fen' string
+            
+        Returns:
+            dict: Contains valid reflected boards with keys:
+                'horizontal': horizontally reflected board or None if invalid
+                'vertical': vertically reflected board or None if invalid
+                'both': board reflected both horizontally and vertically or None if invalid
+                Each valid board is represented as a tuple of (board_tensor, fen_string)
+        """
+        results = {
+            'horizontal': None,
+            'vertical': None,
+            'both': None
+        }
+        
+        # Get original board state
+        original_board_tensor = item['board']
+        original_fen = item['fen']
+        
+        # Create horizontal reflection (flip along vertical axis)
+        h_board_tensor = torch.flip(original_board_tensor.clone(), dims=[1])
+        
+        # Create vertical reflection (flip along horizontal axis)
+        v_board_tensor = torch.flip(original_board_tensor.clone(), dims=[0])
+        
+        # Create both horizontal and vertical reflection
+        hv_board_tensor = torch.flip(original_board_tensor.clone(), dims=[0, 1])
+        
+        # Try to convert tensors back to valid board positions
+        for reflection_type, board_tensor in [
+            ('horizontal', h_board_tensor),
+            ('vertical', v_board_tensor),
+            ('both', hv_board_tensor)
+        ]:
+            try:
+                # Convert tensor to FEN
+                reflected_board = Board()
+                # Clear the board first
+                reflected_board.clear()
+                
+                # Map indices back to chess pieces
+                idx_to_piece = {
+                    0: 'K',   # white king
+                    1: 'Q',   # white queen
+                    2: 'R',   # white rook
+                    3: 'B',   # white bishop
+                    4: 'N',   # white knight
+                    5: 'P',   # white pawn
+                    7: 'p',   # black pawn
+                    8: 'n',   # black knight
+                    9: 'b',   # black bishop
+                    10: 'r',  # black rook
+                    11: 'q',  # black queen
+                    12: 'k',  # black king
+                }
+                
+                # Place pieces on the board
+                for rank in range(8):
+                    for file in range(8):
+                        piece_idx = int(board_tensor[rank, file].item())
+                        if piece_idx != 6:  # Skip empty squares
+                            piece_symbol = idx_to_piece[piece_idx]
+                            # Convert back to chess.Square (0-63)
+                            square = rank * 8 + file
+                            # Convert symbol to chess.Piece
+                            piece = Piece.from_symbol(piece_symbol)
+                            reflected_board.set_piece_at(square, piece)
+                
+                # The python-chess library will validate the board when we construct 
+                # a Board from the FEN string. If the position is illegal, it will 
+                # raise a ValueError, which we'll catch.
+                
+                # Get FEN of the reflected board
+                reflected_fen = reflected_board.fen()
+                # Extract just the board position part (before the space)
+                board_position = reflected_fen.split(' ')[0]
+                # Use original FEN for turn, castling, etc.
+                original_fen_parts = original_fen.split(' ')
+                # Combine reflected board position with original game state
+                complete_fen = board_position + ' ' + ' '.join(original_fen_parts[1:])
+                
+                # Try to validate the complete FEN
+                try:
+                    valid_board = Board(complete_fen)
+                    results[reflection_type] = (board_tensor, complete_fen)
+                except ValueError:
+                    # Invalid FEN string
+                    pass
+            except Exception as e:
+                # Any other error during the process
+                print(f"Error validating {reflection_type} reflection: {e}")
+        
+        return results
     

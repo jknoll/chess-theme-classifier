@@ -13,7 +13,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Dependencies
 - Dependencies are managed via requirements.txt
 - When adding new dependencies, add them to requirements.txt
-- Always test installation with: `pip install -r requirements.txt`
+- The project uses a Python virtual environment located at `.chess-theme-classifier/`
+- Always activate the virtual environment before running any commands: `source .chess-theme-classifier/bin/activate`
+- If new dependencies are needed: `pip install -r requirements.txt`
 - Verify that installation succeeds before committing changes
 
 ## Security and Credentials
