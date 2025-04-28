@@ -50,7 +50,9 @@ def main():
     writer = SummaryWriter(log_dir)
     timer.report(f"Created TensorBoard writer at {log_dir}")
 
-    dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
+    # Use a smaller dataset for testing
+    print("Using smaller dataset for testing...")
+    dataset = ChessPuzzleDataset('lichess_db_puzzle_test.csv')
     
     # Get the number of labels from the dataset
     num_labels = len(dataset.get_theme_names())
@@ -74,7 +76,9 @@ def main():
     out = model(input)
     print(f"Out: {out}")
 
+    # Need to match shapes: out is [batch_size, num_labels], target should be the same
     target = sample['themes'].unsqueeze(0).to(device)
+    out = out.unsqueeze(0) if out.dim() == 1 else out  # Ensure out has batch dimension
     print(f"Target: {target}")
     # Define the loss function and optimizer
     criterion = torch.nn.BCEWithLogitsLoss()
@@ -89,13 +93,14 @@ def main():
 
     model.zero_grad()     # zeroes the gradient buffers of all parameters
 
-    print('conv1.bias.grad before backward')
-    print(model.conv1.bias.grad)
+    print('First layer params grad before backward')
+    first_layer = model.convLayers[0].conv1
+    print(first_layer.bias.grad)
 
     loss.backward()
 
-    print('conv1.bias.grad after backward')
-    print(model.conv1.bias.grad)
+    print('First layer params grad after backward')
+    print(first_layer.bias.grad)
 
     ############################################################
 
@@ -113,7 +118,7 @@ def main():
     # Track global step for TensorBoard
     global_step = 0
 
-    for epoch in range(10):  # loop over the dataset multiple times
+    for epoch in range(2):  # loop over the dataset a few times for testing
 
         for i, data in enumerate(train_dataloader, 0):
             running_loss = 0.0

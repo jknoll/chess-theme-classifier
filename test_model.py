@@ -2,9 +2,18 @@ import torch
 import torch.nn as nn
 import os
 import yaml
+import argparse
 from torch.utils.data import DataLoader
 from dataset import ChessPuzzleDataset
 from model import Model, Lamb, get_lr_with_warmup
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Test the chess theme classifier model')
+parser.add_argument('--csv_file', type=str, default='lichess_db_puzzle_test.csv',
+                   help='Path to the CSV file to use (default: lichess_db_puzzle_test.csv)')
+parser.add_argument('--num_samples', type=int, default=None,
+                   help='Number of samples to use (default: all)')
+args = parser.parse_args()
 
 print("\n" + "="*80)
 print("CHESS THEME CLASSIFIER - MODEL TEST")
@@ -12,7 +21,8 @@ print("="*80)
 
 # Create a small dataset
 print("\nInitializing dataset...")
-dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
+print(f"Using dataset: {args.csv_file}")
+dataset = ChessPuzzleDataset(args.csv_file)
 dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
 
 # Get number of labels

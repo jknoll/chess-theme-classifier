@@ -38,6 +38,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Structure
 This is a PyTorch-based chess puzzle classifier that predicts themes from chess board positions using a CNN architecture for multi-label classification.
 
+## Dataset Files
+- Full dataset: `lichess_db_puzzle.csv` (main dataset for training)
+- Test dataset: `lichess_db_puzzle_test.csv` (smaller dataset for testing)
+- Small sample: `lichess_db_puzzle_small.csv` (tiny dataset for quick tests)
+
 ## Testing
 - Unit tests in test_model_unittest.py verify model functionality
 - Test architecture includes:

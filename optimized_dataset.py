@@ -10,7 +10,9 @@ import concurrent.futures
 from functools import lru_cache
 import multiprocessing
 
-class ChessPuzzleDataset(Dataset):
+class OptimizedChessPuzzleDataset(Dataset):
+    """Optimized version of ChessPuzzleDataset with tensor caching and fast conversion."""
+    
     def __init__(self, csv_file, cache_size=10000, num_workers=None):
         """
         Args:
@@ -42,12 +44,12 @@ class ChessPuzzleDataset(Dataset):
         # Set up LRU cache for tensor conversion
         # We can't directly apply lru_cache to a static method, so create a wrapper function
         self._get_cached_tensor = lru_cache(maxsize=cache_size)(
-            lambda fen: ChessPuzzleDataset._optimized_fen_to_tensor(fen)
+            lambda fen: OptimizedChessPuzzleDataset._optimized_fen_to_tensor(fen)
         )
         
         # Create or load tensor cache
         self._load_or_create_tensor_cache()
-    
+
     def _load_or_create_caches(self):
         """Load themes and opening tags from cache files if they exist and are newer than the CSV,
         otherwise extract them from the CSV and save to cache files."""
@@ -104,9 +106,6 @@ class ChessPuzzleDataset(Dataset):
                 json.dump(sorted(list(self.all_themes)), f)
             with open(self.openings_cache_file, 'w') as f:
                 json.dump(sorted(list(self.all_opening_tags)), f)
-        
-    def __len__(self):
-        return len(self.puzzle_data)
     
     def _load_or_create_tensor_cache(self):
         """Load tensor cache if it exists and is newer than the CSV,
@@ -121,35 +120,26 @@ class ChessPuzzleDataset(Dataset):
         if tensor_cache_is_valid:
             print(f"Loading tensors from cache file: {self.tensors_cache_file}")
             # Use memory mapping for efficient loading of large tensor files
-            try:
-                self.tensor_cache = torch.load(self.tensors_cache_file, map_location='cpu')
-                print(f"Loaded {len(self.tensor_cache)} tensors from cache")
-            except Exception as e:
-                print(f"Error loading tensor cache: {e}")
-                print("Regenerating tensor cache...")
-                self._create_tensor_cache()
+            self.tensor_cache = torch.load(self.tensors_cache_file, map_location='cpu')
+            print(f"Loaded {len(self.tensor_cache)} tensors from cache")
         else:
-            self._create_tensor_cache()
-    
-    def _create_tensor_cache(self):
-        """Create the tensor cache by batch processing all FENs."""
-        print(f"Creating tensor cache for {len(self.puzzle_data):,} puzzles...")
-        start_time = time.time()
-        
-        # Get all FENs
-        all_fens = self.puzzle_data['FEN'].tolist()
-        
-        # Create tensors in parallel
-        self.tensor_cache = self._parallel_batch_conversion(all_fens)
-        
-        # Save to disk
-        print(f"Saving tensor cache to: {self.tensors_cache_file}")
-        torch.save(self.tensor_cache, self.tensors_cache_file)
-        
-        end_time = time.time()
-        elapsed = end_time - start_time
-        print(f"Created and saved tensor cache in {elapsed:.2f} seconds")
-        print(f"Conversion rate: {len(all_fens) / elapsed:.2f} puzzles/second")
+            print(f"Creating tensor cache for {len(self.puzzle_data):,} puzzles...")
+            start_time = time.time()
+            
+            # Get all FENs
+            all_fens = self.puzzle_data['FEN'].tolist()
+            
+            # Create tensors in parallel
+            self.tensor_cache = self._parallel_batch_conversion(all_fens)
+            
+            # Save to disk
+            print(f"Saving tensor cache to: {self.tensors_cache_file}")
+            torch.save(self.tensor_cache, self.tensors_cache_file)
+            
+            end_time = time.time()
+            elapsed = end_time - start_time
+            print(f"Created and saved tensor cache in {elapsed:.2f} seconds")
+            print(f"Conversion rate: {len(all_fens) / elapsed:.2f} puzzles/second")
     
     # Helper function for parallel processing - needs to be a module-level function to be picklable
     @staticmethod
@@ -275,33 +265,6 @@ class ChessPuzzleDataset(Dataset):
         
         return tensor
     
-    def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-            
-        # Get FEN, themes, and opening tags for the puzzle
-        fen = self.puzzle_data.iloc[idx]['FEN']
-        themes = self.puzzle_data.iloc[idx]['Themes'].split()
-        opening_tags = []
-        if pd.notna(self.puzzle_data.iloc[idx]['OpeningTags']):
-            opening_tags = self.puzzle_data.iloc[idx]['OpeningTags'].split()
-        
-        # Create one-hot encoding for all labels (themes + opening tags)
-        label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
-        for theme in themes:
-            label_vector[self.label_to_idx[theme]] = 1
-        for tag in opening_tags:
-            label_vector[self.label_to_idx[tag]] = 1
-        
-        # Get board tensor - use cached tensor if available
-        board_tensor = self.tensor_cache[idx].to(dtype=torch.float32)
-        
-        return {
-            'board': board_tensor,
-            'themes': label_vector,
-            'fen': fen  # Include original FEN for reference
-        }
-    
     def _board_to_tensor(self, board):
         """Convert a chess board to a tensor representation.
         Returns an 8x8 tensor where:
@@ -346,6 +309,36 @@ class ChessPuzzleDataset(Dataset):
                 tensor[rank, file] = piece_to_idx[piece.symbol()]
                 
         return tensor
+    
+    def __len__(self):
+        return len(self.puzzle_data)
+    
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+            
+        # Get FEN, themes, and opening tags for the puzzle
+        fen = self.puzzle_data.iloc[idx]['FEN']
+        themes = self.puzzle_data.iloc[idx]['Themes'].split()
+        opening_tags = []
+        if pd.notna(self.puzzle_data.iloc[idx]['OpeningTags']):
+            opening_tags = self.puzzle_data.iloc[idx]['OpeningTags'].split()
+        
+        # Create one-hot encoding for all labels (themes + opening tags)
+        label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
+        for theme in themes:
+            label_vector[self.label_to_idx[theme]] = 1
+        for tag in opening_tags:
+            label_vector[self.label_to_idx[tag]] = 1
+        
+        # Get board tensor - use cached tensor if available
+        board_tensor = self.tensor_cache[idx].to(dtype=torch.float32)
+        
+        return {
+            'board': board_tensor,
+            'themes': label_vector,
+            'fen': fen  # Include original FEN for reference
+        }
     
     def get_theme_names(self):
         """Return the list of all possible labels (themes and opening tags)."""
@@ -490,4 +483,3 @@ class ChessPuzzleDataset(Dataset):
                 print(f"Error validating {reflection_type} reflection: {e}")
         
         return results
-    
