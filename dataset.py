@@ -11,16 +11,18 @@ from functools import lru_cache
 import multiprocessing
 
 class ChessPuzzleDataset(Dataset):
-    def __init__(self, csv_file, cache_size=10000, num_workers=None):
+    def __init__(self, csv_file, cache_size=10000, num_workers=None, augment_with_reflections=False):
         """
         Args:
             csv_file (str): Path to the CSV file with chess puzzles
             cache_size (int): Size of the LRU cache for tensor storage in memory
             num_workers (int): Number of workers for parallel processing. If None, uses CPU count.
+            augment_with_reflections (bool): If True, augment dataset with horizontally reflected boards.
         """
         self.csv_file = csv_file
         self.cache_size = cache_size
         self.num_workers = num_workers or max(1, multiprocessing.cpu_count() - 1)
+        self.augment_with_reflections = augment_with_reflections
         
         # Read CSV data
         self.puzzle_data = pd.read_csv(csv_file)
@@ -46,7 +48,7 @@ class ChessPuzzleDataset(Dataset):
         )
         
         # Create or load tensor cache
-        self._load_or_create_tensor_cache()
+        self._load_or_create_tensor_cache(augment_with_reflections)
     
     def _load_or_create_caches(self):
         """Load themes and opening tags from cache files if they exist and are newer than the CSV,
@@ -106,33 +108,49 @@ class ChessPuzzleDataset(Dataset):
                 json.dump(sorted(list(self.all_opening_tags)), f)
         
     def __len__(self):
-        return len(self.puzzle_data)
+        if self.augment_with_reflections:
+            return len(self.tensor_cache)  # Will include both original and reflected boards
+        else:
+            return len(self.puzzle_data)
     
-    def _load_or_create_tensor_cache(self):
+    def _load_or_create_tensor_cache(self, augment_with_reflections=False):
         """Load tensor cache if it exists and is newer than the CSV,
-        otherwise create it by batch processing all FENs."""
+        otherwise create it by batch processing all FENs.
+        
+        Args:
+            augment_with_reflections (bool): If True, augment the dataset with horizontally 
+                                             reflected boards.
+        """
         
         csv_mtime = os.path.getmtime(self.csv_file)
+        cache_suffix = '_reflected' if augment_with_reflections else ''
+        tensors_cache_file = f"{self.tensors_cache_file}{cache_suffix}"
+        
         tensor_cache_is_valid = (
-            os.path.exists(self.tensors_cache_file) and
-            os.path.getmtime(self.tensors_cache_file) > csv_mtime
+            os.path.exists(tensors_cache_file) and
+            os.path.getmtime(tensors_cache_file) > csv_mtime
         )
         
         if tensor_cache_is_valid:
-            print(f"Loading tensors from cache file: {self.tensors_cache_file}")
+            print(f"Loading tensors from cache file: {tensors_cache_file}")
             # Use memory mapping for efficient loading of large tensor files
             try:
-                self.tensor_cache = torch.load(self.tensors_cache_file, map_location='cpu')
+                self.tensor_cache = torch.load(tensors_cache_file, map_location='cpu')
                 print(f"Loaded {len(self.tensor_cache)} tensors from cache")
             except Exception as e:
                 print(f"Error loading tensor cache: {e}")
                 print("Regenerating tensor cache...")
-                self._create_tensor_cache()
+                self._create_tensor_cache(augment_with_reflections)
         else:
-            self._create_tensor_cache()
+            self._create_tensor_cache(augment_with_reflections)
     
-    def _create_tensor_cache(self):
-        """Create the tensor cache by batch processing all FENs."""
+    def _create_tensor_cache(self, augment_with_reflections=False):
+        """Create the tensor cache by batch processing all FENs.
+        
+        Args:
+            augment_with_reflections (bool): If True, augment the dataset with horizontally 
+                                             reflected boards.
+        """
         print(f"Creating tensor cache for {len(self.puzzle_data):,} puzzles...")
         start_time = time.time()
         
@@ -140,16 +158,34 @@ class ChessPuzzleDataset(Dataset):
         all_fens = self.puzzle_data['FEN'].tolist()
         
         # Create tensors in parallel
-        self.tensor_cache = self._parallel_batch_conversion(all_fens)
+        self.tensor_cache = self._parallel_batch_conversion(all_fens, augment_with_reflections)
         
         # Save to disk
-        print(f"Saving tensor cache to: {self.tensors_cache_file}")
-        torch.save(self.tensor_cache, self.tensors_cache_file)
+        cache_suffix = '_reflected' if augment_with_reflections else ''
+        tensors_cache_file = f"{self.tensors_cache_file}{cache_suffix}"
+        print(f"Saving tensor cache to: {tensors_cache_file}")
+        torch.save(self.tensor_cache, tensors_cache_file)
         
         end_time = time.time()
         elapsed = end_time - start_time
         print(f"Created and saved tensor cache in {elapsed:.2f} seconds")
-        print(f"Conversion rate: {len(all_fens) / elapsed:.2f} puzzles/second")
+        base_conversion_rate = len(all_fens) / elapsed
+        print(f"Conversion rate: {base_conversion_rate:.2f} puzzles/second")
+        if augment_with_reflections:
+            print(f"Total number of tensors (including reflections): {len(self.tensor_cache)}")
+    
+    @staticmethod
+    def reflect_tensor_horizontally(tensor):
+        """Reflect a chess board tensor horizontally (along vertical axis).
+        
+        Args:
+            tensor (torch.Tensor): A tensor representing a chess board.
+            
+        Returns:
+            torch.Tensor: The horizontally reflected board tensor.
+        """
+        # Flip the tensor along the horizontal axis (dim=1 for second dimension)
+        return torch.flip(tensor.clone(), dims=[1])
     
     # Helper function for parallel processing - needs to be a module-level function to be picklable
     @staticmethod
@@ -201,8 +237,24 @@ class ChessPuzzleDataset(Dataset):
         
         return results
         
-    def _parallel_batch_conversion(self, fen_list):
-        """Use multiple CPU cores for FEN-to-tensor conversion"""
+    # A static helper for the multiprocessing executor to avoid lambda pickling issues
+    @staticmethod
+    def _process_chunk_with_args_wrapper(args):
+        """Wrapper to unpack arguments for _process_chunk_with_args to avoid pickling issues"""
+        chunk, augment_with_reflections = args
+        return ChessPuzzleDataset._process_chunk_with_args(chunk, augment_with_reflections)
+    
+    def _parallel_batch_conversion(self, fen_list, augment_with_reflections=False):
+        """Use multiple CPU cores for FEN-to-tensor conversion
+        
+        Args:
+            fen_list (list): List of FEN strings to convert.
+            augment_with_reflections (bool): If True, augment the dataset with horizontally 
+                                             reflected boards.
+        
+        Returns:
+            list: List of tensors representing the boards.
+        """
         # Split the FEN list into chunks
         chunk_size = max(1, len(fen_list) // self.num_workers)
         chunks = [fen_list[i:i+chunk_size] for i in range(0, len(fen_list), chunk_size)]
@@ -212,20 +264,66 @@ class ChessPuzzleDataset(Dataset):
         # Process chunks in parallel
         all_tensors = []
         with concurrent.futures.ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            # Show a progress bar if tqdm is available
-            try:
-                from tqdm import tqdm
-                results = list(tqdm(executor.map(self._process_chunk, chunks), total=len(chunks), desc="Converting FENs to tensors"))
-            except ImportError:
-                # Fall back to no progress bar if tqdm is not available
-                print("Processing chunks (this may take a while)...")
-                results = list(executor.map(self._process_chunk, chunks))
+            # Process each chunk, with info about whether to include reflections
+            if augment_with_reflections:
+                # Create a list of tuples with (chunk, augment_flag) for each chunk
+                chunk_args = [(chunk, True) for chunk in chunks]
+                # Use the wrapper function to avoid lambda pickling issues
+                try:
+                    from tqdm import tqdm
+                    results = list(tqdm(executor.map(self._process_chunk_with_args_wrapper, 
+                                                    chunk_args), 
+                                        total=len(chunks), 
+                                        desc="Converting FENs to tensors (with reflections)"))
+                except ImportError:
+                    print("Processing chunks with reflections (this may take a while)...")
+                    results = list(executor.map(self._process_chunk_with_args_wrapper, 
+                                               chunk_args))
+            else:
+                # No reflections, use the original method
+                try:
+                    from tqdm import tqdm
+                    results = list(tqdm(executor.map(self._process_chunk, chunks), 
+                                        total=len(chunks), 
+                                        desc="Converting FENs to tensors"))
+                except ImportError:
+                    # Fall back to no progress bar if tqdm is not available
+                    print("Processing chunks (this may take a while)...")
+                    results = list(executor.map(self._process_chunk, chunks))
         
         # Combine results
         for result in results:
             all_tensors.extend(result)
         
         return all_tensors
+    
+    @staticmethod
+    def _process_chunk_with_args(chunk, augment_with_reflections=False):
+        """Process a chunk of FENs and convert them to tensors, with option for reflections
+        
+        Args:
+            chunk (list): List of FEN strings to convert.
+            augment_with_reflections (bool): If True, add horizontal reflections.
+            
+        Returns:
+            list: List of tensors, potentially including reflections.
+        """
+        # Get the base tensors first
+        base_tensors = ChessPuzzleDataset._process_chunk(chunk)
+        
+        if not augment_with_reflections:
+            return base_tensors
+            
+        # If augmenting with reflections, create a new list with originals and reflections
+        augmented_tensors = []
+        for tensor in base_tensors:
+            # Add the original tensor
+            augmented_tensors.append(tensor)
+            # Add the horizontally reflected tensor
+            reflected_tensor = ChessPuzzleDataset.reflect_tensor_horizontally(tensor)
+            augmented_tensors.append(reflected_tensor)
+            
+        return augmented_tensors
     
     @staticmethod
     def _optimized_fen_to_tensor(fen):
@@ -279,13 +377,26 @@ class ChessPuzzleDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
             
-        # Get FEN, themes, and opening tags for the puzzle
-        fen = self.puzzle_data.iloc[idx]['FEN']
-        themes = self.puzzle_data.iloc[idx]['Themes'].split()
-        opening_tags = []
-        if pd.notna(self.puzzle_data.iloc[idx]['OpeningTags']):
-            opening_tags = self.puzzle_data.iloc[idx]['OpeningTags'].split()
-        
+        # Handle the augmented dataset case
+        if self.augment_with_reflections:
+            # Determine if this is an original or reflected board
+            original_idx = idx // 2
+            is_reflection = idx % 2 == 1
+            
+            # Get FEN, themes, and opening tags for the original puzzle
+            fen = self.puzzle_data.iloc[original_idx]['FEN']
+            themes = self.puzzle_data.iloc[original_idx]['Themes'].split()
+            opening_tags = []
+            if pd.notna(self.puzzle_data.iloc[original_idx]['OpeningTags']):
+                opening_tags = self.puzzle_data.iloc[original_idx]['OpeningTags'].split()
+        else:
+            # Normal dataset without reflections
+            fen = self.puzzle_data.iloc[idx]['FEN']
+            themes = self.puzzle_data.iloc[idx]['Themes'].split()
+            opening_tags = []
+            if pd.notna(self.puzzle_data.iloc[idx]['OpeningTags']):
+                opening_tags = self.puzzle_data.iloc[idx]['OpeningTags'].split()
+            
         # Create one-hot encoding for all labels (themes + opening tags)
         label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
         for theme in themes:
@@ -299,7 +410,8 @@ class ChessPuzzleDataset(Dataset):
         return {
             'board': board_tensor,
             'themes': label_vector,
-            'fen': fen  # Include original FEN for reference
+            'fen': fen,  # Include original FEN for reference
+            'is_reflection': self.augment_with_reflections and (idx % 2 == 1)  # Flag if this is a reflection
         }
     
     def _board_to_tensor(self, board):
