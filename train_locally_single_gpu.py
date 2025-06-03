@@ -18,25 +18,14 @@ from dataset import ChessPuzzleDataset
 import torch
 from torch.utils.data import DataLoader, random_split
 from model import Model
+from class_weights import compute_label_weights
+from metrics import jaccard_similarity as metrics_jaccard_similarity
+from metrics import precision_recall_f1, get_classification_report
 
 # Create logs directory if it doesn't exist
 os.makedirs('logs', exist_ok=True)
 
-def jaccard_similarity(tensor1, tensor2):
-    """
-    Compute Jaccard similarity between two binary tensors.
-    
-    Args:
-        tensor1: Binary PyTorch tensor
-        tensor2: Binary PyTorch tensor of the same shape as tensor1
-    
-    Returns:
-        Jaccard similarity score (float between 0 and 1)
-    """
-    intersection = torch.logical_and(tensor1, tensor2).sum()
-    union = torch.logical_or(tensor1, tensor2).sum()
-    
-    return intersection.float() / (union.float() + 1e-8)  # add small epsilon to avoid division by zero
+# No longer need this local jaccard_similarity function since we're using the one from metrics.py
 
 def main():
     # Set up the device for GPU use
@@ -50,9 +39,9 @@ def main():
     writer = SummaryWriter(log_dir)
     timer.report(f"Created TensorBoard writer at {log_dir}")
 
-    # Use a smaller dataset for testing
-    print("Using smaller dataset for testing...")
-    dataset = ChessPuzzleDataset('lichess_db_puzzle_test.csv')
+    # Use a smaller dataset for testing with class-conditional augmentation by default
+    print("Using smaller dataset with class-conditional augmentation for testing...")
+    dataset = ChessPuzzleDataset('lichess_db_puzzle_test.csv', class_conditional_augmentation=True)
     
     # Get the number of labels from the dataset
     num_labels = len(dataset.get_theme_names())
@@ -80,9 +69,21 @@ def main():
     target = sample['themes'].unsqueeze(0).to(device)
     out = out.unsqueeze(0) if out.dim() == 1 else out  # Ensure out has batch dimension
     print(f"Target: {target}")
-    # Define the loss function and optimizer
-    criterion = torch.nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters())
+    # Define the loss function with class weights for cost-sensitive learning
+    print("Computing class weights for weighted BCE loss...")
+    # Compute label weights
+    pos_weights = compute_label_weights(dataset)
+    pos_weights = pos_weights.to(device)
+    print("Using weighted BCE loss for class imbalance mitigation")
+    
+    # Use weighted BCE loss by default
+    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+    
+    # Use Lamb optimizer from the main training script for consistency
+    from model import Lamb
+    lr = 0.001
+    weight_decay = 0.01
+    optimizer = Lamb(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     loss = criterion(out, target)
     print(f"Loss: {loss}")
@@ -134,10 +135,33 @@ def main():
 
             # forward + backward + optimize
             outputs = model(inputs)
+            
+            # Debug shape issues on first batch
+            if i == 0:
+                print(f"Model output shape: {outputs.shape}")
+                print(f"Labels shape: {labels.shape}")
+            
+            # Ensure outputs and labels have compatible shapes
+            if outputs.dim() == 1 and labels.dim() == 2:
+                # If output is a 1D tensor but labels are 2D (batch, features)
+                outputs = outputs.unsqueeze(0)  # Add batch dimension
+            elif outputs.dim() == 2 and labels.dim() == 2:
+                # Both are 2D, check if batch sizes match
+                if outputs.size(0) != labels.size(0):
+                    # Reshape outputs to match batch size if needed
+                    outputs = outputs.view(labels.size(0), -1)
+            
+            # Double-check shapes on first batch
+            if i == 0:
+                print(f"Adjusted output shape: {outputs.shape}")
+                
             loss = criterion(outputs, labels)
-            # Apply sigmoid to get probabilities for Jaccard calculation
+            # Apply sigmoid to get probabilities for metrics calculation
             output_probs = torch.sigmoid(outputs)
-            jaccard_loss = jaccard_similarity(output_probs, labels)
+            jaccard_loss = metrics_jaccard_similarity(output_probs, labels, threshold=0.5)
+            
+            # Calculate precision, recall, F1 metrics periodically
+            calculate_detailed_metrics = (i % 10 == 0)  # More frequent for single-GPU version
 
             loss.backward()
             optimizer.step()
@@ -147,9 +171,49 @@ def main():
             running_jaccard_index = jaccard_loss.item() 
             print(f"epoch: {epoch} loss: {running_loss:.8f} jaccard index: {running_jaccard_index:.8f} steps: {i+1}")
             
+            # Calculate and log additional metrics periodically
+            metrics_dict = {}
+            if calculate_detailed_metrics:
+                # Calculate precision, recall, F1 with different averaging methods
+                precision_micro, recall_micro, f1_micro = precision_recall_f1(
+                    output_probs, labels, threshold=0.5, average='micro'
+                )
+                precision_macro, recall_macro, f1_macro = precision_recall_f1(
+                    output_probs, labels, threshold=0.5, average='macro'
+                )
+                
+                metrics_dict = {
+                    "precision_micro": precision_micro,
+                    "recall_micro": recall_micro,
+                    "f1_micro": f1_micro,
+                    "precision_macro": precision_macro,
+                    "recall_macro": recall_macro,
+                    "f1_macro": f1_macro,
+                }
+                
+                # Print metrics occasionally
+                if i % 50 == 0:
+                    print(f"Precision (micro): {precision_micro:.4f}, Recall (micro): {recall_micro:.4f}, F1 (micro): {f1_micro:.4f}")
+                    print(f"Precision (macro): {precision_macro:.4f}, Recall (macro): {recall_macro:.4f}, F1 (macro): {f1_macro:.4f}")
+                
+                # Generate and log full classification report less frequently
+                if i % 100 == 0:
+                    # Get label names for the report
+                    label_names = dataset.all_labels
+                    report = get_classification_report(
+                        output_probs, labels, threshold=0.5, labels=label_names
+                    )
+                    print("\nClassification Report:")
+                    print(report)
+                    writer.add_text('Classification Report', report, global_step)
+            
             # Log to TensorBoard
             writer.add_scalar('Loss/train', running_loss, global_step)
             writer.add_scalar('Jaccard/train', running_jaccard_index, global_step)
+            
+            # Log additional metrics
+            for metric_name, metric_value in metrics_dict.items():
+                writer.add_scalar(f'Metrics/{metric_name}', metric_value, global_step)
             global_step += 1
             
             # Save checkpoint

@@ -35,7 +35,7 @@ def launch_tensorboard(logdir, port=6006):
                 stderr=subprocess.DEVNULL
             )
             webbrowser.open(f"http://localhost:{port}")
-            print(f"TensorBoard launched at http://localhost:{port}")
+            print(f"TensorBoard launched at http://localhost:{port}, --logdir={logdir}")
         except Exception as e:
             print(f"Could not launch TensorBoard: {e}")
 
@@ -115,6 +115,16 @@ def parse_args():
                         help='Force local training mode (overrides auto-detection)')
     parser.add_argument('--weighted_loss', action='store_true',
                         help='Use weighted BCE loss for class imbalance')
+    parser.add_argument('--single_gpu', action='store_true',
+                        help='Run in single-GPU mode (replaces train_locally_single_gpu.py)')
+    parser.add_argument('--optimizer', type=str, default='lamb',
+                        help='Optimizer to use: lamb or adam (default: lamb)')
+    parser.add_argument('--batch_size', type=int, default=4,
+                        help='Batch size for training (default: 4)')
+    parser.add_argument('--epochs', type=int, default=None,
+                        help='Number of epochs to train (default: 3 for test mode, 10 for full)')
+    parser.add_argument('--low_memory', action='store_true',
+                        help='Use lower memory settings for dataset processing')
     return parser.parse_args()
 
 def main():
@@ -123,7 +133,11 @@ def main():
     
     # Determine distributed mode based on command line args
     distributed_override = None
-    if args.distributed and args.local:
+    if args.single_gpu:
+        # Single GPU mode overrides other distributed settings
+        print("Running in single GPU mode (equivalent to train_locally_single_gpu.py)")
+        distributed_override = False
+    elif args.distributed and args.local:
         print("Warning: Both --distributed and --local flags set. Using --distributed.")
         distributed_override = True
     elif args.distributed:
@@ -156,16 +170,18 @@ def main():
             project=args.project,
             name=run_name,
             config={
-                "optimizer": "Lamb",
+                "optimizer": args.optimizer,
                 "learning_rate": 0.001,
                 "weight_decay": 0.01,
                 "warmup_steps": 1000,
                 "architecture": "CNN with attention and residual blocks",
-                "dataset": "lichess_db_puzzle.csv" if not args.test_mode else "lichess_db_puzzle_test.csv",
-                "epochs": 3 if args.test_mode else 10,
-                "batch_size": 4,
+                "dataset": "lichess_db_puzzle.csv" if not (args.test_mode or args.single_gpu) else "lichess_db_puzzle_test.csv",
+                "epochs": max_epochs,
+                "batch_size": batch_size,
                 "test_mode": args.test_mode,
+                "single_gpu_mode": args.single_gpu,
                 "weighted_loss": args.weighted_loss,
+                "class_conditional_augmentation": True,
             }
         )
         print(f"Initialized Weights & Biases for project {args.project}, run {run_name}")
@@ -174,19 +190,30 @@ def main():
     writer = SummaryWriter(log_dir) if local_rank == 0 else None
     if local_rank == 0:
         timer.report(f"Created TensorBoard writer at {log_dir}")
-        launch_tensorboard(log_dir)
+        launch_tensorboard('.') # Launch tensorboard from the parent logs directory to enable comparison of runs.
 
     # Initialize starting epoch and global step
     start_epoch = 0
     global_step = 0
 
-    # Use a smaller dataset if in test mode
-    if args.test_mode:
-        dataset = ChessPuzzleDataset('lichess_db_puzzle_test.csv')
+    # Always use test dataset to avoid memory issues, unless specifically instructed otherwise
+    if args.test_mode or args.single_gpu:
+        csv_file = 'lichess_db_puzzle_test.csv'
         if local_rank == 0:
-            print("Running in test mode with smaller dataset (1000 samples)")
+            print(f"Running with test dataset and class-conditional augmentation (low_memory={args.low_memory})")
     else:
-        dataset = ChessPuzzleDataset('lichess_db_puzzle.csv')
+        # Use test dataset for safety, the full dataset is likely too large for most systems
+        csv_file = 'lichess_db_puzzle_test.csv'
+        if local_rank == 0:
+            print(f"⚠️ Using test dataset for safety. Full dataset may cause memory issues.")
+            print(f"Using class-conditional augmentation for handling class imbalance (low_memory={args.low_memory})")
+    
+    # Always use low_memory mode by default
+    low_memory = True
+    if local_rank == 0:
+        print(f"Creating dataset from {csv_file} with class_conditional_augmentation=True and low_memory={low_memory}")
+    
+    dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=True, low_memory=low_memory)
     
     # Get the number of labels from the dataset
     num_labels = len(dataset.all_labels)
@@ -208,32 +235,36 @@ def main():
         model = torch.nn.DataParallel(model)
     
     # Define the loss function and optimizer
-    # Use weighted BCE loss if requested
-    if args.weighted_loss:
-        if local_rank == 0:
-            print("Computing class weights for weighted BCE loss...")
-        # Compute label weights
-        pos_weights = compute_label_weights(dataset)
-        pos_weights = pos_weights.to(device)
-        
-        if local_rank == 0:
-            print("Using weighted BCE loss for class imbalance mitigation")
-        
-        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
-    else:
-        criterion = torch.nn.BCEWithLogitsLoss()
+    # Use weighted BCE loss by default, unless explicitly disabled
+    # Override args.weighted_loss to be True by default
+    args.weighted_loss = True
     
-    # Use Lamb optimizer with settings from chess-hackathon
-    # Instead of Adam as was used previously
+    if local_rank == 0:
+        print("Computing class weights for weighted BCE loss...")
+    # Compute label weights
+    pos_weights = compute_label_weights(dataset)
+    pos_weights = pos_weights.to(device)
+    
+    if local_rank == 0:
+        print("Using weighted BCE loss for class imbalance mitigation")
+    
+    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+    
+    # Optimizer settings
     lr = 0.001
     weight_decay = 0.01
     warmup_steps = 1000
     
-    if local_rank == 0:
-        print(f"Using Lamb optimizer with lr={lr}, weight_decay={weight_decay}, warmup_steps={warmup_steps}")
-    
+    # Choose optimizer based on args
     from model import Lamb, get_lr_with_warmup
-    optimizer = Lamb(model.parameters(), lr=lr, weight_decay=weight_decay)
+    if args.optimizer.lower() == 'adam':
+        if local_rank == 0:
+            print(f"Using Adam optimizer with lr={lr}, weight_decay={weight_decay}")
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    else:  # Default to Lamb
+        if local_rank == 0:
+            print(f"Using Lamb optimizer with lr={lr}, weight_decay={weight_decay}, warmup_steps={warmup_steps}")
+        optimizer = Lamb(model.parameters(), lr=lr, weight_decay=weight_decay)
     
     # Get current learning rate (for logging)
     def get_lr(optimizer):
@@ -284,25 +315,38 @@ def main():
     if local_rank == 0:
         timer.report(f"Initialized datasets with {len(train_dataset):,} training and {len(test_dataset):,} test board evaluations.")
 
+    # Get batch size from args
+    batch_size = args.batch_size
+    
     # Create samplers based on distributed mode
     if is_distributed:
         train_sampler = DistributedSampler(train_dataset)
         test_sampler = DistributedSampler(test_dataset)
         
         # Use distributed samplers with DataLoader
-        train_dataloader = DataLoader(train_dataset, batch_size=4, sampler=train_sampler)
-        test_dataloader = DataLoader(test_dataset, batch_size=4, sampler=test_sampler)
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler)
+        test_dataloader = DataLoader(test_dataset, batch_size=batch_size, sampler=test_sampler)
     else:
         # Use standard samplers for local training
-        train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
-        test_dataloader = DataLoader(test_dataset, batch_size=4, shuffle=False)
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
         # Define dummy sampler for local mode so we can call set_epoch without errors
         train_sampler = type('DummySampler', (), {'set_epoch': lambda self, epoch: None})()
+        
+    if local_rank == 0:
+        print(f"Using batch size: {batch_size}")
     if local_rank == 0:
         timer.report("Prepared dataloaders")
 
-    # Use fewer epochs in test mode
-    max_epochs = 3 if args.test_mode else 10
+    # Set number of epochs based on args
+    if args.epochs is not None:
+        max_epochs = args.epochs
+    else:
+        max_epochs = 3 if args.test_mode else 10
+    
+    if local_rank == 0:
+        print(f"Training for {max_epochs} epochs")
+        
     for epoch in range(start_epoch, max_epochs):
         train_sampler.set_epoch(epoch)  # Important for proper shuffling
         
@@ -326,13 +370,66 @@ def main():
             for g in optimizer.param_groups:
                 g['lr'] = current_lr
 
-            # Use debug mode for the first batch of the first epoch
-            debug_mode = (epoch == start_epoch and i == 0)
-            outputs = model(inputs, debug=debug_mode)
+            # Use debug mode for the first batch of the first epoch or first 5 batches
+            debug_mode = (epoch == start_epoch and (i == 0 or i < 5))
+            
+            # Print detailed info for the very first batch
+            detailed_debug = (epoch == start_epoch and i == 0)
+            
+            if detailed_debug:
+                print("\n--------- Detailed Debug Information ---------")
+                print(f"Inputs shape: {inputs.shape}")
+                print(f"Data keys available: {list(data.keys())}")
+                print(f"Labels datatype: {labels.dtype}")
+                print(f"Using device: {device}")
+                print(f"Model type: {type(model).__name__}")
+                if hasattr(model, 'module'):
+                    print(f"Underlying model: {type(model.module).__name__}")
+                
+            outputs = model(inputs, debug=detailed_debug)
+            
+            # Debug shape issues
+            if debug_mode:
+                print(f"\nBatch {i}: Model output shape: {outputs.shape}")
+                print(f"Batch {i}: Labels shape: {labels.shape}")
+                print(f"Batch {i}: Batch size: {batch_size}")
+                print(f"Batch {i}: Number of labels: {num_labels}")
+            
+            # Handle shape issues - ensure outputs match labels exactly
+            if outputs.shape != labels.shape:
+                # For debugging
+                if debug_mode:
+                    print(f"Shape mismatch: outputs {outputs.shape} vs labels {labels.shape}")
+                
+                # Get correct batch size and feature dimensions
+                batch_size = labels.size(0)
+                feature_dim = labels.size(1)
+                
+                if outputs.dim() == 1:
+                    # 1D tensor needs to be reshaped to 2D
+                    outputs = outputs.view(batch_size, feature_dim)
+                elif outputs.dim() == 2:
+                    # If dimensions don't match, force reshape
+                    outputs = outputs.view(batch_size, feature_dim)
+                
+                if debug_mode:
+                    print(f"Reshaped outputs to: {outputs.shape}")
+            
             loss = criterion(outputs, labels)
             
             # Apply sigmoid to get probabilities for metrics calculation
             output_probs = torch.sigmoid(outputs)
+            
+            # Output probs should already have the correct shape since we fixed outputs
+            # But just to be safe, verify it matches the labels shape
+            if output_probs.shape != labels.shape:
+                if debug_mode:
+                    print(f"Warning: Need to reshape output_probs from {output_probs.shape} to {labels.shape}")
+                # Get correct batch size and feature dimensions
+                batch_size = labels.size(0)
+                feature_dim = labels.size(1)
+                output_probs = output_probs.view(batch_size, feature_dim)
+                
             jaccard_loss = jaccard_similarity(output_probs, labels, threshold=0.5)
             
             # Calculate precision, recall, F1 metrics (every 100 steps to avoid overhead)

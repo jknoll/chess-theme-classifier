@@ -5,7 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 - Training (distributed): `torchrun --nproc_per_node=NUM_GPUS train.py`
 - Training with W&B: `torchrun --nproc_per_node=NUM_GPUS train.py --wandb`
-- Training (single GPU): `python train_locally_single_gpu.py`
+- Training (single GPU): `python train.py --single_gpu`
+- Low memory mode: `python train.py --low_memory` (reduces memory usage, enabled by default)
+- Using Adam optimizer: `python train.py --optimizer adam`
+- Custom batch size: `python train.py --batch_size 8`
+- Custom epochs: `python train.py --epochs 5`
+- Legacy single GPU training: `python train_locally_single_gpu.py` (deprecated, use `--single_gpu` flag instead)
 - Testing: `python test.py` (runs on 20,000 samples by default)
 - Running a specific test: Modify test sample size with `--num_samples` flag
 - Unit testing: `python -m pytest test_model_unittest.py -v`
@@ -15,7 +20,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - When adding new dependencies, add them to requirements.txt
 - The project uses a Python virtual environment located at `.chess-theme-classifier/`
 - Always activate the virtual environment before running any commands: `source .chess-theme-classifier/bin/activate`
-- If new dependencies are needed: `pip install -r requirements.txt`
+- If new dependencies are needed, add them to requirements.txt and run `pip install -r requirements.txt`
+- Required third-party packages include: PyTorch, torchvision, pandas, numpy, scikit-learn, matplotlib, etc. (see requirements.txt)
 - Verify that installation succeeds before committing changes
 
 ## Security and Credentials

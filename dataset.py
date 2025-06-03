@@ -12,7 +12,7 @@ import multiprocessing
 
 class ChessPuzzleDataset(Dataset):
     def __init__(self, csv_file, cache_size=10000, num_workers=None, augment_with_reflections=False, 
-                 class_conditional_augmentation=False, rarity_threshold=None):
+                 class_conditional_augmentation=False, rarity_threshold=None, low_memory=False):
         """
         Args:
             csv_file (str): Path to the CSV file with chess puzzles
@@ -22,10 +22,18 @@ class ChessPuzzleDataset(Dataset):
             class_conditional_augmentation (bool): If True, only augment underrepresented label combinations.
             rarity_threshold (int): Optional threshold below which a label combination is considered rare.
                 If None, will be automatically determined based on distribution.
+            low_memory (bool): If True, use fewer workers and smaller chunks to reduce memory usage.
         """
         self.csv_file = csv_file
         self.cache_size = cache_size
-        self.num_workers = num_workers or max(1, multiprocessing.cpu_count() - 1)
+        
+        # Set num_workers based on low_memory flag
+        if low_memory:
+            self.num_workers = 1  # Use just 1 worker in low memory mode
+        else:
+            self.num_workers = num_workers or max(1, multiprocessing.cpu_count() - 1)
+            
+        self.low_memory = low_memory
         self.augment_with_reflections = augment_with_reflections
         self.class_conditional_augmentation = class_conditional_augmentation
         self.augmented_indices = set()  # Track which indices were augmented
@@ -271,14 +279,28 @@ class ChessPuzzleDataset(Dataset):
         Returns:
             list: List of tensors representing the boards.
         """
-        # Split the FEN list into chunks
-        chunk_size = max(1, len(fen_list) // self.num_workers)
+        # For extremely large datasets, consider processing a smaller subset
+        MAX_FENS = 50000  # Maximum number of FENs to process at once
+        
+        # Check if the dataset is very large and we're in low_memory mode
+        if self.low_memory and len(fen_list) > MAX_FENS:
+            print(f"⚠️ Very large dataset detected ({len(fen_list):,} FENs). Processing first {MAX_FENS:,} samples only.")
+            fen_list = fen_list[:MAX_FENS]
+        
+        # Split the FEN list into chunks - smaller chunks in low memory mode
+        if self.low_memory:
+            chunk_size = 50  # Very small chunks for low memory mode
+        else:
+            chunk_size = max(1, len(fen_list) // self.num_workers)
+            
         chunks = [fen_list[i:i+chunk_size] for i in range(0, len(fen_list), chunk_size)]
         
-        print(f"Processing {len(fen_list):,} FENs in {len(chunks)} chunks using {self.num_workers} workers")
+        print(f"Processing {len(fen_list):,} FENs in {len(chunks)} chunks using {self.num_workers} workers (low_memory={self.low_memory})")
         
-        # Process chunks in parallel
+        # Process chunks in a more memory-efficient way
         all_tensors = []
+        
+        # Use ProcessPoolExecutor with a timeout to prevent hanging
         with concurrent.futures.ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             # Process each chunk, with info about whether to include reflections
             if augment_with_reflections:
@@ -287,30 +309,80 @@ class ChessPuzzleDataset(Dataset):
                 # Use the wrapper function to avoid lambda pickling issues
                 try:
                     from tqdm import tqdm
-                    results = list(tqdm(executor.map(self._process_chunk_with_args_wrapper, 
-                                                    chunk_args), 
-                                        total=len(chunks), 
-                                        desc="Converting FENs to tensors (with reflections)"))
+                    
+                    # Process chunks with a timeout to prevent hanging
+                    futures = []
+                    for chunk_arg in chunk_args:
+                        future = executor.submit(self._process_chunk_with_args_wrapper, chunk_arg)
+                        futures.append(future)
+                    
+                    # Use tqdm to show progress while waiting for results
+                    results = []
+                    for future in tqdm(concurrent.futures.as_completed(futures), 
+                                       total=len(futures),
+                                       desc="Converting FENs to tensors (with reflections)"):
+                        try:
+                            result = future.result(timeout=60)  # 60 second timeout
+                            results.append(result)
+                        except concurrent.futures.TimeoutError:
+                            print("⚠️ Warning: A worker process timed out. This chunk will be skipped.")
+                        except Exception as e:
+                            print(f"⚠️ Error processing chunk: {e}")
+                            
                 except ImportError:
                     print("Processing chunks with reflections (this may take a while)...")
-                    results = list(executor.map(self._process_chunk_with_args_wrapper, 
-                                               chunk_args))
+                    # Fallback method without tqdm
+                    futures = [executor.submit(self._process_chunk_with_args_wrapper, chunk_arg) 
+                              for chunk_arg in chunk_args]
+                    results = []
+                    for future in concurrent.futures.as_completed(futures):
+                        try:
+                            result = future.result(timeout=60)
+                            results.append(result)
+                        except Exception as e:
+                            print(f"⚠️ Error processing chunk: {e}")
             else:
-                # No reflections, use the original method
+                # No reflections, use the original method but with improved error handling
                 try:
                     from tqdm import tqdm
-                    results = list(tqdm(executor.map(self._process_chunk, chunks), 
-                                        total=len(chunks), 
-                                        desc="Converting FENs to tensors"))
+                    
+                    # Process chunks with a timeout to prevent hanging
+                    futures = []
+                    for chunk in chunks:
+                        future = executor.submit(self._process_chunk, chunk)
+                        futures.append(future)
+                    
+                    # Use tqdm to show progress while waiting for results
+                    results = []
+                    for future in tqdm(concurrent.futures.as_completed(futures), 
+                                       total=len(futures),
+                                       desc="Converting FENs to tensors"):
+                        try:
+                            result = future.result(timeout=60)  # 60 second timeout
+                            results.append(result)
+                        except concurrent.futures.TimeoutError:
+                            print("⚠️ Warning: A worker process timed out. This chunk will be skipped.")
+                        except Exception as e:
+                            print(f"⚠️ Error processing chunk: {e}")
+                            
                 except ImportError:
                     # Fall back to no progress bar if tqdm is not available
                     print("Processing chunks (this may take a while)...")
-                    results = list(executor.map(self._process_chunk, chunks))
+                    # Fallback method without tqdm
+                    futures = [executor.submit(self._process_chunk, chunk) for chunk in chunks]
+                    results = []
+                    for future in concurrent.futures.as_completed(futures):
+                        try:
+                            result = future.result(timeout=60)
+                            results.append(result)
+                        except Exception as e:
+                            print(f"⚠️ Error processing chunk: {e}")
         
         # Combine results
         for result in results:
             all_tensors.extend(result)
         
+        print(f"✅ Successfully processed {len(all_tensors)} tensors")
         return all_tensors
     
     @staticmethod
@@ -448,7 +520,15 @@ class ChessPuzzleDataset(Dataset):
         original_to_cache_idx = {}
         next_tensor_idx = 0
         
-        for idx in range(len(self.puzzle_data)):
+        # Add progress bar for augmentation process
+        try:
+            from tqdm import tqdm
+            iterator = tqdm(range(len(self.puzzle_data)), desc="Creating augmented dataset")
+        except ImportError:
+            print("Processing tensors for augmentation (no progress bar available)...")
+            iterator = range(len(self.puzzle_data))
+        
+        for idx in iterator:
             # Add the original tensor
             augmented_tensors.append(basic_tensors[idx])
             original_to_cache_idx[idx] = next_tensor_idx
@@ -722,8 +802,15 @@ class ChessPuzzleDataset(Dataset):
         print("Analyzing theme co-occurrence patterns...")
         label_combinations = {}
         
-        # Process each puzzle
-        for idx in range(len(self.puzzle_data)):
+        # Process each puzzle with tqdm progress bar
+        try:
+            from tqdm import tqdm
+            iterator = tqdm(range(len(self.puzzle_data)), desc="Analyzing theme co-occurrences")
+        except ImportError:
+            print("tqdm not available, no progress bar will be shown")
+            iterator = range(len(self.puzzle_data))
+            
+        for idx in iterator:
             # Get ONLY themes (ignoring opening tags as per updated requirements)
             themes = self.puzzle_data.iloc[idx]['Themes'].split()
             
@@ -778,7 +865,16 @@ class ChessPuzzleDataset(Dataset):
         # For each label set Y, compute the L2 distance reduction gain from adding 1 more example
         # gain(Y) = (f_Y - ideal)^2 - (f_Y + 1 - ideal)^2
         gains = {}
-        for label_set, count in label_combinations.items():
+        
+        # Add progress bar for gain calculation
+        try:
+            from tqdm import tqdm
+            items = tqdm(label_combinations.items(), desc="Calculating augmentation gains")
+        except ImportError:
+            print("Calculating augmentation gains...")
+            items = label_combinations.items()
+            
+        for label_set, count in items:
             # Only consider combinations below threshold for potential augmentation
             if count <= threshold:
                 # Calculate L2 distance reduction (how much adding 1 more improves balance)

@@ -256,6 +256,9 @@ class Model(nn.Module):
         
         if debug: print(f"Input shape before embedding: {input.shape}, dtype: {input.dtype}")
         
+        # Get batch size for proper reshaping later
+        batch_size = input.size(0)
+        
         # Embedding expects indices between 0 and len(PIECE_CHARS)-1
         # Our dataset uses 0-12 which maps to chess pieces, need to ensure compatibility
         x = self.embedder(input)
@@ -270,8 +273,15 @@ class Model(nn.Module):
         x = self.accumulator(x)
         if debug: print(f"After accumulator (before squeeze): {x.shape}")
         
-        x = F.relu(x.squeeze())
-        if debug: print(f"After accumulator + relu: {x.shape}")
+        # Handle different squeeze scenarios carefully
+        if x.size(0) == 1 and x.size(2) == 1 and x.size(3) == 1:
+            # Single batch case
+            x = F.relu(x.view(batch_size, -1))
+        else:
+            # Regular case
+            x = F.relu(x.squeeze())
+            
+        if debug: print(f"After accumulator + relu + reshape: {x.shape}")
         
         # Fully connected layers with dropout for multi-label classification
         x = F.relu(self.fc1(x))
@@ -284,5 +294,10 @@ class Model(nn.Module):
         
         x = self.fc3(x)
         if debug: print(f"After fc3: {x.shape}")
+        
+        # Ensure output has the right shape (batch_size, num_labels)
+        if x.dim() == 1:
+            x = x.view(batch_size, -1)
+            if debug: print(f"Reshaped final output to: {x.shape}")
         
         return x

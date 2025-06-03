@@ -25,10 +25,11 @@ def compute_label_weights(dataset):
         
         # Add opening tags if they exist
         opening_tags = []
-        if 'OpeningTags' in dataset.puzzle_data.columns and \
-           dataset.puzzle_data.iloc[i]['OpeningTags'] and \
-           not dataset.puzzle_data.iloc[i]['OpeningTags'].isna():
-            opening_tags = dataset.puzzle_data.iloc[i]['OpeningTags'].split()
+        if 'OpeningTags' in dataset.puzzle_data.columns:
+            opening_tag_value = dataset.puzzle_data.iloc[i]['OpeningTags']
+            # Check if the value is a non-empty string (not NaN, None, or empty)
+            if isinstance(opening_tag_value, str) and opening_tag_value.strip():
+                opening_tags = opening_tag_value.split()
         
         # Update counts for each label
         for label in themes + opening_tags:
