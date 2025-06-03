@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from sklearn.metrics import precision_recall_fscore_support, classification_report
 
 def compute_multilabel_confusion_matrix(pred, target, threshold=0.5):
     """
@@ -62,4 +63,59 @@ def jaccard_similarity(pred, target, threshold=0.5):
         target_set = set(target)
         intersection = len(pred_set & target_set)
         union = len(pred_set | target_set)
-        return intersection / union if union > 0 else 1.0  # Handle case where both sets are empty 
+        return intersection / union if union > 0 else 1.0  # Handle case where both sets are empty
+
+def precision_recall_f1(pred, target, threshold=0.5, average='micro'):
+    """
+    Calculate precision, recall, and F1 score for multi-label classification.
+    
+    Args:
+        pred (torch.Tensor): Predicted probabilities tensor [batch_size, num_classes]
+        target (torch.Tensor): Target binary tensor [batch_size, num_classes]
+        threshold (float): Probability threshold for binary prediction
+        average (str): Averaging method ('micro', 'macro', 'samples', 'weighted', or None)
+            - 'micro': Calculate metrics globally by counting the total TPs, FNs, and FPs
+            - 'macro': Calculate metrics for each label, and find their unweighted mean
+            - 'weighted': Calculate metrics for each label, and find their average weighted by support
+            - 'samples': Calculate metrics for each instance, and find their average
+            - None: Return scores for each class
+            
+    Returns:
+        tuple: (precision, recall, f1)
+    """
+    # Convert to binary predictions based on threshold
+    pred_binary = (pred > threshold).cpu().numpy()
+    target_binary = target.cpu().numpy()
+    
+    # Calculate precision, recall, F1
+    precision, recall, f1, _ = precision_recall_fscore_support(
+        target_binary, pred_binary, average=average, zero_division=0
+    )
+    
+    return precision, recall, f1
+
+def get_classification_report(pred, target, threshold=0.5, labels=None):
+    """
+    Generate a text report showing the main classification metrics for multi-label classification.
+    
+    Args:
+        pred (torch.Tensor): Predicted probabilities tensor [batch_size, num_classes]
+        target (torch.Tensor): Target binary tensor [batch_size, num_classes]
+        threshold (float): Probability threshold for binary prediction
+        labels (list): Optional list of label names corresponding to the classes
+        
+    Returns:
+        str: Text summary of the precision, recall, F1 score for each class
+    """
+    # Convert to binary predictions based on threshold
+    pred_binary = (pred > threshold).cpu().numpy()
+    target_binary = target.cpu().numpy()
+    
+    # Get the classification report
+    report = classification_report(
+        target_binary, pred_binary, 
+        target_names=labels,
+        zero_division=0
+    )
+    
+    return report

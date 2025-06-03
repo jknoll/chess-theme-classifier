@@ -66,3 +66,6 @@ This is a PyTorch-based chess puzzle classifier that predicts themes from chess 
 - Weights & Biases (wandb) is available for more advanced experiment tracking
 - To use wandb: set WANDB_API_KEY environment variable or run `wandb login`
 - Enable wandb with `--wandb` flag when running train.py
+
+## Documenting Progress through Milestones in Markdown Documentation
+- When implementing changes listed in Markdown Documentation (in /docs) do not strikethrough completed work and subtasks; instead use [ ] and [x] before each item.

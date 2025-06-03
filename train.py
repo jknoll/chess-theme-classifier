@@ -13,7 +13,7 @@ import datetime
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
-from metrics import jaccard_similarity
+from metrics import jaccard_similarity, precision_recall_f1, get_classification_report
 import wandb
 
 timer = TimestampedTimer("Imported TimestampedTimer")
@@ -22,6 +22,7 @@ from dataset import ChessPuzzleDataset
 import torch
 from torch.utils.data import DataLoader, random_split
 from model import Model
+from class_weights import compute_label_weights
 
 # Automatically launch tensorboard on port 6006 when training is started.
 def launch_tensorboard(logdir, port=6006):
@@ -112,6 +113,8 @@ def parse_args():
                         help='Force distributed training mode (overrides auto-detection)')
     parser.add_argument('--local', action='store_true',
                         help='Force local training mode (overrides auto-detection)')
+    parser.add_argument('--weighted_loss', action='store_true',
+                        help='Use weighted BCE loss for class imbalance')
     return parser.parse_args()
 
 def main():
@@ -162,6 +165,7 @@ def main():
                 "epochs": 3 if args.test_mode else 10,
                 "batch_size": 4,
                 "test_mode": args.test_mode,
+                "weighted_loss": args.weighted_loss,
             }
         )
         print(f"Initialized Weights & Biases for project {args.project}, run {run_name}")
@@ -204,7 +208,20 @@ def main():
         model = torch.nn.DataParallel(model)
     
     # Define the loss function and optimizer
-    criterion = torch.nn.BCEWithLogitsLoss()
+    # Use weighted BCE loss if requested
+    if args.weighted_loss:
+        if local_rank == 0:
+            print("Computing class weights for weighted BCE loss...")
+        # Compute label weights
+        pos_weights = compute_label_weights(dataset)
+        pos_weights = pos_weights.to(device)
+        
+        if local_rank == 0:
+            print("Using weighted BCE loss for class imbalance mitigation")
+        
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+    else:
+        criterion = torch.nn.BCEWithLogitsLoss()
     
     # Use Lamb optimizer with settings from chess-hackathon
     # Instead of Adam as was used previously
@@ -314,10 +331,13 @@ def main():
             outputs = model(inputs, debug=debug_mode)
             loss = criterion(outputs, labels)
             
-            # Apply sigmoid to get probabilities for Jaccard calculation
+            # Apply sigmoid to get probabilities for metrics calculation
             output_probs = torch.sigmoid(outputs)
             jaccard_loss = jaccard_similarity(output_probs, labels, threshold=0.5)
-
+            
+            # Calculate precision, recall, F1 metrics (every 100 steps to avoid overhead)
+            calculate_detailed_metrics = (i % 100 == 0)
+            
             loss.backward()
             optimizer.step()
 
@@ -329,20 +349,65 @@ def main():
                 current_lr = get_lr(optimizer)
                 print(f"epoch: {epoch}/{max_epochs-1} step: {i+1} lr: {current_lr:.8f} loss: {running_loss:.8f} jaccard index: {running_jaccard_index:.8f}")
                 
+                # Calculate precision, recall, F1 periodically (to reduce computational overhead)
+                metrics_dict = {}
+                if calculate_detailed_metrics:
+                    # Calculate precision, recall, F1 with different averaging methods
+                    precision_micro, recall_micro, f1_micro = precision_recall_f1(
+                        output_probs, labels, threshold=0.5, average='micro'
+                    )
+                    precision_macro, recall_macro, f1_macro = precision_recall_f1(
+                        output_probs, labels, threshold=0.5, average='macro'
+                    )
+                    precision_weighted, recall_weighted, f1_weighted = precision_recall_f1(
+                        output_probs, labels, threshold=0.5, average='weighted'
+                    )
+                    
+                    metrics_dict = {
+                        "precision_micro": precision_micro,
+                        "recall_micro": recall_micro,
+                        "f1_micro": f1_micro,
+                        "precision_macro": precision_macro,
+                        "recall_macro": recall_macro,
+                        "f1_macro": f1_macro,
+                        "precision_weighted": precision_weighted,
+                        "recall_weighted": recall_weighted,
+                        "f1_weighted": f1_weighted
+                    }
+                    
+                    # Generate and log full classification report every 1000 steps
+                    if i % 1000 == 0:
+                        # Get label names for the report
+                        label_names = dataset.all_labels
+                        report = get_classification_report(
+                            output_probs, labels, threshold=0.5, labels=label_names
+                        )
+                        print("\nClassification Report:")
+                        print(report)
+                        if writer is not None:
+                            writer.add_text('Classification Report', report, global_step)
+                
                 if writer is not None:
                     writer.add_scalar('Loss/train', running_loss, global_step)
                     writer.add_scalar('Jaccard/train', running_jaccard_index, global_step)
                     writer.add_scalar('Learning_rate', current_lr, global_step)
+                    
+                    # Log additional metrics if calculated
+                    for metric_name, metric_value in metrics_dict.items():
+                        writer.add_scalar(f'Metrics/{metric_name}', metric_value, global_step)
                 
                 # Log to wandb if enabled
                 if args.wandb:
-                    wandb.log({
+                    log_dict = {
                         "loss": running_loss,
                         "jaccard_index": running_jaccard_index,
                         "learning_rate": current_lr,
                         "epoch": epoch,
                         "global_step": global_step
-                    })
+                    }
+                    # Add metrics if calculated
+                    log_dict.update(metrics_dict)
+                    wandb.log(log_dict)
                 
                 if i % args.checkpoint_steps == 0 and i > 0:
                     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

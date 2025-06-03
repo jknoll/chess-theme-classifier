@@ -32,13 +32,13 @@ This document outlines the implementation plan to address class imbalance in a m
 > Adjust model training to penalize errors more heavily on minority labels. For this modification, we are concerned with both themes and openings.
 
 ### ✅ High-Level Tasks
-- [ ] Integrate per-label class weights into loss function.
+- [x] Integrate per-label class weights into loss function.
 
 ### 🔧 Implementation Steps
-- **Task**: Compute inverse frequency of each individual label.
-- **Task**: Convert to normalized weights (e.g., softmax of inverse frequencies).
-- **Task**: Use `BCEWithLogitsLoss(pos_weight=...)` in PyTorch for weighted multilabel loss.
-- **Task**: Validate impact on precision/recall curves.
+- [x] **Task**: Compute inverse frequency of each individual label.
+- [x] **Task**: Convert to normalized weights (e.g., softmax of inverse frequencies).
+- [x] **Task**: Use `BCEWithLogitsLoss(pos_weight=...)` in PyTorch for weighted multilabel loss.
+- [x] **Task**: Validate impact on precision/recall curves.
 
 📚 *Reference*: Japkowicz & Stephen, "The class imbalance problem: A systematic study" (2002) – [DOI:10.1613/jair.953](https://doi.org/10.1613/jair.953)
 
@@ -49,14 +49,14 @@ This document outlines the implementation plan to address class imbalance in a m
 > Shift from accuracy to multi-label metrics sensitive to imbalance.
 
 ### ✅ High-Level Tasks
-- [ ] Compute per-label precision, recall, F1.
-- [ ] Compute macro/micro-averaged metrics.
+- [x] Compute per-label precision, recall, F1.
+- [x] Compute macro/micro-averaged metrics.
 
 ### 🔧 Implementation Steps
-- **Task**: Use `sklearn.metrics.classification_report()` with `average='micro'`, `'macro'`, and `'samples'`.
-- **Task**: Visualize label-wise performance to track minority-class behavior.
-- **Task**: Add metrics to training/validation logs and dashboards.
-- **Task**: Optionally: use label ranking loss or subset accuracy as additional metrics.
+- [x] **Task**: Use `sklearn.metrics.classification_report()` with `average='micro'`, `'macro'`, and `'samples'`.
+- [x] **Task**: Visualize label-wise performance to track minority-class behavior.
+- [x] **Task**: Add metrics to training/validation logs and dashboards.
+- [x] **Task**: Optionally: use label ranking loss or subset accuracy as additional metrics.
 
 📚 *Reference*: Zhang & Zhou, "A Review on Multi-Label Learning Algorithms" (2013) – [DOI:10.1109/TKDE.2013.39](https://doi.org/10.1109/TKDE.2013.39)
 

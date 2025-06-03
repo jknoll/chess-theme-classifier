@@ -90,3 +90,30 @@ The class balanced version is represented by the file with _conditional suffix: 
    horizontal flipping only to underrepresented theme combinations, as documented in the class_imbalance_work_breakdown.md file.
 
   The augmented indices are tracked in the file lichess_db_puzzle_test.csv.tensors.pt_conditional.augmented_indices.json.
+
+  Here's a complete set of commands to run with the class-balanced dataset and weighted loss:
+
+## Complete Loop with Corrected Dataset
+
+### First, activate the virtual environment
+```bash
+source .chess-theme-classifier/bin/activate
+```
+### Generate the class conditional augmentation for the test dataset. This will create the class-balanced tensor cache.
+```bash
+python -c "from dataset import ChessPuzzleDataset; ChessPuzzleDataset('lichess_db_puzzle_test.csv', class_conditional_augmentation=True)"
+```
+
+### Run training with the class-balanced test dataset and weighted loss enabled
+```bash
+python train_locally_single_gpu.py --test_mode --weighted_loss
+```
+
+### To view the co-occurrence matrices for the class-balanced dataset
+```bash
+python -c 'import json; import pprint; with open("lichess_db_puzzle_test.csv.cooccurrence.json", "r") as f: 
+pprint.pprint(json.load(f))'
+```
+
+This sequence will first generate the conditional augmentation for the small test dataset, then run the training with both class balancing (through the
+conditional augmentation) and cost-sensitive learning (via weighted loss), and finally display the co-occurrence data for analysis.
