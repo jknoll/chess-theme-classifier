@@ -205,9 +205,9 @@ def main():
         for param_group in optimizer.param_groups:
             return param_group['lr']
     
-    # Check for checkpoint file
+    # Check for checkpoint file, but skip if in test mode
     checkpoint_path = "checkpoints/checkpoint_resume.pth"
-    if os.path.exists(checkpoint_path):
+    if not args.test_mode and os.path.exists(checkpoint_path):
         if local_rank == 0:
             print(f"Loading checkpoint from {checkpoint_path}")
         
@@ -240,6 +240,8 @@ def main():
             print(f"  Steps per epoch: {steps_per_epoch}")
             print(f"  Completed epochs: {completed_epochs}")
             print(f"  Resuming from epoch: {start_epoch}")
+    elif args.test_mode and local_rank == 0:
+        print("Test mode enabled, skipping checkpoint loading")
 
     # Split the dataset into train and test sets
     random_generator = torch.Generator().manual_seed(42)
