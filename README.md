@@ -78,4 +78,15 @@ Optional parameters:
 --checkpoint Checkpoint file to use for testing
 ```
 
-More notes to come.
+## Tensorized Dataset
+
+
+## Class Imbalance and Corrected Dataset
+The dataset is class-imbalanced by default. There is a long-tail distribution of examples of particular openings (especially specialized branches of rarer openings) and of particular themes. We have generated 
+
+The class balanced version is represented by the file with _conditional suffix: `lichess_db_puzzle_test.csv.tensors.pt_conditional`.
+
+  This file contains the result of applying class-conditional augmentation to address class imbalance in the chess theme classification dataset. The augmentation process selectively applies
+   horizontal flipping only to underrepresented theme combinations, as documented in the class_imbalance_work_breakdown.md file.
+
+  The augmented indices are tracked in the file lichess_db_puzzle_test.csv.tensors.pt_conditional.augmented_indices.json.
