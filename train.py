@@ -1,4 +1,4 @@
-# Basic training loop insired by https://pytorch.org/tutorials/beginner/blitz/neural_networks_tutorial.html
+ # Basic training loop insired by https://pytorch.org/tutorials/beginner/blitz/neural_networks_tutorial.html
 # This script trains locally on a single GPU.
 # This version has a correction to ensure that it is training on the GPU; previously I was not correctly calling model.to(device), inputs.to(device), and labels.to(device).
 
@@ -7,6 +7,8 @@ import time
 import os
 import argparse
 from torch.utils.tensorboard import SummaryWriter
+import subprocess
+import webbrowser
 import datetime
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -20,6 +22,21 @@ from dataset import ChessPuzzleDataset
 import torch
 from torch.utils.data import DataLoader, random_split
 from model import Model
+
+# Automatically launch tensorboard on port 6006 when training is started.
+def launch_tensorboard(logdir, port=6006):
+    # Only launch from rank 0 process
+    if os.environ.get("LOCAL_RANK", "0") == "0":
+        try:
+            subprocess.Popen(
+                ["tensorboard", f"--logdir={logdir}", f"--port={port}"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            webbrowser.open(f"http://localhost:{port}")
+            print(f"TensorBoard launched at http://localhost:{port}")
+        except Exception as e:
+            print(f"Could not launch TensorBoard: {e}")
 
 # Create logs and checkpoints directories if they don't exist
 os.makedirs('logs', exist_ok=True)
@@ -153,6 +170,7 @@ def main():
     writer = SummaryWriter(log_dir) if local_rank == 0 else None
     if local_rank == 0:
         timer.report(f"Created TensorBoard writer at {log_dir}")
+        launch_tensorboard(log_dir)
 
     # Initialize starting epoch and global step
     start_epoch = 0
