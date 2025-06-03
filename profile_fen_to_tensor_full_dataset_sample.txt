@@ -1,0 +1,108 @@
+==================================================
+FEN to Tensor Conversion Profiling
+==================================================
+Dataset: lichess_db_puzzle.csv
+Samples: 5000
+--------------------------------------------------
+Profiling dataset loading from lichess_db_puzzle.csv...
+Loading themes and openings from cache files
+Dataset initialization: 9.55 seconds
+Total puzzles: 4,956,459
+Profiling FEN to tensor conversion for 5,000 puzzles over 5 iterations...
+Warming up caches...
+Starting profiling...
+
+Results:
+Total time for 5,000 puzzles: 2.76 seconds
+Average time per puzzle: 0.55 ms
+Conversion rate: 1808.50 puzzles/second
+
+Detailed profiling statistics:
+         22890503 function calls (22649738 primitive calls) in 13.770 seconds
+
+   Ordered by: cumulative time
+   List reduced from 117 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    25000    0.864    0.000   13.767    0.001 /root/chess-theme-classifier/dataset.py:92(__getitem__)
+    80255    0.099    0.000    4.846    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/indexing.py:1139(__getitem__)
+    80255    0.195    0.000    4.648    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/indexing.py:1681(_getitem_axis)
+    25000    3.131    0.000    4.586    0.000 /root/chess-theme-classifier/dataset.py:123(_board_to_tensor)
+    80255    0.273    0.000    3.791    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/frame.py:3776(_ixs)
+    80255    0.803    0.000    2.456    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/internals/managers.py:941(fast_xs)
+    25000    0.036    0.000    2.453    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:1697(__init__)
+    25000    0.112    0.000    2.378    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:2562(set_fen)
+    25000    0.852    0.000    2.148    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:1123(_set_board_fen)
+  1600000    0.511    0.000    0.946    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:825(piece_at)
+    80255    0.042    0.000    0.922    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/internals/base.py:347(interleaved_dtype)
+    80255    0.295    0.000    0.872    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/dtypes/cast.py:1400(find_common_type)
+   474060    0.341    0.000    0.651    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:1052(_set_piece_at)
+    80255    0.128    0.000    0.619    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/series.py:1016(__getitem__)
+   474060    0.324    0.000    0.541    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:624(from_symbol)
+    80255    0.065    0.000    0.442    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/frame.py:654(_constructor_sliced_from_mgr)
+  2074060    0.438    0.000    0.438    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:835(piece_type_at)
+  2056375    0.252    0.000    0.435    0.000 {built-in method builtins.isinstance}
+   474060    0.158    0.000    0.365    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:596(symbol)
+    80255    0.092    0.000    0.360    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/pandas/core/series.py:1139(_get_value)
+
+
+
+
+Profiling alternate batch conversion approach over 5 iterations...
+CSV loading time: 9.30 seconds
+Warming up caches...
+Starting profiling...
+
+Batch Conversion Results:
+Total time for 5,000 puzzles: 1.35 seconds
+Average time per puzzle: 0.27 ms
+Conversion rate: 3713.40 puzzles/second
+
+Detailed batch profiling statistics:
+         10923273 function calls in 6.705 seconds
+
+   Ordered by: cumulative time
+   List reduced from 36 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    25000    3.043    0.000    6.703    0.000 /root/chess-theme-classifier/profile_fen_to_tensor.py:129(fen_to_tensor)
+    25000    0.029    0.000    2.289    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:1697(__init__)
+    25000    0.096    0.000    2.232    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:2562(set_fen)
+    25000    0.801    0.000    2.029    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:1123(_set_board_fen)
+  1600000    0.501    0.000    0.917    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:825(piece_at)
+   474060    0.315    0.000    0.606    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:1052(_set_piece_at)
+   474060    0.308    0.000    0.523    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:624(from_symbol)
+  2074060    0.414    0.000    0.414    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:835(piece_type_at)
+   474060    0.149    0.000    0.336    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:596(symbol)
+   474060    0.207    0.000    0.290    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:1014(_remove_piece_at)
+   948120    0.169    0.000    0.169    0.000 <string>:2(__init__)
+   474060    0.124    0.000    0.161    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:52(piece_symbol)
+    25000    0.118    0.000    0.118    0.000 {built-in method torch.full}
+  1603900    0.105    0.000    0.105    0.000 {method 'lower' of 'str' objects}
+   474070    0.059    0.000    0.059    0.000 {method 'index' of 'list' objects}
+   480780    0.040    0.000    0.040    0.000 {method 'isupper' of 'str' objects}
+   474060    0.038    0.000    0.038    0.000 /usr/lib/python3.10/typing.py:1737(cast)
+    50000    0.030    0.000    0.030    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:777(_clear_board)
+    27870    0.029    0.000    0.029    0.000 {method 'match' of 're.Pattern' objects}
+    25000    0.012    0.000    0.028    0.000 /root/chess-theme-classifier/.chess-theme-classifier/lib/python3.10/site-packages/chess/__init__.py:743(__init__)
+
+
+
+
+==================================================
+Summary
+==================================================
+Dataset: lichess_db_puzzle.csv
+Total puzzles processed: 5,000
+Dataset initialization time: 9.55 seconds
+Item-by-item conversion time: 2.76 seconds
+Average per puzzle: 0.55 ms
+Conversion rate: 1808.50 puzzles/second
+
+Batch conversion approach:
+Total conversion time: 1.35 seconds
+Average per puzzle: 0.27 ms
+Conversion rate: 3713.40 puzzles/second
+
+Comparison: Batch approach is 2.05x faster
+==================================================
