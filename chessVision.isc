@@ -3,7 +3,7 @@ experiment_name = "chess-theme-classifier"
 gpus = 16
 output_path = "/root/outputs/chessThemeClassifier"
 dataset_id_list = ["8e69f5fe-42fa-47e3-83ea-986c7d1b7014"]
-compute_mode = "cycle"
+compute_mode = "interruptible"
 command = '''
 source /root/chess-theme-classifier/.chess-theme-classifier/bin/activate && 
 cd /root/chess-theme-classifier/ && 

@@ -130,6 +130,8 @@ def parse_args():
                         help='Number of epochs to train (default: 3 for test mode, 10 for full)')
     parser.add_argument('--low_memory', action='store_true',
                         help='Use lower memory settings for dataset processing')
+    parser.add_argument('--dataset-id', type=str, default=None,
+                        help='Dataset ID for ISC training (overrides environment variable)')
     return parser.parse_args()
 
 def main():
@@ -159,26 +161,72 @@ def main():
     else:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-    print(f"Using device: {device} with local_rank: {local_rank} (Running in {'distributed' if is_distributed else 'local'} mode)")
+    # Add master flag similar to ISC training
+    args.is_master = local_rank == 0
+    
+    if args.is_master:
+        print(f"Using device: {device} with local_rank: {local_rank} (Running in {'distributed' if is_distributed else 'local'} mode)")
     torch.autograd.set_detect_anomaly(True)
 
     # Create a timestamp for the run
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    log_dir = os.path.join('logs', f'run_{timestamp}')
+    
+    # Check for ISC environment
+    isc_mode = "LOSSY_ARTIFACT_PATH" in os.environ
+    
+    # Set log directory based on environment (local or ISC)
+    if isc_mode and args.is_master:
+        print(f"Running in ISC mode, using LOSSY_ARTIFACT_PATH for logging")
+        log_dir = os.environ["LOSSY_ARTIFACT_PATH"]
+    else:
+        log_dir = os.path.join('logs', f'run_{timestamp}')
     
     # Set up dataset file choice first so we can use it in wandb config
-    # Set dataset based on mode
-    if args.test_mode:
-        csv_file = 'lichess_db_puzzle_test.csv'
-    elif args.single_gpu:
-        csv_file = 'lichess_db_puzzle_test.csv'
-    else:
-        csv_file = 'lichess_db_puzzle.csv'
+    # Set dataset based on mode and environment
+    # Get dataset ID from command line arg or environment variable
+    dataset_id = args.dataset_id
     
-    # Initialize wandb on the main process if enabled
+    # If not provided as arg, check environment variable
+    if not dataset_id and "DATASET_IDS" in os.environ:
+        try:
+            # Get the first dataset ID from the environment (comma-separated list)
+            dataset_id = os.environ["DATASET_IDS"].split(",")[0]
+            if args.is_master:
+                print(f"Found dataset ID in environment: {dataset_id}")
+        except Exception as e:
+            if args.is_master:
+                print(f"Error parsing dataset ID: {e}")
+                
+    # Select the appropriate dataset file
+    if args.test_mode:
+        csv_filename = 'lichess_db_puzzle_test.csv'
+    elif args.single_gpu:
+        csv_filename = 'lichess_db_puzzle_test.csv'
+    else:
+        csv_filename = 'lichess_db_puzzle.csv'
+    
+    # Determine the full path to the CSV file
+    if isc_mode and dataset_id:
+        # Use the ISC dataset path
+        csv_file = f'/data/{dataset_id}/{csv_filename}'
+        if args.is_master:
+            print(f"Using ISC dataset path: {csv_file}")
+    else:
+        # Use the local path
+        csv_file = csv_filename
+    
+    if args.is_master:
+        if args.test_mode:
+            print(f"Running in TEST MODE with smaller dataset")
+        elif args.single_gpu:
+            print(f"Running in SINGLE GPU MODE with test dataset")
+        else:
+            print(f"Running with FULL DATASET. This may require significant memory and processing time.")
+            
+    # Initialize wandb on the master process if enabled
     # The WANDB_API_KEY environment variable should be set before running
     # or use `wandb login` command beforehand
-    if local_rank == 0 and args.wandb:
+    if args.is_master and args.wandb:
         run_name = args.name if args.name else f"run_{timestamp}"
         wandb.init(
             project=args.project,
@@ -200,29 +248,23 @@ def main():
         )
         print(f"Initialized Weights & Biases for project {args.project}, run {run_name}")
     
-    # Only create writer on main process
-    writer = SummaryWriter(log_dir) if local_rank == 0 else None
-    if local_rank == 0:
+    # Only create writer on master process
+    writer = SummaryWriter(log_dir) if args.is_master else None
+    if args.is_master:
         timer.report(f"Created TensorBoard writer at {log_dir}")
-        launch_tensorboard('.') # Launch tensorboard from the parent logs directory to enable comparison of runs.
+        # Only launch tensorboard in non-ISC mode
+        if not isc_mode:
+            launch_tensorboard('.') # Launch tensorboard from the parent logs directory to enable comparison of runs.
 
     # Initialize starting epoch and global step
     start_epoch = 0
     global_step = 0
 
     # csv_file is already set earlier for wandb config
-    if local_rank == 0:
-        if args.test_mode:
-            print(f"Running in TEST MODE with smaller dataset")
-        elif args.single_gpu:
-            print(f"Running in SINGLE GPU MODE with test dataset")
-        else:
-            print(f"Running with FULL DATASET. This may require significant memory and processing time.")
-    
     # Always use low_memory mode for class conditional augmentation to avoid memory issues
     low_memory = True
     
-    if local_rank == 0:
+    if args.is_master:
         print(f"Creating dataset from {csv_file} with class_conditional_augmentation=True and low_memory={low_memory}")
         print(f"⚠️ Processing may take several minutes, especially for the full dataset")
     
@@ -234,7 +276,7 @@ def main():
     
     # Get the number of labels from the dataset
     num_labels = len(dataset.all_labels)
-    if local_rank == 0:
+    if args.is_master:
         print(f"Number of unique labels (themes + opening tags): {num_labels}")
     
     # Create model with the correct number of labels
@@ -252,24 +294,24 @@ def main():
         model = torch.nn.DataParallel(model)
     
     # Define the loss function and optimizer
-    if local_rank == 0:
+    if args.is_master:
         print(f"\n{'='*60}")
         print(f"LOSS FUNCTION: {'Weighted BCE Loss' if args.weighted_loss else 'Standard BCE Loss (no class weights)'}")
         print(f"{'='*60}\n")
     
     if args.weighted_loss:
-        if local_rank == 0:
+        if args.is_master:
             print("Computing class weights for weighted BCE loss...")
         # Compute label weights
         pos_weights = compute_label_weights(dataset)
         pos_weights = pos_weights.to(device)
         
-        if local_rank == 0:
+        if args.is_master:
             print("Using weighted BCE loss for class imbalance mitigation")
         
         criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
     else:
-        if local_rank == 0:
+        if args.is_master:
             print("Using standard BCE loss without class weights")
             print("⚠️  WARNING: Not using class weights may result in poor performance on imbalanced datasets")
             print("⚠️  Consider using --weighted_loss for better results on rare chess themes")
@@ -283,11 +325,11 @@ def main():
     # Choose optimizer based on args
     from model import Lamb, get_lr_with_warmup
     if args.optimizer.lower() == 'adam':
-        if local_rank == 0:
+        if args.is_master:
             print(f"Using Adam optimizer with lr={lr}, weight_decay={weight_decay}")
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     else:  # Default to Lamb
-        if local_rank == 0:
+        if args.is_master:
             print(f"Using Lamb optimizer with lr={lr}, weight_decay={weight_decay}, warmup_steps={warmup_steps}")
         optimizer = Lamb(model.parameters(), lr=lr, weight_decay=weight_decay)
     
@@ -297,51 +339,99 @@ def main():
             return param_group['lr']
     
     # Check for checkpoint file, but skip if in test mode
-    checkpoint_path = "checkpoints/checkpoint_resume.pth"
+    # Check for ISC environment - use OUTPUT_PATH if available for checkpoint loading
+    if isc_mode and "OUTPUT_PATH" in os.environ:
+        checkpoint_dir = os.environ["OUTPUT_PATH"]
+    else:
+        checkpoint_dir = "checkpoints"
+        
+    checkpoint_path = os.path.join(checkpoint_dir, "checkpoint_resume.pth")
     if not args.test_mode and os.path.exists(checkpoint_path):
-        if local_rank == 0:
+        if args.is_master:
             print(f"Loading checkpoint from {checkpoint_path}")
         
         checkpoint = torch.load(checkpoint_path, map_location=device)
-        # Load state dict properly depending on model type (DDP, DataParallel, or regular)
-        if is_distributed or isinstance(model, torch.nn.DataParallel):
-            model.module.load_state_dict(checkpoint['model_state_dict'])
+        # Support both formats - native format and ISC format
+        if 'model_state_dict' in checkpoint:
+            # Original format
+            if is_distributed or isinstance(model, torch.nn.DataParallel):
+                model.module.load_state_dict(checkpoint['model_state_dict'])
+            else:
+                model.load_state_dict(checkpoint['model_state_dict'])
+        elif 'model' in checkpoint:
+            # ISC format from StrongResearch
+            if args.is_master:
+                print("Loading checkpoint in ISC format")
+            if is_distributed or isinstance(model, torch.nn.DataParallel):
+                model.module.load_state_dict(checkpoint['model'])
+            else:
+                model.load_state_dict(checkpoint['model'])
         else:
-            model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        global_step = checkpoint.get('global_step', 0)  # Get global_step if exists, else 0
+            if args.is_master:
+                print("Warning: Checkpoint doesn't contain recognized model state format")
+        # Load optimizer state, supporting both formats
+        if 'optimizer_state_dict' in checkpoint:
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        elif 'optimizer' in checkpoint:
+            optimizer.load_state_dict(checkpoint['optimizer'])
+            
+        # Get global step, supporting both formats
+        if 'global_step' in checkpoint:
+            global_step = checkpoint['global_step']
+        elif 'train_sampler' in checkpoint and hasattr(checkpoint['train_sampler'], 'progress'):
+            # ISC format uses the sampler progress as the global step
+            global_step = checkpoint['train_sampler'].progress
+        else:
+            global_step = 0
         
         # Calculate if we completed the previous epoch
         train_size = int(0.8 * len(dataset))  # Same split as in training
         steps_per_epoch = train_size // 4  # batch_size=4
         completed_epochs = global_step // steps_per_epoch
         
-        start_epoch = checkpoint['epoch']
+        # Get epoch, supporting both formats
+        if 'epoch' in checkpoint:
+            start_epoch = checkpoint['epoch']
+        elif 'train_sampler' in checkpoint and hasattr(checkpoint['train_sampler'], 'epoch'):
+            # ISC format uses the sampler epoch
+            start_epoch = checkpoint['train_sampler'].epoch
+        else:
+            # Estimate from global step
+            start_epoch = global_step // steps_per_epoch
+            
+        # Check if we completed the current epoch
         if global_step >= (start_epoch + 1) * steps_per_epoch:
             # We completed this epoch, start the next one
             start_epoch += 1
         
-        if local_rank == 0:
+        if args.is_master:
             print(f"Resumed from checkpoint:")
-            print(f"  Epoch: {checkpoint['epoch']}")
+            print(f"  Epoch: {start_epoch}")
             print(f"  Global Step: {global_step}")
-            print(f"  Loss: {checkpoint['loss']:.8f}")
-            print(f"  Jaccard Loss: {checkpoint['jaccard_loss']:.8f}")
-            print(f"  Learning Rate: {checkpoint.get('learning_rate', get_lr(optimizer)):.8f}")
+            
+            # Show loss and metrics if available
+            if 'loss' in checkpoint:
+                print(f"  Loss: {checkpoint['loss']:.8f}")
+            if 'jaccard_loss' in checkpoint:
+                print(f"  Jaccard Loss: {checkpoint['jaccard_loss']:.8f}")
+                
+            # Get learning rate
+            lr_value = checkpoint.get('learning_rate', get_lr(optimizer))
+            print(f"  Learning Rate: {lr_value:.8f}")
             print(f"  Steps per epoch: {steps_per_epoch}")
             print(f"  Completed epochs: {completed_epochs}")
             print(f"  Resuming from epoch: {start_epoch}")
-    elif args.test_mode and local_rank == 0:
+    elif args.test_mode and args.is_master:
         print("Test mode enabled, skipping checkpoint loading")
 
     # Split the dataset into train and test sets
-    if local_rank == 0:
+    if args.is_master:
         print("Splitting dataset into train and test sets...")
         
     random_generator = torch.Generator().manual_seed(42)
     train_dataset, test_dataset = random_split(dataset, [0.8, 0.2], generator=random_generator)
     
-    if local_rank == 0:
+    if args.is_master:
         timer.report(f"Initialized datasets with {len(train_dataset):,} training and {len(test_dataset):,} test board evaluations.")
 
     # Get batch size from args
@@ -362,9 +452,8 @@ def main():
         # Define dummy sampler for local mode so we can call set_epoch without errors
         train_sampler = type('DummySampler', (), {'set_epoch': lambda self, epoch: None})()
         
-    if local_rank == 0:
+    if args.is_master:
         print(f"Using batch size: {batch_size}")
-    if local_rank == 0:
         timer.report("Prepared dataloaders")
 
     # Set number of epochs based on args
@@ -373,7 +462,7 @@ def main():
     else:
         max_epochs = 3 if args.test_mode else 10
     
-    if local_rank == 0:
+    if args.is_master:
         print(f"Training for {max_epochs} epochs")
         
     for epoch in range(start_epoch, max_epochs):
@@ -471,7 +560,7 @@ def main():
             running_loss = loss.item()
             running_jaccard_index = jaccard_loss.item()
             
-            if local_rank == 0:  # Only log on main process
+            if args.is_master:  # Only log on master process
                 current_lr = get_lr(optimizer)
                 print(f"epoch: {epoch}/{max_epochs-1} step: {i+1} lr: {current_lr:.8f} loss: {running_loss:.8f} jaccard index: {running_jaccard_index:.8f}")
                 
@@ -540,16 +629,27 @@ def main():
                     log_dict.update(metrics_dict)
                     wandb.log(log_dict)
                 
-                if i % args.checkpoint_steps == 0 and i > 0:
+                if args.is_master and i % args.checkpoint_steps == 0 and i > 0:
+                    # Check for ISC environment - use OUTPUT_PATH if available
+                    if isc_mode and "OUTPUT_PATH" in os.environ:
+                        checkpoint_dir = os.environ["OUTPUT_PATH"]
+                    else:
+                        checkpoint_dir = "checkpoints"
+                        
+                    # Create directory if it doesn't exist
+                    os.makedirs(checkpoint_dir, exist_ok=True)
+                    
                     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                    checkpoint_filename = f"checkpoints/checkpoint_{timestamp}_{i}.pth"
+                    checkpoint_filename = os.path.join(checkpoint_dir, f"checkpoint_{timestamp}_{i}.pth")
+                    resume_filename = os.path.join(checkpoint_dir, "checkpoint_resume.pth")
+                    
                     # Save the model state dict properly depending on model type
                     if is_distributed or isinstance(model, torch.nn.DataParallel):
                         model_state = model.module.state_dict()
                     else:
                         model_state = model.state_dict()
                         
-                    torch.save({
+                    checkpoint_data = {
                         'epoch': epoch,
                         'model_state_dict': model_state,
                         'optimizer_state_dict': optimizer.state_dict(),
@@ -557,34 +657,45 @@ def main():
                         'global_step': global_step,
                         'jaccard_loss': jaccard_loss,
                         'learning_rate': current_lr,
-                    }, checkpoint_filename)
+                    }
                     
-                    # Also save a copy as the latest checkpoint for easy resuming
-                    torch.save({
-                        'epoch': epoch,
-                        'model_state_dict': model_state,
-                        'optimizer_state_dict': optimizer.state_dict(),
-                        'loss': loss,
-                        'global_step': global_step,
-                        'jaccard_loss': jaccard_loss,
-                        'learning_rate': current_lr,
-                    }, "checkpoints/checkpoint_resume.pth")
+                    # Save both the timestamped checkpoint and the resume checkpoint
+                    torch.save(checkpoint_data, checkpoint_filename)
+                    torch.save(checkpoint_data, resume_filename)
                     
                     if writer is not None:
                         writer.add_text('Checkpoint', f'Saved checkpoint: {checkpoint_filename}', global_step)
                         print(f"Checkpoint saved at step {i} in {checkpoint_filename}")
+                        print(f"Resume checkpoint saved at {resume_filename}")
             
             global_step += 1
     
     # Clean up
     if writer is not None:
         writer.close()
-        timer.report("Closed TensorBoard writer")
+        if args.is_master:
+            timer.report("Closed TensorBoard writer")
     
     # Close wandb run if it was used
-    if local_rank == 0 and args.wandb:
+    if args.is_master and args.wandb:
         wandb.finish()
         print("Closed Weights & Biases run")
+    
+    # Print completion message
+    if args.is_master:
+        print(f"\n{'='*60}")
+        print(f"TRAINING COMPLETED")
+        
+        # Show different output paths based on environment
+        if isc_mode and "OUTPUT_PATH" in os.environ:
+            print(f"Checkpoints saved to: {os.environ['OUTPUT_PATH']}")
+            if "LOSSY_ARTIFACT_PATH" in os.environ:
+                print(f"Logs saved to: {os.environ['LOSSY_ARTIFACT_PATH']}")
+        else:
+            print(f"Checkpoints saved to: {os.path.join(os.getcwd(), 'checkpoints')}")
+            print(f"Logs saved to: {log_dir}")
+            
+        print(f"{'='*60}\n")
     
     # Clean up distributed process group if we were using it
     if is_distributed:
