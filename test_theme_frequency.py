@@ -11,10 +11,10 @@ from dataset import ChessPuzzleDataset
 @pytest.fixture
 def dataset():
     """Create a dataset fixture for tests"""
-    if os.path.exists("lichess_db_puzzle_small.csv"):
-        return ChessPuzzleDataset("lichess_db_puzzle_small.csv")
-    elif os.path.exists("lichess_db_puzzle_test.csv"):
-        return ChessPuzzleDataset("lichess_db_puzzle_test.csv")
+    if os.path.exists(os.path.join("dataset", "lichess_db_puzzle_small.csv")):
+        return ChessPuzzleDataset(os.path.join("dataset", "lichess_db_puzzle_small.csv"))
+    elif os.path.exists(os.path.join("dataset", "lichess_db_puzzle_test.csv")):
+        return ChessPuzzleDataset(os.path.join("dataset", "lichess_db_puzzle_test.csv"))
     else:
         pytest.skip("No suitable dataset found for testing")
 

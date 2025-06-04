@@ -42,16 +42,43 @@ class ChessPuzzleDataset(Dataset):
         self.class_conditional_augmentation = class_conditional_augmentation
         self.augmented_indices = set()  # Track which indices were augmented
         
-        # Read CSV data
-        self.puzzle_data = pd.read_csv(csv_file)
-        
         # Cache file paths
-        cache_dir = '.'  # Use current directory for cache files
+        cache_dir = 'dataset'  # Use dataset directory for cache files
         csv_basename = os.path.basename(csv_file)
         self.themes_cache_file = os.path.join(cache_dir, f"{csv_basename}.themes.json")
         self.openings_cache_file = os.path.join(cache_dir, f"{csv_basename}.openings.json")
         self.tensors_cache_file = os.path.join(cache_dir, f"{csv_basename}.tensors.pt")
         self.label_cooccurrence_file = os.path.join(cache_dir, f"{csv_basename}.cooccurrence.json")
+        
+        # Check if CSV file exists
+        self.csv_exists = os.path.exists(csv_file)
+        
+        # Check if we have required cache files when CSV is missing
+        if not self.csv_exists:
+            # Check for cache files required to run without CSV
+            required_cache_files = [
+                self.label_cooccurrence_file,
+                f"{self.tensors_cache_file}_conditional",
+                f"{self.tensors_cache_file}_conditional.augmented_indices.json"
+            ]
+            
+            cache_files_exist = all(os.path.exists(f) for f in required_cache_files)
+            
+            if not cache_files_exist:
+                # Get missing files for better error message
+                missing_files = [f for f in required_cache_files if not os.path.exists(f)]
+                missing_str = '\n  - '.join(missing_files)
+                raise FileNotFoundError(
+                    f"CSV file {csv_file} not found and required cache files are missing:\n  - {missing_str}\n"
+                    "Please provide either the original CSV file or the pre-processed cache files."
+                )
+                
+            print(f"CSV file {csv_file} not found, but required cache files exist. Proceeding with cache-only mode.")
+            # Create a minimal DataFrame with enough structure for other methods
+            self.puzzle_data = pd.DataFrame(columns=['FEN', 'Themes', 'OpeningTags'])
+        else:
+            # Read CSV data as usual
+            self.puzzle_data = pd.read_csv(csv_file)
         
         # Load or create theme and opening tag caches
         self._load_or_create_caches()
@@ -82,6 +109,21 @@ class ChessPuzzleDataset(Dataset):
         """Load themes and opening tags from cache files if they exist and are newer than the CSV,
         otherwise extract them from the CSV and save to cache files."""
         
+        # If CSV doesn't exist, we must use the cache files
+        if not self.csv_exists:
+            if os.path.exists(self.themes_cache_file) and os.path.exists(self.openings_cache_file):
+                print(f"CSV file not found. Loading themes and openings from cache files")
+                self._load_themes_and_openings_from_cache()
+            else:
+                raise FileNotFoundError(
+                    f"CSV file not found and theme/opening cache files missing:\n"
+                    f"  - {self.themes_cache_file}\n"
+                    f"  - {self.openings_cache_file}\n"
+                    f"Cannot proceed without either the CSV file or the cache files."
+                )
+            return
+            
+        # Normal flow when CSV exists
         csv_mtime = os.path.getmtime(self.csv_file)
         cache_is_valid = (
             os.path.exists(self.themes_cache_file) and
@@ -93,25 +135,7 @@ class ChessPuzzleDataset(Dataset):
         if cache_is_valid:
             # Load from cache files
             print(f"Loading themes and openings from cache files")
-            with open(self.themes_cache_file, 'r') as f:
-                themes_data = json.load(f)
-                # Check if the format is a list of [name, count] lists or just a list of names
-                if themes_data and isinstance(themes_data[0], list):
-                    # Format is [[name, count], [name, count], ...]
-                    self.all_themes = set(item[0] for item in themes_data)
-                else:
-                    # Format is [name, name, ...]
-                    self.all_themes = set(themes_data)
-                    
-            with open(self.openings_cache_file, 'r') as f:
-                openings_data = json.load(f)
-                # Check if the format is a list of [name, count] lists or just a list of names
-                if openings_data and isinstance(openings_data[0], list):
-                    # Format is [[name, count], [name, count], ...]
-                    self.all_opening_tags = set(item[0] for item in openings_data)
-                else:
-                    # Format is [name, name, ...]
-                    self.all_opening_tags = set(openings_data)
+            self._load_themes_and_openings_from_cache()
         else:
             # Extract from CSV and save to cache
             print(f"Extracting themes and openings from CSV and creating cache files")
@@ -134,6 +158,28 @@ class ChessPuzzleDataset(Dataset):
                 json.dump(sorted(list(self.all_themes)), f)
             with open(self.openings_cache_file, 'w') as f:
                 json.dump(sorted(list(self.all_opening_tags)), f)
+                
+    def _load_themes_and_openings_from_cache(self):
+        """Helper method to load themes and openings from cache files."""
+        with open(self.themes_cache_file, 'r') as f:
+            themes_data = json.load(f)
+            # Check if the format is a list of [name, count] lists or just a list of names
+            if themes_data and isinstance(themes_data[0], list):
+                # Format is [[name, count], [name, count], ...]
+                self.all_themes = set(item[0] for item in themes_data)
+            else:
+                # Format is [name, name, ...]
+                self.all_themes = set(themes_data)
+                
+        with open(self.openings_cache_file, 'r') as f:
+            openings_data = json.load(f)
+            # Check if the format is a list of [name, count] lists or just a list of names
+            if openings_data and isinstance(openings_data[0], list):
+                # Format is [[name, count], [name, count], ...]
+                self.all_opening_tags = set(item[0] for item in openings_data)
+            else:
+                # Format is [name, name, ...]
+                self.all_opening_tags = set(openings_data)
         
     def __len__(self):
         if self.augment_with_reflections or self.class_conditional_augmentation:
@@ -150,9 +196,27 @@ class ChessPuzzleDataset(Dataset):
                                              reflected boards.
         """
         
-        csv_mtime = os.path.getmtime(self.csv_file)
         cache_suffix = '_reflected' if augment_with_reflections else ''
         tensors_cache_file = f"{self.tensors_cache_file}{cache_suffix}"
+        
+        # If CSV doesn't exist, we must use the cache files
+        if not self.csv_exists:
+            if os.path.exists(tensors_cache_file):
+                print(f"CSV file not found. Loading tensor cache from: {tensors_cache_file}")
+                try:
+                    self.tensor_cache = torch.load(tensors_cache_file, map_location='cpu')
+                    print(f"Loaded {len(self.tensor_cache)} tensors from cache")
+                except Exception as e:
+                    raise RuntimeError(f"Error loading tensor cache in CSV-less mode: {e}")
+            else:
+                raise FileNotFoundError(
+                    f"CSV file not found and tensor cache file missing: {tensors_cache_file}\n"
+                    f"Cannot proceed without either the CSV file or the cache files."
+                )
+            return
+            
+        # Normal flow when CSV exists
+        csv_mtime = os.path.getmtime(self.csv_file)
         
         tensor_cache_is_valid = (
             os.path.exists(tensors_cache_file) and
@@ -472,13 +536,36 @@ class ChessPuzzleDataset(Dataset):
         Load tensor cache if it exists and is newer than the CSV and co-occurrence cache,
         otherwise create it by selectively augmenting only the rare label combinations.
         """
-        csv_mtime = os.path.getmtime(self.csv_file)
-        cooc_mtime = os.path.getmtime(self.label_cooccurrence_file) if os.path.exists(self.label_cooccurrence_file) else 0
-        latest_mtime = max(csv_mtime, cooc_mtime)
-        
         # Define cache file with conditional suffix
         conditional_suffix = '_conditional'
         tensors_cache_file = f"{self.tensors_cache_file}{conditional_suffix}"
+        
+        # If CSV doesn't exist, we must use the cache files
+        if not self.csv_exists:
+            if os.path.exists(tensors_cache_file):
+                print(f"CSV file not found. Loading tensor cache from: {tensors_cache_file}")
+                try:
+                    self.tensor_cache = torch.load(tensors_cache_file, map_location='cpu')
+                    # Load the augmented indices
+                    augmented_indices_file = f"{tensors_cache_file}.augmented_indices.json"
+                    if os.path.exists(augmented_indices_file):
+                        with open(augmented_indices_file, 'r') as f:
+                            self.augmented_indices = set(json.load(f))
+                    print(f"Loaded {len(self.tensor_cache)} tensors from cache")
+                    print(f"Including {len(self.augmented_indices)} augmented (reflected) rare samples")
+                except Exception as e:
+                    raise RuntimeError(f"Error loading tensor cache in CSV-less mode: {e}")
+            else:
+                raise FileNotFoundError(
+                    f"CSV file not found and tensor cache file missing: {tensors_cache_file}\n"
+                    f"Cannot proceed without either the CSV file or the cache files."
+                )
+            return
+            
+        # Normal flow when CSV exists
+        csv_mtime = os.path.getmtime(self.csv_file)
+        cooc_mtime = os.path.getmtime(self.label_cooccurrence_file) if os.path.exists(self.label_cooccurrence_file) else 0
+        latest_mtime = max(csv_mtime, cooc_mtime)
         
         tensor_cache_is_valid = (
             os.path.exists(tensors_cache_file) and
@@ -593,8 +680,31 @@ class ChessPuzzleDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
             
+        # Handle the case where we're running with cache files only (no CSV)
+        if not self.csv_exists:
+            # In this case, we can only access the tensor data and not the original FEN or labels
+            # These will be derived from the tensor_cache and augmented_indices
+            is_reflection = False
+            original_idx = idx
+            themes = []
+            opening_tags = []
+            fen = "cache_only_mode"  # Placeholder since we don't have the original FEN
+            
+            # We still need to determine if this is a reflection based on augmented_indices
+            if self.class_conditional_augmentation and hasattr(self, 'augmented_indices'):
+                # This logic attempts to infer if the current index is an augmented (reflected) entry
+                # Note: Without the CSV, this is an approximation based on the cached augmented_indices
+                augmented_count = 0
+                for i in range(len(self.tensor_cache) // 2):
+                    if i in self.augmented_indices:
+                        augmented_count += 1
+                        if idx == i + augmented_count:
+                            is_reflection = True
+                            original_idx = i
+                            break
+        
         # Handle the augmented dataset case (both full and conditional)
-        if self.augment_with_reflections or self.class_conditional_augmentation:
+        elif self.augment_with_reflections or self.class_conditional_augmentation:
             # For class-conditional augmentation, the mapping is more complex
             if self.class_conditional_augmentation:
                 # Get the original index and whether this is a reflection
@@ -647,18 +757,26 @@ class ChessPuzzleDataset(Dataset):
         # Create one-hot encoding for labels
         label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
         
-        # Always include theme labels
-        for theme in themes:
-            if theme in self.label_to_idx:  # Ensure theme exists in our index
-                theme_idx = self.label_to_idx[theme]
-                label_vector[theme_idx] = 1
-        
-        # Only include opening tags for non-reflections
-        if not is_reflection:
-            for tag in opening_tags:
-                if tag in self.label_to_idx:
-                    tag_idx = self.label_to_idx[tag]
-                    label_vector[tag_idx] = 1
+        # In cache-only mode, we won't have labels from the CSV
+        # Instead, we'll rely on the labels embedded in the cache files
+        if not self.csv_exists:
+            # In cache-only mode, since we don't have the original labels,
+            # we'll use an empty label vector
+            # The model will use this for prediction but not for training
+            pass
+        else:
+            # Always include theme labels
+            for theme in themes:
+                if theme in self.label_to_idx:  # Ensure theme exists in our index
+                    theme_idx = self.label_to_idx[theme]
+                    label_vector[theme_idx] = 1
+            
+            # Only include opening tags for non-reflections
+            if not is_reflection:
+                for tag in opening_tags:
+                    if tag in self.label_to_idx:
+                        tag_idx = self.label_to_idx[tag]
+                        label_vector[tag_idx] = 1
         
         # Get board tensor - use cached tensor if available
         board_tensor = self.tensor_cache[idx].to(dtype=torch.float32)
@@ -776,6 +894,45 @@ class ChessPuzzleDataset(Dataset):
                 label_combinations: Dictionary mapping frozensets of theme labels to their frequency
                 rare_combinations: Set of frozensets containing theme label combinations below threshold
         """
+        # If CSV doesn't exist, we must use the cache file
+        if not self.csv_exists:
+            if os.path.exists(self.label_cooccurrence_file):
+                print(f"CSV file not found. Loading theme co-occurrence data from cache: {self.label_cooccurrence_file}")
+                with open(self.label_cooccurrence_file, 'r') as f:
+                    cache_data = json.load(f)
+                    
+                    # Convert string representations back to frozensets
+                    label_combinations = {
+                        frozenset(eval(k)): v for k, v in cache_data['combinations'].items()
+                    }
+                    
+                    # Get threshold from cache or compute from data
+                    stored_threshold = cache_data.get('rarity_threshold', None)
+                    if rarity_threshold is None:
+                        rarity_threshold = stored_threshold
+                    
+                    # If we still don't have a threshold, compute one
+                    if rarity_threshold is None:
+                        rarity_threshold = self._compute_rarity_threshold(label_combinations)
+                    
+                    # Get rare combinations
+                    rare_combinations = {
+                        frozenset(eval(combo)) for combo in cache_data.get('rare_combinations', [])
+                    }
+                    
+                    # Use the precomputed rare combinations
+                    if not rare_combinations:
+                        print(f"Computing rare combinations with threshold: {rarity_threshold}")
+                        rare_combinations = self._identify_rare_combinations(label_combinations, rarity_threshold)
+                    
+                    return label_combinations, rare_combinations
+            else:
+                raise FileNotFoundError(
+                    f"CSV file not found and co-occurrence cache file missing: {self.label_cooccurrence_file}\n"
+                    f"Cannot proceed without either the CSV file or the cache files."
+                )
+                
+        # Normal flow when CSV exists
         # Check if cache file exists and is newer than the CSV
         csv_mtime = os.path.getmtime(self.csv_file)
         cache_is_valid = (

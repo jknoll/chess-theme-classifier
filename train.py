@@ -212,8 +212,8 @@ def main():
         if args.is_master:
             print(f"Using ISC dataset path: {csv_file}")
     else:
-        # Use the local path
-        csv_file = csv_filename
+        # Use the local path in the dataset directory
+        csv_file = os.path.join('dataset', csv_filename)
     
     if args.is_master:
         if args.test_mode:
@@ -270,6 +270,74 @@ def main():
     
     # Thread limit is already set at the top of the file
     # No need to set it again here
+    
+    # Check if the CSV file exists
+    csv_exists = os.path.exists(csv_file)
+    
+    # If CSV doesn't exist, check if cache files are available in processed_lichess_puzzle_files
+    if not csv_exists:
+        if args.is_master:
+            print(f"⚠️ CSV file {csv_file} not found. Looking for pre-processed cache files...")
+        
+        # Get the base filename without path
+        csv_basename = os.path.basename(csv_file)
+        
+        # Define required cache files
+        processed_dir = 'processed_lichess_puzzle_files'
+        cache_files_exist = False
+        
+        if os.path.exists(processed_dir):
+            # Check for required cache files
+            required_files = [
+                f"{csv_basename}.cooccurrence.json",
+                f"{csv_basename}.tensors.pt_conditional",
+                f"{csv_basename}.tensors.pt_conditional.augmented_indices.json",
+                f"{csv_basename}.class_weights.pt"
+            ]
+            
+            all_files_exist = all(os.path.exists(os.path.join(processed_dir, f)) for f in required_files)
+            
+            if all_files_exist:
+                if args.is_master:
+                    print(f"✅ Found all required cache files in {processed_dir}")
+                    print(f"⚠️ Training will proceed using pre-processed cache files without CSV")
+                
+                # Create symlinks in dataset directory to make cache files available to dataset loader
+                os.makedirs('dataset', exist_ok=True)
+                
+                # Create symlinks for each required file
+                for cache_file in required_files:
+                    src = os.path.join(processed_dir, cache_file)
+                    dst = os.path.join('dataset', cache_file)
+                    
+                    # Create symlink if it doesn't already exist
+                    if not os.path.exists(dst):
+                        try:
+                            os.symlink(src, dst)
+                            if args.is_master:
+                                print(f"  Created symlink from {src} to {dst}")
+                        except Exception as e:
+                            if args.is_master:
+                                print(f"  ⚠️ Failed to create symlink: {e}")
+                
+                # Set flag indicating cache files exist
+                cache_files_exist = True
+            else:
+                missing_files = [f for f in required_files if not os.path.exists(os.path.join(processed_dir, f))]
+                if args.is_master:
+                    print(f"❌ Some required cache files are missing from {processed_dir}:")
+                    for f in missing_files:
+                        print(f"  - {f}")
+        else:
+            if args.is_master:
+                print(f"❌ Directory {processed_dir} not found")
+        
+        # If neither CSV nor cache files exist, raise an error
+        if not cache_files_exist:
+            raise FileNotFoundError(
+                f"CSV file {csv_file} not found and required cache files not available in {processed_dir}. "
+                "Please provide either the original CSV file or the pre-processed cache files."
+            )
     
     # Create dataset with memory-saving options
     dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=True, low_memory=low_memory)

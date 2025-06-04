@@ -14,8 +14,8 @@ def get_cache_path(dataset):
     Returns:
         str: Path to the cache file
     """
-    # Use the same directory as the CSV file
-    cache_dir = '.'
+    # Use the dataset directory
+    cache_dir = 'dataset'
     csv_basename = os.path.basename(dataset.csv_file)
     return os.path.join(cache_dir, f"{csv_basename}.class_weights.pt")
 
@@ -34,6 +34,12 @@ def is_cache_valid(dataset):
     # Check if cache file exists
     if not os.path.exists(cache_path):
         return False
+    
+    # When CSV doesn't exist, we're in cache-only mode
+    if hasattr(dataset, 'csv_exists') and not dataset.csv_exists:
+        # In cache-only mode, we just check if the cache file exists
+        # since we can't compare against the original CSV
+        return True
     
     # Check if the CSV file or any of its dependent caches are newer than the cache
     csv_mtime = os.path.getmtime(dataset.csv_file)
@@ -141,6 +147,45 @@ def compute_label_weights(dataset):
             # Log statistics about weights from cache
             log_weight_statistics(dataset, weights, label_counts)
             return weights
+    
+    # If CSV doesn't exist, we can't compute class weights - must rely on cache
+    if hasattr(dataset, 'csv_exists') and not dataset.csv_exists:
+        print("CSV file not found. Checking for class weights in processed_lichess_puzzle_files...")
+        
+        # Try to load class weights from processed_lichess_puzzle_files directory
+        csv_basename = os.path.basename(dataset.csv_file)
+        alternate_weights_file = os.path.join('processed_lichess_puzzle_files', f"{csv_basename}.class_weights.pt")
+        
+        if os.path.exists(alternate_weights_file):
+            print(f"Found class weights in {alternate_weights_file}")
+            try:
+                # Load from the alternate location
+                cache_data = torch.load(alternate_weights_file)
+                weights = cache_data['weights']
+                label_counts = cache_data['label_counts']
+                
+                # Log statistics about weights
+                log_weight_statistics(dataset, weights, label_counts)
+                
+                # Copy to the expected cache location
+                os.makedirs('dataset', exist_ok=True)
+                cache_path = get_cache_path(dataset)
+                if not os.path.exists(cache_path):
+                    try:
+                        import shutil
+                        shutil.copy2(alternate_weights_file, cache_path)
+                        print(f"Copied class weights to {cache_path}")
+                    except Exception as e:
+                        print(f"Error copying class weights: {e}")
+                
+                return weights
+            except Exception as e:
+                raise RuntimeError(f"Error loading class weights from {alternate_weights_file}: {e}")
+        else:
+            raise FileNotFoundError(
+                f"CSV file not found and class weights cache not available in {alternate_weights_file}. "
+                "Cannot compute class weights without either the CSV file or pre-computed weights."
+            )
     
     print("Computing class weights (no valid cache found)...")
     

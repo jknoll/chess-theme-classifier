@@ -122,12 +122,13 @@ def test_tensor_cache_creation(test_dataset):
 
 def test_with_small_real_dataset():
     """Test with a real dataset file"""
-    if not os.path.exists('lichess_db_puzzle_test.csv'):
+    dataset_path = os.path.join('dataset', 'lichess_db_puzzle_test.csv')
+    if not os.path.exists(dataset_path):
         pytest.skip("Test dataset not available")
     
     # Load the dataset with and without augmentation
-    regular_dataset = ChessPuzzleDataset('lichess_db_puzzle_test.csv', augment_with_reflections=False)
-    augmented_dataset = ChessPuzzleDataset('lichess_db_puzzle_test.csv', augment_with_reflections=True)
+    regular_dataset = ChessPuzzleDataset(dataset_path, augment_with_reflections=False)
+    augmented_dataset = ChessPuzzleDataset(dataset_path, augment_with_reflections=True)
     
     # Check that the augmented dataset is twice as large
     assert len(augmented_dataset) == 2 * len(regular_dataset)

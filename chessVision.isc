@@ -1,11 +1,11 @@
 isc_project_id = "294d3f8b-a3e6-4b1a-8da7-7be1ee611845"
 experiment_name = "chess-theme-classifier"
-gpus = 16
+gpus = 1
 output_path = "/root/outputs/chessThemeClassifier"
-dataset_id_list = ["8e69f5fe-42fa-47e3-83ea-986c7d1b7014"]
-compute_mode = "interruptible"
+dataset_id_list = ["uds-lovely-rhinestone-gerbera-250604"]
+compute_mode = "cycle"
 command = '''
 source /root/chess-theme-classifier/.chess-theme-classifier/bin/activate && 
 cd /root/chess-theme-classifier/ && 
 torchrun --nnodes=$NNODES --nproc-per-node=$N_PROC --master_addr=$MASTER_ADDR --master_port=$MASTER_PORT --node_rank=$RANK 
-train-isc.py --dataset-id 8e69f5fe-42fa-47e3-83ea-986c7d1b7014'''
+train-isc.py --dataset-id uds-lovely-rhinestone-gerbera-250604'''

@@ -9,8 +9,8 @@ from model import Model, Lamb, get_lr_with_warmup
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Test the chess theme classifier model')
-parser.add_argument('--csv_file', type=str, default='lichess_db_puzzle_test.csv',
-                   help='Path to the CSV file to use (default: lichess_db_puzzle_test.csv)')
+parser.add_argument('--csv_file', type=str, default=os.path.join('dataset', 'lichess_db_puzzle_test.csv'),
+                   help='Path to the CSV file to use (default: dataset/lichess_db_puzzle_test.csv)')
 parser.add_argument('--num_samples', type=int, default=None,
                    help='Number of samples to use (default: all)')
 args = parser.parse_args()

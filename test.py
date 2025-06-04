@@ -312,7 +312,7 @@ def run_test():
     global theme_metrics  # Need to make this global for matrix functions
     
     # Create dataset first to get number of labels
-    dataset = ChessPuzzleDataset("lichess_db_puzzle_test.csv")  # Use smaller test file
+    dataset = ChessPuzzleDataset(os.path.join("dataset", "lichess_db_puzzle_test.csv"))  # Use smaller test file
     num_labels = len(dataset.get_theme_names())
 
     # Initialize model with configuration from YAML file if it exists

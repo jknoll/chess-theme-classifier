@@ -11,8 +11,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Custom batch size: `python train.py --batch_size 8`
 - Custom epochs: `python train.py --epochs 5`
 - Legacy single GPU training: `python train_locally_single_gpu.py` (deprecated, use `--single_gpu` flag instead)
-- Testing: `python test.py` (runs on 20,000 samples by default)
-- Running a specific test: Modify test sample size with `--num_samples` flag
+- Model Evaluation: `python evaluate_model_classification.py` (evaluates trained model on 20,000 samples by default)
+- Running evaluation on specific sample size: `python evaluate_model_classification.py --num_samples 5000`
 - Unit testing: `python -m pytest test_model_unittest.py -v`
 
 ## Dependencies

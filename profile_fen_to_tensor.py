@@ -182,8 +182,8 @@ def profile_batch_conversion(csv_file, num_samples=None, iterations=10):
 
 def main():
     parser = argparse.ArgumentParser(description='Profile FEN to tensor conversion')
-    parser.add_argument('--csv', type=str, default='lichess_db_puzzle_test.csv',
-                       help='Path to the CSV file (default: lichess_db_puzzle_test.csv)')
+    parser.add_argument('--csv', type=str, default=os.path.join('dataset', 'lichess_db_puzzle_test.csv'),
+                       help='Path to the CSV file (default: dataset/lichess_db_puzzle_test.csv)')
     parser.add_argument('--samples', type=int, default=None,
                        help='Number of puzzles to process (default: all)')
     parser.add_argument('--output', type=str, default='profile_fen_to_tensor.txt',
