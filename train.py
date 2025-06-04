@@ -197,7 +197,7 @@ def main():
             if args.is_master:
                 print(f"Error parsing dataset ID: {e}")
                 
-    # Select the appropriate dataset file
+    # Select the appropriate dataset file; _test.csv is only 100 lines/positions.
     if args.test_mode:
         csv_filename = 'lichess_db_puzzle_test.csv'
     elif args.single_gpu:
@@ -274,7 +274,7 @@ def main():
     # Check if the CSV file exists
     csv_exists = os.path.exists(csv_file)
     
-    # If CSV doesn't exist, check if cache files are available in processed_lichess_puzzle_files
+    # If CSV doesn't exist, use cache files from processed_lichess_puzzle_files directly
     if not csv_exists:
         if args.is_master:
             print(f"⚠️ CSV file {csv_file} not found. Looking for pre-processed cache files...")
@@ -282,62 +282,197 @@ def main():
         # Get the base filename without path
         csv_basename = os.path.basename(csv_file)
         
-        # Define required cache files
-        processed_dir = 'processed_lichess_puzzle_files'
-        cache_files_exist = False
+        # Determine the appropriate processed directory based on whether we're in ISC mode or not
+        if isc_mode and dataset_id:
+            # In ISC mode, check if we have cache files in the ISC data directory
+            processed_dir = f'/data/{dataset_id}'
+            if args.is_master:
+                print(f"Running in ISC mode, checking for cache files in: {processed_dir}")
+        else:
+            # Standard case - use local processed_lichess_puzzle_files directory
+            processed_dir = 'processed_lichess_puzzle_files'
+            
+        # Update csv_file to point to the processed directory
+        # This will make the dataset loader look for cache files in the correct directory
+        new_csv_file = os.path.join(processed_dir, csv_basename)
         
         if os.path.exists(processed_dir):
-            # Check for required cache files
-            required_files = [
+            # Separate truly essential files from nice-to-have files
+            # Essential files without which training cannot proceed at all
+            truly_essential_files = [
+                f"{csv_basename}.themes.json",
+                f"{csv_basename}.openings.json"
+            ]
+            
+            # Files needed specifically for class conditional augmentation
+            conditional_aug_files = [
                 f"{csv_basename}.cooccurrence.json",
                 f"{csv_basename}.tensors.pt_conditional",
-                f"{csv_basename}.tensors.pt_conditional.augmented_indices.json",
+                f"{csv_basename}.tensors.pt_conditional.augmented_indices.json"
+            ]
+            
+            # Files needed for weighted loss (but can train without them)
+            weighted_loss_files = [
                 f"{csv_basename}.class_weights.pt"
             ]
             
-            all_files_exist = all(os.path.exists(os.path.join(processed_dir, f)) for f in required_files)
+            # Optional cache files - we'll just note if they're missing
+            optional_files = [
+                f"{csv_basename}.tensors.pt_reflected",
+                f"{csv_basename}.tensors.pt"
+            ]
             
-            if all_files_exist:
+            # For simplicity in the current mode, create the essential files list
+            essential_files = truly_essential_files.copy()
+            
+            # Add conditional augmentation files if we're using that feature
+            if True:  # Class conditional augmentation is enabled by default in line 410
+                essential_files.extend(conditional_aug_files)
+            
+            # Add weighted loss files if that feature is enabled
+            if args.weighted_loss:
+                essential_files.extend(weighted_loss_files)
+            
+            # Check for essential files
+            essential_files_exist = all(os.path.exists(os.path.join(processed_dir, f)) for f in essential_files)
+            
+            if essential_files_exist:
                 if args.is_master:
-                    print(f"✅ Found all required cache files in {processed_dir}")
+                    print(f"✅ Found all essential cache files in {processed_dir}")
+                    
+                    # Check optional files for debugging
+                    all_monitored_files = truly_essential_files + conditional_aug_files + weighted_loss_files + optional_files
+                    missing_optional = [f for f in all_monitored_files if f not in essential_files and not os.path.exists(os.path.join(processed_dir, f))]
+                    if missing_optional:
+                        print(f"ℹ️ Some non-essential cache files are missing (this is okay):")
+                        for f in missing_optional:
+                            print(f"  - {f}")
+                    
                     print(f"⚠️ Training will proceed using pre-processed cache files without CSV")
                 
-                # Create symlinks in dataset directory to make cache files available to dataset loader
-                os.makedirs('dataset', exist_ok=True)
-                
-                # Create symlinks for each required file
-                for cache_file in required_files:
-                    src = os.path.join(processed_dir, cache_file)
-                    dst = os.path.join('dataset', cache_file)
-                    
-                    # Create symlink if it doesn't already exist
-                    if not os.path.exists(dst):
-                        try:
-                            os.symlink(src, dst)
-                            if args.is_master:
-                                print(f"  Created symlink from {src} to {dst}")
-                        except Exception as e:
-                            if args.is_master:
-                                print(f"  ⚠️ Failed to create symlink: {e}")
-                
-                # Set flag indicating cache files exist
-                cache_files_exist = True
-            else:
-                missing_files = [f for f in required_files if not os.path.exists(os.path.join(processed_dir, f))]
+                # Update the csv_file path to use the processed directory
+                csv_file = new_csv_file
                 if args.is_master:
-                    print(f"❌ Some required cache files are missing from {processed_dir}:")
-                    for f in missing_files:
-                        print(f"  - {f}")
+                    print(f"👉 Using cache files from: {processed_dir}")
+                    print(f"👉 Setting csv_file path to: {csv_file}")
+            else:
+                missing_files = [f for f in essential_files if not os.path.exists(os.path.join(processed_dir, f))]
+                
+                # Check if only non-truly-essential files are missing
+                missing_truly_essential = [f for f in truly_essential_files if not os.path.exists(os.path.join(processed_dir, f))]
+                
+                if not missing_truly_essential:
+                    # We're missing some feature-specific files but have the truly essential ones
+                    # We can still proceed but with warnings
+                    if args.is_master:
+                        print(f"⚠️ Some feature-specific cache files are missing from {processed_dir}:")
+                        for f in missing_files:
+                            print(f"  - {f}")
+                        
+                        # Warn about disabled features
+                        if any(f in missing_files for f in conditional_aug_files):
+                            print(f"⚠️ Class conditional augmentation may be limited due to missing files")
+                        
+                        if any(f in missing_files for f in weighted_loss_files) and args.weighted_loss:
+                            print(f"⚠️ Weighted loss feature may be limited due to missing class weight file")
+                        
+                        print(f"⚠️ Training will proceed with limited features using available cache files")
+                    
+                    # Update the csv_file path to use the processed directory despite missing some files
+                    csv_file = new_csv_file
+                    if args.is_master:
+                        print(f"👉 Using available cache files from: {processed_dir}")
+                        print(f"👉 Setting csv_file path to: {csv_file}")
+                    essential_files_exist = True  # Allow training to proceed
+                else:
+                    if args.is_master:
+                        print(f"❌ Some truly essential cache files are missing from {processed_dir}:")
+                        for f in missing_truly_essential:
+                            print(f"  - {f}")
+                        
+                        # If in ISC mode and files missing, try the local processed directory as fallback
+                        if isc_mode and 'processed_lichess_puzzle_files' not in processed_dir:
+                            fallback_dir = 'processed_lichess_puzzle_files'
+                            if os.path.exists(fallback_dir):
+                                print(f"Checking fallback directory: {fallback_dir}")
+                                # Check for essential files in fallback
+                                fallback_essential_exist = all(os.path.exists(os.path.join(fallback_dir, f)) for f in truly_essential_files)
+                                if fallback_essential_exist:
+                                    print(f"✅ Found truly essential cache files in fallback directory {fallback_dir}")
+                                    csv_file = os.path.join(fallback_dir, csv_basename)
+                                    print(f"👉 Using cache files from: {fallback_dir}")
+                                    print(f"👉 Setting csv_file path to: {csv_file}")
+                                    # Success! We found the essential files in the fallback directory
+                                    essential_files_exist = True  # Mark as successful
+                
+                # Only raise error if we didn't find truly essential files in primary or fallback location
+                if not essential_files_exist and missing_truly_essential:
+                    raise FileNotFoundError(
+                        f"CSV file {csv_file} not found and truly essential cache files not available in {processed_dir}. "
+                        "Please provide either the original CSV file or at minimum the themes.json and openings.json files."
+                    )
         else:
             if args.is_master:
                 print(f"❌ Directory {processed_dir} not found")
-        
-        # If neither CSV nor cache files exist, raise an error
-        if not cache_files_exist:
-            raise FileNotFoundError(
-                f"CSV file {csv_file} not found and required cache files not available in {processed_dir}. "
-                "Please provide either the original CSV file or the pre-processed cache files."
-            )
+                
+                # If in ISC mode and primary directory not found, try local directory as fallback
+                fallback_success = False
+                if isc_mode and 'processed_lichess_puzzle_files' not in processed_dir:
+                    fallback_dir = 'processed_lichess_puzzle_files'
+                    if os.path.exists(fallback_dir):
+                        print(f"Checking fallback directory: {fallback_dir}")
+                        # Define truly essential files to check in fallback
+                        truly_essential_files = [
+                            f"{csv_basename}.themes.json",
+                            f"{csv_basename}.openings.json"
+                        ]
+                        
+                        # Check for truly essential files first - these are non-negotiable
+                        fallback_truly_essential_exist = all(os.path.exists(os.path.join(fallback_dir, f)) for f in truly_essential_files)
+                        
+                        if fallback_truly_essential_exist:
+                            # Now check for feature-specific files
+                            conditional_aug_files = [
+                                f"{csv_basename}.cooccurrence.json",
+                                f"{csv_basename}.tensors.pt_conditional",
+                                f"{csv_basename}.tensors.pt_conditional.augmented_indices.json"
+                            ]
+                            
+                            weighted_loss_files = [
+                                f"{csv_basename}.class_weights.pt"
+                            ]
+                            
+                            # Check which feature-specific files exist
+                            missing_conditional = [f for f in conditional_aug_files if not os.path.exists(os.path.join(fallback_dir, f))]
+                            missing_weighted = [f for f in weighted_loss_files if not os.path.exists(os.path.join(fallback_dir, f))]
+                            
+                            # We can proceed with fallback if we have truly essential files
+                            print(f"✅ Found truly essential cache files in fallback directory {fallback_dir}")
+                            
+                            # Warn about any missing feature-specific files
+                            if missing_conditional:
+                                print(f"⚠️ Some class conditional augmentation files are missing:")
+                                for f in missing_conditional:
+                                    print(f"  - {f}")
+                                print(f"⚠️ Class conditional augmentation may be limited")
+                                
+                            if missing_weighted and args.weighted_loss:
+                                print(f"⚠️ Class weight file is missing but weighted loss is enabled:")
+                                for f in missing_weighted:
+                                    print(f"  - {f}")
+                                print(f"⚠️ Weighted loss feature may use default weights")
+                            
+                            csv_file = os.path.join(fallback_dir, csv_basename)
+                            print(f"👉 Using cache files from: {fallback_dir}")
+                            print(f"👉 Setting csv_file path to: {csv_file}")
+                            fallback_success = True  # Mark that we found at least the truly essential files
+            
+            # Only raise the error if we didn't find files in the fallback location
+            if not fallback_success:
+                raise FileNotFoundError(
+                    f"CSV file {csv_file} not found and {processed_dir} directory not found. "
+                    "Please provide either the original CSV file or the pre-processed cache files."
+                )
     
     # Create dataset with memory-saving options
     dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=True, low_memory=low_memory)
@@ -370,14 +505,21 @@ def main():
     if args.weighted_loss:
         if args.is_master:
             print("Computing class weights for weighted BCE loss...")
-        # Compute label weights
-        pos_weights = compute_label_weights(dataset)
-        pos_weights = pos_weights.to(device)
-        
-        if args.is_master:
-            print("Using weighted BCE loss for class imbalance mitigation")
-        
-        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+        try:
+            # Compute label weights
+            pos_weights = compute_label_weights(dataset)
+            pos_weights = pos_weights.to(device)
+            
+            if args.is_master:
+                print("Using weighted BCE loss for class imbalance mitigation")
+            
+            criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+        except Exception as e:
+            if args.is_master:
+                print(f"⚠️ Error computing class weights: {e}")
+                print("⚠️ Falling back to standard BCE loss")
+                print("⚠️ This may result in reduced performance for rare themes")
+            criterion = torch.nn.BCEWithLogitsLoss()
     else:
         if args.is_master:
             print("Using standard BCE loss without class weights")
