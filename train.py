@@ -2,9 +2,13 @@
 # This script trains locally on a single GPU.
 # This version has a correction to ensure that it is training on the GPU; previously I was not correctly calling model.to(device), inputs.to(device), and labels.to(device).
 
+# Set OpenMP thread limit to avoid "Thread creation failed" error
+import os
+os.environ['OMP_NUM_THREADS'] = '4'  # Limit OpenMP threads
+os.environ['MKL_NUM_THREADS'] = '4'  # Limit MKL threads
+
 from cycling_utils import TimestampedTimer
 import time
-import os
 import argparse
 from torch.utils.tensorboard import SummaryWriter
 import subprocess
@@ -15,6 +19,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 from metrics import jaccard_similarity, precision_recall_f1, get_classification_report
 import wandb
+import torch
 
 timer = TimestampedTimer("Imported TimestampedTimer")
 
@@ -161,6 +166,15 @@ def main():
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     log_dir = os.path.join('logs', f'run_{timestamp}')
     
+    # Set up dataset file choice first so we can use it in wandb config
+    # Set dataset based on mode
+    if args.test_mode:
+        csv_file = 'lichess_db_puzzle_test.csv'
+    elif args.single_gpu:
+        csv_file = 'lichess_db_puzzle_test.csv'
+    else:
+        csv_file = 'lichess_db_puzzle.csv'
+    
     # Initialize wandb on the main process if enabled
     # The WANDB_API_KEY environment variable should be set before running
     # or use `wandb login` command beforehand
@@ -175,7 +189,7 @@ def main():
                 "weight_decay": 0.01,
                 "warmup_steps": 1000,
                 "architecture": "CNN with attention and residual blocks",
-                "dataset": "lichess_db_puzzle.csv" if not (args.test_mode or args.single_gpu) else "lichess_db_puzzle_test.csv",
+                "dataset": csv_file,
                 "epochs": max_epochs,
                 "batch_size": batch_size,
                 "test_mode": args.test_mode,
@@ -196,23 +210,26 @@ def main():
     start_epoch = 0
     global_step = 0
 
-    # Always use test dataset to avoid memory issues, unless specifically instructed otherwise
-    if args.test_mode or args.single_gpu:
-        csv_file = 'lichess_db_puzzle_test.csv'
-        if local_rank == 0:
-            print(f"Running with test dataset and class-conditional augmentation (low_memory={args.low_memory})")
-    else:
-        # Use test dataset for safety, the full dataset is likely too large for most systems
-        csv_file = 'lichess_db_puzzle_test.csv'
-        if local_rank == 0:
-            print(f"⚠️ Using test dataset for safety. Full dataset may cause memory issues.")
-            print(f"Using class-conditional augmentation for handling class imbalance (low_memory={args.low_memory})")
+    # csv_file is already set earlier for wandb config
+    if local_rank == 0:
+        if args.test_mode:
+            print(f"Running in TEST MODE with smaller dataset")
+        elif args.single_gpu:
+            print(f"Running in SINGLE GPU MODE with test dataset")
+        else:
+            print(f"Running with FULL DATASET. This may require significant memory and processing time.")
     
-    # Always use low_memory mode by default
+    # Always use low_memory mode for class conditional augmentation to avoid memory issues
     low_memory = True
+    
     if local_rank == 0:
         print(f"Creating dataset from {csv_file} with class_conditional_augmentation=True and low_memory={low_memory}")
+        print(f"⚠️ Processing may take several minutes, especially for the full dataset")
     
+    # Thread limit is already set at the top of the file
+    # No need to set it again here
+    
+    # Create dataset with memory-saving options
     dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=True, low_memory=low_memory)
     
     # Get the number of labels from the dataset
@@ -235,20 +252,28 @@ def main():
         model = torch.nn.DataParallel(model)
     
     # Define the loss function and optimizer
-    # Use weighted BCE loss by default, unless explicitly disabled
-    # Override args.weighted_loss to be True by default
-    args.weighted_loss = True
-    
     if local_rank == 0:
-        print("Computing class weights for weighted BCE loss...")
-    # Compute label weights
-    pos_weights = compute_label_weights(dataset)
-    pos_weights = pos_weights.to(device)
+        print(f"\n{'='*60}")
+        print(f"LOSS FUNCTION: {'Weighted BCE Loss' if args.weighted_loss else 'Standard BCE Loss (no class weights)'}")
+        print(f"{'='*60}\n")
     
-    if local_rank == 0:
-        print("Using weighted BCE loss for class imbalance mitigation")
-    
-    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+    if args.weighted_loss:
+        if local_rank == 0:
+            print("Computing class weights for weighted BCE loss...")
+        # Compute label weights
+        pos_weights = compute_label_weights(dataset)
+        pos_weights = pos_weights.to(device)
+        
+        if local_rank == 0:
+            print("Using weighted BCE loss for class imbalance mitigation")
+        
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+    else:
+        if local_rank == 0:
+            print("Using standard BCE loss without class weights")
+            print("⚠️  WARNING: Not using class weights may result in poor performance on imbalanced datasets")
+            print("⚠️  Consider using --weighted_loss for better results on rare chess themes")
+        criterion = torch.nn.BCEWithLogitsLoss()
     
     # Optimizer settings
     lr = 0.001
@@ -310,8 +335,12 @@ def main():
         print("Test mode enabled, skipping checkpoint loading")
 
     # Split the dataset into train and test sets
+    if local_rank == 0:
+        print("Splitting dataset into train and test sets...")
+        
     random_generator = torch.Generator().manual_seed(42)
     train_dataset, test_dataset = random_split(dataset, [0.8, 0.2], generator=random_generator)
+    
     if local_rank == 0:
         timer.report(f"Initialized datasets with {len(train_dataset):,} training and {len(test_dataset):,} test board evaluations.")
 
@@ -450,14 +479,18 @@ def main():
                 metrics_dict = {}
                 if calculate_detailed_metrics:
                     # Calculate precision, recall, F1 with different averaging methods
+                    # Turn on verbose mode for the first calculation in each epoch
+                    first_in_epoch = (i == 0 and epoch == start_epoch)
+                    
+                    # First batch of each epoch uses verbose mode to show progress
                     precision_micro, recall_micro, f1_micro = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='micro'
+                        output_probs, labels, threshold=0.5, average='micro', verbose=first_in_epoch
                     )
                     precision_macro, recall_macro, f1_macro = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='macro'
+                        output_probs, labels, threshold=0.5, average='macro', verbose=first_in_epoch
                     )
                     precision_weighted, recall_weighted, f1_weighted = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='weighted'
+                        output_probs, labels, threshold=0.5, average='weighted', verbose=first_in_epoch
                     )
                     
                     metrics_dict = {
@@ -477,7 +510,8 @@ def main():
                         # Get label names for the report
                         label_names = dataset.all_labels
                         report = get_classification_report(
-                            output_probs, labels, threshold=0.5, labels=label_names
+                            output_probs, labels, threshold=0.5, labels=label_names,
+                            verbose=(i == 0 and epoch == start_epoch)  # Verbose on first report
                         )
                         print("\nClassification Report:")
                         print(report)

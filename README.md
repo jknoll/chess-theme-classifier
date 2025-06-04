@@ -117,3 +117,30 @@ pprint.pprint(json.load(f))'
 
 This sequence will first generate the conditional augmentation for the small test dataset, then run the training with both class balancing (through the
 conditional augmentation) and cost-sensitive learning (via weighted loss), and finally display the co-occurrence data for analysis.
+
+### Class-Imbalance-Considerate Metrics
+
+ Micro Averaging
+
+  - Calculation: Aggregates all true positives, false positives, and false negatives across all classes before calculating metrics
+  - Emphasis: Gives equal weight to each sample-class pair, favoring performance on common themes
+  - When to use: Best when you want to assess overall effectiveness across all predictions
+  - Example: If your classifier is great at detecting common themes like "mate" but struggles with rare ones, micro metrics will look good
+
+  Macro Averaging
+
+  - Calculation: Calculates metrics for each class independently, then takes the unweighted average
+  - Emphasis: Each chess theme contributes equally regardless of frequency
+  - When to use: When performance on rare themes is as important as common ones
+  - Example: Lower macro than micro scores indicate your model performs worse on rare chess themes
+
+  Weighted Averaging
+
+  - Calculation: Takes a weighted average of per-class metrics, with weights proportional to class frequency
+  - Emphasis: Balances between micro and macro, giving more influence to common themes
+  - When to use: When you want a balanced view that still reflects dataset distribution
+  - Example: Similar weighted and micro scores but lower macro scores suggest your model performs well overall but struggles with some rare themes
+
+  These averages apply to precision (correct predictions/total predictions), recall (correct predictions/actual positives), and F1 (harmonic mean
+  of precision and recall). In your multi-label chess theme context, they help evaluate how well your model identifies all relevant themes for each
+   position.

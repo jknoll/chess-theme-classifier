@@ -10,6 +10,10 @@ import concurrent.futures
 from functools import lru_cache
 import multiprocessing
 
+# Limit OpenMP threads to avoid resource exhaustion
+os.environ['OMP_NUM_THREADS'] = '4'  # Limit OpenMP threads
+os.environ['MKL_NUM_THREADS'] = '4'  # Limit MKL threads
+
 class ChessPuzzleDataset(Dataset):
     def __init__(self, csv_file, cache_size=10000, num_workers=None, augment_with_reflections=False, 
                  class_conditional_augmentation=False, rarity_threshold=None, low_memory=False):
@@ -279,12 +283,14 @@ class ChessPuzzleDataset(Dataset):
         Returns:
             list: List of tensors representing the boards.
         """
-        # For extremely large datasets, consider processing a smaller subset
-        MAX_FENS = 50000  # Maximum number of FENs to process at once
+        # For extremely large datasets, consider processing a subset if class conditional augmentation is enabled
+        # This is because class conditional augmentation is memory intensive and can cause OOM errors
+        MAX_FENS = 100000  # Maximum number of FENs to process with class conditional aug
         
-        # Check if the dataset is very large and we're in low_memory mode
-        if self.low_memory and len(fen_list) > MAX_FENS:
-            print(f"⚠️ Very large dataset detected ({len(fen_list):,} FENs). Processing first {MAX_FENS:,} samples only.")
+        # Check if this is for class conditional augmentation and the dataset is very large
+        if self.class_conditional_augmentation and len(fen_list) > MAX_FENS:
+            print(f"⚠️ Very large dataset detected ({len(fen_list):,} FENs) with class_conditional_augmentation.")
+            print(f"⚠️ For memory efficiency, processing first {MAX_FENS:,} samples only.")
             fen_list = fen_list[:MAX_FENS]
         
         # Split the FEN list into chunks - smaller chunks in low memory mode
@@ -512,6 +518,18 @@ class ChessPuzzleDataset(Dataset):
         # Create basic tensors first (no augmentation)
         basic_tensors = self._parallel_batch_conversion(all_fens, augment_with_reflections=False)
         
+        # Check if any tensors were successfully created
+        if not basic_tensors:
+            print("⚠️ No basic tensors were created. Using an empty tensor cache.")
+            self.tensor_cache = []
+            self.augmented_indices = set()
+            return
+            
+        # Make sure we only process as many indices as we have tensors
+        valid_indices = min(len(self.puzzle_data), len(basic_tensors))
+        if valid_indices < len(self.puzzle_data):
+            print(f"⚠️ Warning: Only processed {valid_indices} out of {len(self.puzzle_data)} puzzles.")
+            
         # Now identify which indices should be augmented (those with rare theme combinations)
         self.augmented_indices = set()
         augmented_tensors = []
@@ -523,10 +541,10 @@ class ChessPuzzleDataset(Dataset):
         # Add progress bar for augmentation process
         try:
             from tqdm import tqdm
-            iterator = tqdm(range(len(self.puzzle_data)), desc="Creating augmented dataset")
+            iterator = tqdm(range(valid_indices), desc="Creating augmented dataset")
         except ImportError:
             print("Processing tensors for augmentation (no progress bar available)...")
-            iterator = range(len(self.puzzle_data))
+            iterator = range(valid_indices)
         
         for idx in iterator:
             # Add the original tensor
@@ -799,20 +817,32 @@ class ChessPuzzleDataset(Dataset):
                 return label_combinations, rare_combinations
         
         # Analyze co-occurrence patterns
-        print("Analyzing theme co-occurrence patterns...")
+        # Sample up to MAX_SAMPLES puzzles for co-occurrence analysis to avoid memory issues
+        MAX_SAMPLES = 100000
+        
+        if len(self.puzzle_data) > MAX_SAMPLES:
+            print(f"⚠️ Large dataset detected. Sampling {MAX_SAMPLES:,} out of {len(self.puzzle_data):,} puzzles for co-occurrence analysis.")
+            # Use random sampling without replacement for a representative subset
+            sample_indices = np.random.choice(len(self.puzzle_data), size=MAX_SAMPLES, replace=False)
+            puzzle_subset = self.puzzle_data.iloc[sample_indices]
+        else:
+            puzzle_subset = self.puzzle_data
+            
+        print(f"Analyzing theme co-occurrence patterns for {len(puzzle_subset):,} puzzles...")
         label_combinations = {}
         
         # Process each puzzle with tqdm progress bar
         try:
             from tqdm import tqdm
-            iterator = tqdm(range(len(self.puzzle_data)), desc="Analyzing theme co-occurrences")
+            iterator = tqdm(range(len(puzzle_subset)), desc="Analyzing theme co-occurrences")
         except ImportError:
             print("tqdm not available, no progress bar will be shown")
-            iterator = range(len(self.puzzle_data))
+            iterator = range(len(puzzle_subset))
             
         for idx in iterator:
             # Get ONLY themes (ignoring opening tags as per updated requirements)
-            themes = self.puzzle_data.iloc[idx]['Themes'].split()
+            # Use puzzle_subset instead of self.puzzle_data
+            themes = puzzle_subset.iloc[idx]['Themes'].split()
             
             # Use only theme labels as the label set
             theme_labels = frozenset(themes)

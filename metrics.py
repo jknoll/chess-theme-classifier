@@ -65,7 +65,7 @@ def jaccard_similarity(pred, target, threshold=0.5):
         union = len(pred_set | target_set)
         return intersection / union if union > 0 else 1.0  # Handle case where both sets are empty
 
-def precision_recall_f1(pred, target, threshold=0.5, average='micro'):
+def precision_recall_f1(pred, target, threshold=0.5, average='micro', verbose=False):
     """
     Calculate precision, recall, and F1 score for multi-label classification.
     
@@ -79,22 +79,45 @@ def precision_recall_f1(pred, target, threshold=0.5, average='micro'):
             - 'weighted': Calculate metrics for each label, and find their average weighted by support
             - 'samples': Calculate metrics for each instance, and find their average
             - None: Return scores for each class
+        verbose (bool): Whether to print progress information
             
     Returns:
         tuple: (precision, recall, f1)
     """
     # Convert to binary predictions based on threshold
+    if verbose:
+        print(f"Converting predictions to binary with threshold {threshold}...")
+    
     pred_binary = (pred > threshold).cpu().numpy()
     target_binary = target.cpu().numpy()
     
     # Calculate precision, recall, F1
-    precision, recall, f1, _ = precision_recall_fscore_support(
-        target_binary, pred_binary, average=average, zero_division=0
-    )
+    if verbose:
+        print(f"Calculating {average} precision, recall, and F1 scores...")
+        
+    try:
+        # Try with progress reporting if tqdm is available and it's verbose mode
+        from tqdm import tqdm
+        if verbose:
+            # Use a dummy progress bar since scikit-learn doesn't provide progress updates
+            with tqdm(total=1, desc=f"Computing {average} metrics") as pbar:
+                precision, recall, f1, _ = precision_recall_fscore_support(
+                    target_binary, pred_binary, average=average, zero_division=0
+                )
+                pbar.update(1)
+        else:
+            precision, recall, f1, _ = precision_recall_fscore_support(
+                target_binary, pred_binary, average=average, zero_division=0
+            )
+    except ImportError:
+        # Fall back if tqdm isn't available
+        precision, recall, f1, _ = precision_recall_fscore_support(
+            target_binary, pred_binary, average=average, zero_division=0
+        )
     
     return precision, recall, f1
 
-def get_classification_report(pred, target, threshold=0.5, labels=None):
+def get_classification_report(pred, target, threshold=0.5, labels=None, verbose=False):
     """
     Generate a text report showing the main classification metrics for multi-label classification.
     
@@ -103,19 +126,41 @@ def get_classification_report(pred, target, threshold=0.5, labels=None):
         target (torch.Tensor): Target binary tensor [batch_size, num_classes]
         threshold (float): Probability threshold for binary prediction
         labels (list): Optional list of label names corresponding to the classes
+        verbose (bool): Whether to print progress information
         
     Returns:
         str: Text summary of the precision, recall, F1 score for each class
     """
     # Convert to binary predictions based on threshold
+    if verbose:
+        print("Converting predictions for classification report...")
+        
     pred_binary = (pred > threshold).cpu().numpy()
     target_binary = target.cpu().numpy()
     
     # Get the classification report
-    report = classification_report(
-        target_binary, pred_binary, 
-        target_names=labels,
-        zero_division=0
-    )
+    if verbose:
+        print("Generating detailed classification report (this might take a moment)...")
+        try:
+            from tqdm import tqdm
+            with tqdm(total=1, desc="Generating classification report") as pbar:
+                report = classification_report(
+                    target_binary, pred_binary, 
+                    target_names=labels,
+                    zero_division=0
+                )
+                pbar.update(1)
+        except ImportError:
+            report = classification_report(
+                target_binary, pred_binary, 
+                target_names=labels,
+                zero_division=0
+            )
+    else:
+        report = classification_report(
+            target_binary, pred_binary, 
+            target_names=labels,
+            zero_division=0
+        )
     
     return report
