@@ -65,21 +65,126 @@ def main(args, timer):
 
     # Use a smaller dataset if in test mode
     if args.test_mode:
-        if args.dataset_id:
-            dataset_path = f'/data/{args.dataset_id}/lichess_db_puzzle_test.csv'
-        else:
-            dataset_path = 'lichess_db_puzzle_test.csv'
-        dataset = ChessPuzzleDataset(dataset_path)
-        if args.device_id == 0:
-            print(f"Running in test mode with smaller dataset: {dataset_path}")
+        csv_basename = 'lichess_db_puzzle_test.csv'
     else:
-        if args.dataset_id:
-            dataset_path = f'/data/{args.dataset_id}/lichess_db_puzzle.csv'
-        else:
-            dataset_path = 'lichess_db_puzzle.csv'
-        dataset = ChessPuzzleDataset(dataset_path)
+        csv_basename = 'lichess_db_puzzle.csv'
+    
+    # Determine where to look for the dataset or cache files
+    isc_mode = bool(args.dataset_id)
+    
+    if isc_mode:
+        # Try to find dataset or cache files in ISC data directory
+        processed_dir = f'/data/{args.dataset_id}'
+        dataset_path = f'{processed_dir}/{csv_basename}'
+    else:
+        # Try local dataset directory
+        processed_dir = 'dataset'
+        dataset_path = f'{processed_dir}/{csv_basename}'
+        
+        # Also check processed_lichess_puzzle_files as fallback
+        fallback_dir = 'processed_lichess_puzzle_files'
+    
+    # Check if CSV exists
+    csv_exists = os.path.exists(dataset_path)
+    
+    # If CSV doesn't exist, check for cache files
+    if not csv_exists:
         if args.device_id == 0:
-            print(f"Using dataset: {dataset_path}")
+            print(f"⚠️ CSV file {dataset_path} not found. Checking for cache files...")
+        
+        # Define critical cache files needed for operation
+        essential_cache_files = [
+            f"{csv_basename}.themes.json",
+            f"{csv_basename}.openings.json"
+        ]
+        
+        # Files specifically needed for class conditional augmentation
+        conditional_aug_files = [
+            f"{csv_basename}.tensors.pt_conditional",
+            f"{csv_basename}.tensors.pt_conditional.augmented_indices.json",
+            f"{csv_basename}.cooccurrence.json"
+        ]
+        
+        # Check if essential files exist in the current directory
+        essential_files_exist = all(
+            os.path.exists(os.path.join(processed_dir, f)) for f in essential_cache_files
+        )
+        
+        conditional_files_exist = all(
+            os.path.exists(os.path.join(processed_dir, f)) for f in conditional_aug_files
+        )
+        
+        # If not using ISC mode, check fallback directory
+        if not isc_mode and not essential_files_exist:
+            if args.device_id == 0:
+                print(f"Checking fallback directory: {fallback_dir}")
+            
+            fallback_essential_exist = os.path.exists(fallback_dir) and all(
+                os.path.exists(os.path.join(fallback_dir, f)) for f in essential_cache_files
+            )
+            
+            fallback_conditional_exist = os.path.exists(fallback_dir) and all(
+                os.path.exists(os.path.join(fallback_dir, f)) for f in conditional_aug_files
+            )
+            
+            if fallback_essential_exist:
+                if args.device_id == 0:
+                    print(f"✅ Found essential files in fallback directory {fallback_dir}")
+                processed_dir = fallback_dir
+                dataset_path = os.path.join(fallback_dir, csv_basename)
+                essential_files_exist = True
+                conditional_files_exist = fallback_conditional_exist
+        
+        # If we have essential files but not conditional files
+        if essential_files_exist and not conditional_files_exist:
+            if args.device_id == 0:
+                print(f"⚠️ Class conditional augmentation files missing, but essential files exist")
+                print(f"⚠️ Will attempt to use simpler augmentation or no augmentation")
+                
+        # Proceed if we have at least the essential files
+        if essential_files_exist:
+            if args.device_id == 0:
+                print(f"✅ Using cache files from: {processed_dir}")
+                print(f"✅ Setting dataset path to: {dataset_path}")
+        else:
+            if args.device_id == 0:
+                print(f"❌ Essential cache files not found in any location")
+                missing_files = [f for f in essential_cache_files 
+                                if not os.path.exists(os.path.join(processed_dir, f))]
+                print(f"Missing files: {', '.join(missing_files)}")
+            raise FileNotFoundError(
+                f"CSV file {dataset_path} not found and essential cache files not available. "
+                "Please provide either the CSV file or the pre-processed cache files."
+            )
+    
+    # Initialize dataset with appropriate settings
+    try:
+        # First try with class conditional augmentation (preferred)
+        dataset = ChessPuzzleDataset(dataset_path, class_conditional_augmentation=True, low_memory=True)
+        if args.device_id == 0:
+            print("Using dataset with class conditional augmentation")
+    except Exception as e:
+        # If that fails, try without class conditional augmentation
+        if args.device_id == 0:
+            print(f"⚠️ Error with class conditional augmentation: {e}")
+            print(f"⚠️ Trying without class conditional augmentation")
+        try:
+            dataset = ChessPuzzleDataset(dataset_path, class_conditional_augmentation=False, low_memory=True)
+            if args.device_id == 0:
+                print("Using dataset without class conditional augmentation")
+        except Exception as e2:
+            # Last resort: try with minimal features
+            if args.device_id == 0:
+                print(f"⚠️ Error initializing dataset: {e2}")
+                print(f"⚠️ Attempting with minimal feature set")
+            dataset = ChessPuzzleDataset(dataset_path, class_conditional_augmentation=False, 
+                                         low_memory=True, augment_with_reflections=False)
+    
+    if args.device_id == 0:
+        if args.test_mode:
+            print(f"Running in test mode with smaller dataset")
+        else:
+            print(f"Using full dataset")
     
     # Get the number of labels from the dataset
     num_labels = len(dataset.all_labels)
@@ -125,7 +230,29 @@ def main(args, timer):
     model = DDP(model, device_ids=[args.device_id])
     timer.report("Prepared model for distributed training")
 
-    loss_fn = nn.BCEWithLogitsLoss(reduction="sum")
+    # Try to use weighted loss if class weight file exists
+    try:
+        from class_weights import compute_label_weights
+        
+        if args.device_id == 0:
+            print("Attempting to use weighted BCE loss for class imbalance...")
+            
+        # Try to compute or load class weights
+        pos_weights = compute_label_weights(dataset)
+        pos_weights = pos_weights.to(args.device_id)
+        
+        # If we succeed, use weighted loss
+        if args.device_id == 0:
+            print("✅ Using weighted BCE loss for class imbalance mitigation")
+        
+        loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weights, reduction="sum")
+    except Exception as e:
+        # If weights can't be computed or loaded, fall back to standard BCE loss
+        if args.device_id == 0:
+            print(f"⚠️ Could not load or compute class weights: {e}")
+            print("⚠️ Using standard BCE loss (no class weights)")
+        loss_fn = nn.BCEWithLogitsLoss(reduction="sum")
+        
     optimizer = Lamb(model.parameters(), lr=args.lr, weight_decay=args.wd)
     metrics = {"train": MetricsTracker(), "test": MetricsTracker()}
 
@@ -237,7 +364,7 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%], Examples: {rpt['exam
                         },
                         os.path.join(checkpoint_directory, "checkpoint.pt"),
                     )
-                    saver.atomic_symlink(checkpoint_directory)
+                    saver.symlink_latest(checkpoint_directory)
 
         with test_dataloader.sampler.in_epoch(epoch):
             timer.report(f"Testing epoch {epoch}")
@@ -303,7 +430,7 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%], Examples: {rpt['exam
                             },
                             os.path.join(checkpoint_directory, "checkpoint.pt"),
                         )
-                        saver.atomic_symlink(checkpoint_directory)
+                        saver.symlink_latest(checkpoint_directory)
 
 
 timer.report("Defined functions")

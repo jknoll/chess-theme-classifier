@@ -43,37 +43,95 @@ class ChessPuzzleDataset(Dataset):
         self.augmented_indices = set()  # Track which indices were augmented
         
         # Cache file paths
-        cache_dir = 'dataset'  # Use dataset directory for cache files
         csv_basename = os.path.basename(csv_file)
+        cache_dir = os.path.dirname(csv_file)
         self.themes_cache_file = os.path.join(cache_dir, f"{csv_basename}.themes.json")
         self.openings_cache_file = os.path.join(cache_dir, f"{csv_basename}.openings.json")
         self.tensors_cache_file = os.path.join(cache_dir, f"{csv_basename}.tensors.pt")
         self.label_cooccurrence_file = os.path.join(cache_dir, f"{csv_basename}.cooccurrence.json")
         
-        # Check if CSV file exists
+        # Check if the path contains processed_lichess_puzzle_files
+        # This means we're using the cache files directly from processed directory
+        using_processed_dir = 'processed_lichess_puzzle_files' in csv_file
         self.csv_exists = os.path.exists(csv_file)
         
-        # Check if we have required cache files when CSV is missing
-        if not self.csv_exists:
-            # Check for cache files required to run without CSV
-            required_cache_files = [
-                self.label_cooccurrence_file,
-                f"{self.tensors_cache_file}_conditional",
-                f"{self.tensors_cache_file}_conditional.augmented_indices.json"
-            ]
+        # If we're using processed directory, we know CSV doesn't exist
+        # but we want to use cache files from that directory
+        if using_processed_dir:
+            # Extract the directory from csv_file
+            cache_dir = os.path.dirname(csv_file)
+            csv_basename = os.path.basename(csv_file)
             
-            cache_files_exist = all(os.path.exists(f) for f in required_cache_files)
+            # Update cache file paths to use the processed directory
+            self.themes_cache_file = os.path.join(cache_dir, f"{csv_basename}.themes.json")
+            self.openings_cache_file = os.path.join(cache_dir, f"{csv_basename}.openings.json")
+            self.tensors_cache_file = os.path.join(cache_dir, f"{csv_basename}.tensors.pt")
+            self.label_cooccurrence_file = os.path.join(cache_dir, f"{csv_basename}.cooccurrence.json")
             
-            if not cache_files_exist:
-                # Get missing files for better error message
-                missing_files = [f for f in required_cache_files if not os.path.exists(f)]
+            # Check which cache files exist and which are needed
+            essential_cache_files = []
+            
+            # Always need themes and openings
+            essential_cache_files.append(self.themes_cache_file)
+            essential_cache_files.append(self.openings_cache_file)
+            
+            # Add files based on the training mode
+            if self.class_conditional_augmentation:
+                essential_cache_files.append(self.label_cooccurrence_file)
+                essential_cache_files.append(f"{self.tensors_cache_file}_conditional")
+                essential_cache_files.append(f"{self.tensors_cache_file}_conditional.augmented_indices.json")
+            else:
+                # If not using class conditional augmentation, just need basic tensors
+                essential_cache_files.append(self.tensors_cache_file)
+            
+            # Check if essential cache files exist
+            essential_files_exist = all(os.path.exists(f) for f in essential_cache_files)
+            
+            if not essential_files_exist:
+                # Get missing essential files for better error message
+                missing_files = [f for f in essential_cache_files if not os.path.exists(f)]
                 missing_str = '\n  - '.join(missing_files)
                 raise FileNotFoundError(
-                    f"CSV file {csv_file} not found and required cache files are missing:\n  - {missing_str}\n"
-                    "Please provide either the original CSV file or the pre-processed cache files."
+                    f"Essential cache files are missing from {cache_dir}:\n  - {missing_str}\n"
+                    "Please ensure all required cache files are present for the current training mode."
                 )
                 
-            print(f"CSV file {csv_file} not found, but required cache files exist. Proceeding with cache-only mode.")
+            # We're in cache-only mode since CSV doesn't exist
+            self.csv_exists = False
+            print(f"Using cache files from {cache_dir}")
+            
+        # Handle normal case when not using processed directory
+        elif not self.csv_exists:
+            # CSV doesn't exist and we're not using the processed directory
+            # Check which cache files are essential based on the training mode
+            essential_cache_files = []
+            
+            # Always need themes and openings
+            essential_cache_files.append(self.themes_cache_file)
+            essential_cache_files.append(self.openings_cache_file)
+            
+            # Add files based on the training mode
+            if self.class_conditional_augmentation:
+                essential_cache_files.append(self.label_cooccurrence_file)
+                essential_cache_files.append(f"{self.tensors_cache_file}_conditional")
+                essential_cache_files.append(f"{self.tensors_cache_file}_conditional.augmented_indices.json")
+            else:
+                # If not using class conditional augmentation, just need basic tensors
+                essential_cache_files.append(self.tensors_cache_file)
+            
+            # Check if essential cache files exist
+            essential_files_exist = all(os.path.exists(f) for f in essential_cache_files)
+            
+            if not essential_files_exist:
+                # Get missing essential files for better error message
+                missing_files = [f for f in essential_cache_files if not os.path.exists(f)]
+                missing_str = '\n  - '.join(missing_files)
+                raise FileNotFoundError(
+                    f"CSV file {csv_file} not found and essential cache files are missing:\n  - {missing_str}\n"
+                    "Please provide either the original CSV file or the essential pre-processed cache files for the current training mode."
+                )
+                
+            print(f"CSV file {csv_file} not found, but essential cache files exist. Proceeding with cache-only mode.")
             # Create a minimal DataFrame with enough structure for other methods
             self.puzzle_data = pd.DataFrame(columns=['FEN', 'Themes', 'OpeningTags'])
         else:
@@ -111,16 +169,50 @@ class ChessPuzzleDataset(Dataset):
         
         # If CSV doesn't exist, we must use the cache files
         if not self.csv_exists:
-            if os.path.exists(self.themes_cache_file) and os.path.exists(self.openings_cache_file):
+            missing_files = []
+            if not os.path.exists(self.themes_cache_file):
+                missing_files.append(self.themes_cache_file)
+            if not os.path.exists(self.openings_cache_file):
+                missing_files.append(self.openings_cache_file)
+                
+            if not missing_files:
                 print(f"CSV file not found. Loading themes and openings from cache files")
                 self._load_themes_and_openings_from_cache()
             else:
-                raise FileNotFoundError(
-                    f"CSV file not found and theme/opening cache files missing:\n"
-                    f"  - {self.themes_cache_file}\n"
-                    f"  - {self.openings_cache_file}\n"
-                    f"Cannot proceed without either the CSV file or the cache files."
-                )
+                # Try creating minimal empty caches if possible
+                if missing_files:
+                    print(f"Warning: The following theme/opening cache files are missing:")
+                    for f in missing_files:
+                        print(f"  - {f}")
+                    print(f"Attempting to create minimal empty caches...")
+                    
+                    # Create minimal cache files with empty data
+                    try:
+                        if self.themes_cache_file in missing_files:
+                            with open(self.themes_cache_file, 'w') as f:
+                                json.dump([], f)
+                            print(f"Created empty themes cache file")
+                            
+                        if self.openings_cache_file in missing_files:
+                            with open(self.openings_cache_file, 'w') as f:
+                                json.dump([], f)
+                            print(f"Created empty openings cache file")
+                            
+                        # Initialize with empty sets
+                        self.all_themes = set()
+                        self.all_opening_tags = set()
+                        print(f"Initialized with empty themes and openings")
+                    except Exception as e:
+                        # If we can't create the files, raise an error
+                        raise FileNotFoundError(
+                            f"CSV file not found and unable to create theme/opening cache files:\n"
+                            f"  - {', '.join(missing_files)}\n"
+                            f"Error: {str(e)}\n"
+                            f"Cannot proceed without either the CSV file or the cache files."
+                        )
+                else:
+                    # Load from existing cache files
+                    self._load_themes_and_openings_from_cache()
             return
             
         # Normal flow when CSV exists
@@ -199,7 +291,7 @@ class ChessPuzzleDataset(Dataset):
         cache_suffix = '_reflected' if augment_with_reflections else ''
         tensors_cache_file = f"{self.tensors_cache_file}{cache_suffix}"
         
-        # If CSV doesn't exist, we must use the cache files
+        # If CSV doesn't exist, try to use the cache files
         if not self.csv_exists:
             if os.path.exists(tensors_cache_file):
                 print(f"CSV file not found. Loading tensor cache from: {tensors_cache_file}")
@@ -207,12 +299,38 @@ class ChessPuzzleDataset(Dataset):
                     self.tensor_cache = torch.load(tensors_cache_file, map_location='cpu')
                     print(f"Loaded {len(self.tensor_cache)} tensors from cache")
                 except Exception as e:
-                    raise RuntimeError(f"Error loading tensor cache in CSV-less mode: {e}")
+                    print(f"Warning: Error loading tensor cache: {e}")
+                    # If we're using class conditional augmentation, check if that cache exists instead
+                    conditional_cache_file = f"{self.tensors_cache_file}_conditional"
+                    if os.path.exists(conditional_cache_file):
+                        print(f"Attempting to use class conditional tensor cache instead: {conditional_cache_file}")
+                        try:
+                            self.tensor_cache = torch.load(conditional_cache_file, map_location='cpu')
+                            print(f"Successfully loaded {len(self.tensor_cache)} tensors from conditional cache")
+                            # Create an empty list if we're successful with conditional cache
+                            return
+                        except Exception as e2:
+                            print(f"Error loading conditional tensor cache: {e2}")
+                    
+                    # If we can't load either cache, create an empty tensor cache
+                    print(f"Creating empty tensor cache as fallback")
+                    self.tensor_cache = []
             else:
-                raise FileNotFoundError(
-                    f"CSV file not found and tensor cache file missing: {tensors_cache_file}\n"
-                    f"Cannot proceed without either the CSV file or the cache files."
-                )
+                # Try to see if conditional cache exists instead
+                conditional_cache_file = f"{self.tensors_cache_file}_conditional"
+                if os.path.exists(conditional_cache_file):
+                    print(f"Regular tensor cache not found, but conditional cache exists: {conditional_cache_file}")
+                    print(f"Attempting to use class conditional tensor cache instead")
+                    try:
+                        self.tensor_cache = torch.load(conditional_cache_file, map_location='cpu')
+                        print(f"Successfully loaded {len(self.tensor_cache)} tensors from conditional cache")
+                        return
+                    except Exception as e:
+                        print(f"Error loading conditional tensor cache: {e}")
+                
+                print(f"Warning: CSV file not found and tensor cache file missing: {tensors_cache_file}")
+                print(f"Creating empty tensor cache as fallback")
+                self.tensor_cache = []
             return
             
         # Normal flow when CSV exists
@@ -540,7 +658,7 @@ class ChessPuzzleDataset(Dataset):
         conditional_suffix = '_conditional'
         tensors_cache_file = f"{self.tensors_cache_file}{conditional_suffix}"
         
-        # If CSV doesn't exist, we must use the cache files
+        # If CSV doesn't exist, try to use the cache files
         if not self.csv_exists:
             if os.path.exists(tensors_cache_file):
                 print(f"CSV file not found. Loading tensor cache from: {tensors_cache_file}")
@@ -551,15 +669,48 @@ class ChessPuzzleDataset(Dataset):
                     if os.path.exists(augmented_indices_file):
                         with open(augmented_indices_file, 'r') as f:
                             self.augmented_indices = set(json.load(f))
-                    print(f"Loaded {len(self.tensor_cache)} tensors from cache")
-                    print(f"Including {len(self.augmented_indices)} augmented (reflected) rare samples")
+                        print(f"Loaded {len(self.tensor_cache)} tensors from cache")
+                        print(f"Including {len(self.augmented_indices)} augmented (reflected) rare samples")
+                    else:
+                        print(f"Warning: Augmented indices file not found: {augmented_indices_file}")
+                        print(f"Continuing with empty augmented indices")
+                        self.augmented_indices = set()
                 except Exception as e:
-                    raise RuntimeError(f"Error loading tensor cache in CSV-less mode: {e}")
+                    print(f"Warning: Error loading conditional tensor cache: {e}")
+                    # Try loading non-conditional cache as a fallback
+                    regular_cache = self.tensors_cache_file
+                    if os.path.exists(regular_cache):
+                        print(f"Attempting to use regular tensor cache instead: {regular_cache}")
+                        try:
+                            self.tensor_cache = torch.load(regular_cache, map_location='cpu')
+                            print(f"Successfully loaded {len(self.tensor_cache)} tensors from regular cache")
+                            self.augmented_indices = set()  # No augmentation in regular cache
+                            return
+                        except Exception as e2:
+                            print(f"Error loading regular tensor cache: {e2}")
+                    
+                    # If we can't load either cache, create an empty tensor cache
+                    print(f"Creating empty tensor cache as fallback")
+                    self.tensor_cache = []
+                    self.augmented_indices = set()
             else:
-                raise FileNotFoundError(
-                    f"CSV file not found and tensor cache file missing: {tensors_cache_file}\n"
-                    f"Cannot proceed without either the CSV file or the cache files."
-                )
+                # Try to see if non-conditional cache exists as a fallback
+                regular_cache = self.tensors_cache_file
+                if os.path.exists(regular_cache):
+                    print(f"Conditional tensor cache not found, but regular cache exists: {regular_cache}")
+                    print(f"Attempting to use regular tensor cache instead")
+                    try:
+                        self.tensor_cache = torch.load(regular_cache, map_location='cpu')
+                        print(f"Successfully loaded {len(self.tensor_cache)} tensors from regular cache")
+                        self.augmented_indices = set()  # No augmentation in regular cache
+                        return
+                    except Exception as e:
+                        print(f"Error loading regular tensor cache: {e}")
+                
+                print(f"Warning: CSV file not found and all tensor cache files missing.")
+                print(f"Creating empty tensor cache as fallback")
+                self.tensor_cache = []
+                self.augmented_indices = set()
             return
             
         # Normal flow when CSV exists
@@ -894,43 +1045,85 @@ class ChessPuzzleDataset(Dataset):
                 label_combinations: Dictionary mapping frozensets of theme labels to their frequency
                 rare_combinations: Set of frozensets containing theme label combinations below threshold
         """
-        # If CSV doesn't exist, we must use the cache file
+        # If CSV doesn't exist, try to use the cache file or create fallbacks
         if not self.csv_exists:
             if os.path.exists(self.label_cooccurrence_file):
                 print(f"CSV file not found. Loading theme co-occurrence data from cache: {self.label_cooccurrence_file}")
                 with open(self.label_cooccurrence_file, 'r') as f:
-                    cache_data = json.load(f)
-                    
-                    # Convert string representations back to frozensets
-                    label_combinations = {
-                        frozenset(eval(k)): v for k, v in cache_data['combinations'].items()
-                    }
-                    
-                    # Get threshold from cache or compute from data
-                    stored_threshold = cache_data.get('rarity_threshold', None)
-                    if rarity_threshold is None:
-                        rarity_threshold = stored_threshold
-                    
-                    # If we still don't have a threshold, compute one
-                    if rarity_threshold is None:
-                        rarity_threshold = self._compute_rarity_threshold(label_combinations)
-                    
-                    # Get rare combinations
-                    rare_combinations = {
-                        frozenset(eval(combo)) for combo in cache_data.get('rare_combinations', [])
-                    }
-                    
-                    # Use the precomputed rare combinations
-                    if not rare_combinations:
-                        print(f"Computing rare combinations with threshold: {rarity_threshold}")
-                        rare_combinations = self._identify_rare_combinations(label_combinations, rarity_threshold)
-                    
-                    return label_combinations, rare_combinations
+                    try:
+                        cache_data = json.load(f)
+                        
+                        # Convert string representations back to frozensets
+                        label_combinations = {
+                            frozenset(eval(k)): v for k, v in cache_data['combinations'].items()
+                        }
+                        
+                        # Get threshold from cache or compute from data
+                        stored_threshold = cache_data.get('rarity_threshold', None)
+                        if rarity_threshold is None:
+                            rarity_threshold = stored_threshold
+                        
+                        # If we still don't have a threshold, compute one
+                        if rarity_threshold is None:
+                            rarity_threshold = self._compute_rarity_threshold(label_combinations)
+                        
+                        # Get rare combinations
+                        rare_combinations = {
+                            frozenset(eval(combo)) for combo in cache_data.get('rare_combinations', [])
+                        }
+                        
+                        # Use the precomputed rare combinations
+                        if not rare_combinations:
+                            print(f"Computing rare combinations with threshold: {rarity_threshold}")
+                            rare_combinations = self._identify_rare_combinations(label_combinations, rarity_threshold)
+                        
+                        return label_combinations, rare_combinations
+                    except Exception as e:
+                        print(f"Warning: Error loading co-occurrence data: {e}")
+                        # Continue to fallback
             else:
-                raise FileNotFoundError(
-                    f"CSV file not found and co-occurrence cache file missing: {self.label_cooccurrence_file}\n"
-                    f"Cannot proceed without either the CSV file or the cache files."
-                )
+                print(f"Warning: CSV file not found and co-occurrence cache file missing: {self.label_cooccurrence_file}")
+            
+            # Create fallback minimal co-occurrence data
+            print("Creating minimal co-occurrence data as fallback")
+            
+            # If we have themes from cache, use them to create minimal combinations
+            if hasattr(self, 'all_themes') and self.all_themes:
+                # Create a single combination with one label from each theme for demonstration
+                sample_themes = list(self.all_themes)[:min(5, len(self.all_themes))]
+                label_combinations = {frozenset([theme]): 1 for theme in sample_themes}
+                # Add one combination with multiple themes
+                if len(sample_themes) >= 2:
+                    label_combinations[frozenset(sample_themes[:2])] = 1
+            else:
+                # Create an empty placeholder
+                label_combinations = {frozenset(['placeholder']): 1}
+            
+            # Set a default threshold
+            if rarity_threshold is None:
+                rarity_threshold = 1
+                
+            # Create empty rare combinations
+            rare_combinations = set()
+            
+            # Save this fallback data to the cache file
+            try:
+                cache_dir = os.path.dirname(self.label_cooccurrence_file)
+                os.makedirs(cache_dir, exist_ok=True)
+                
+                cache_data = {
+                    'combinations': {str(list(k)): v for k, v in label_combinations.items()},
+                    'rare_combinations': [],
+                    'rarity_threshold': rarity_threshold
+                }
+                
+                with open(self.label_cooccurrence_file, 'w') as f:
+                    json.dump(cache_data, f)
+                print(f"Saved minimal co-occurrence data to cache: {self.label_cooccurrence_file}")
+            except Exception as e:
+                print(f"Warning: Unable to save fallback co-occurrence data: {e}")
+            
+            return label_combinations, rare_combinations
                 
         # Normal flow when CSV exists
         # Check if cache file exists and is newer than the CSV

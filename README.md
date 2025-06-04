@@ -122,6 +122,7 @@ conditional augmentation) and cost-sensitive learning (via weighted loss), and f
 
  Micro Averaging
 
+
   - Calculation: Aggregates all true positives, false positives, and false negatives across all classes before calculating metrics
   - Emphasis: Gives equal weight to each sample-class pair, favoring performance on common themes
   - When to use: Best when you want to assess overall effectiveness across all predictions
