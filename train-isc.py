@@ -325,22 +325,23 @@ def main(args, timer):
                 calculate_detailed_metrics = (batch % 100 == 0)
                 metrics_dict = {}
                 
-                if calculate_detailed_metrics and args.is_master:
+                if calculate_detailed_metrics:
                     # Calculate precision, recall, F1 with different averaging methods
                     # Turn on verbose mode for the first calculation in each epoch
                     first_in_epoch = (batch == 0 and epoch == train_dataloader.sampler.epoch)
                     
                     # First batch of each epoch uses verbose mode to show progress
                     precision_micro, recall_micro, f1_micro = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='micro', verbose=first_in_epoch
+                        output_probs, labels, threshold=0.5, average='micro', verbose=first_in_epoch if args.is_master else False
                     )
                     precision_macro, recall_macro, f1_macro = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='macro', verbose=first_in_epoch
+                        output_probs, labels, threshold=0.5, average='macro', verbose=first_in_epoch if args.is_master else False
                     )
                     precision_weighted, recall_weighted, f1_weighted = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='weighted', verbose=first_in_epoch
+                        output_probs, labels, threshold=0.5, average='weighted', verbose=first_in_epoch if args.is_master else False
                     )
                     
+                    # Create metrics dictionary exactly as in train.py
                     metrics_dict = {
                         "precision_micro": precision_micro,
                         "recall_micro": recall_micro,
@@ -366,16 +367,18 @@ def main(args, timer):
                         if args.is_master:
                             writer.add_text('Classification Report', report, batch + epoch * train_batches_per_epoch)
 
+                # Update basic metrics
                 metrics["train"].update({
                     "examples_seen": len(boards),
                     "accum_loss": loss.item() * args.grad_accum,  # undo loss scale
                     "jaccard": jaccard.item()
                 })
-                # Also update with detailed metrics if we calculated them
-                for k, v in metrics_dict.items():
-                    if k not in metrics["train"].local:
-                        metrics["train"].local[k] = 0
-                    metrics["train"].local[k] += v
+                
+                # Store detailed metrics in the dictionary directly
+                if calculate_detailed_metrics:
+                    # Make sure we store all the metrics we calculated for later logging
+                    for k, v in metrics_dict.items():
+                        metrics["train"].local[k] = v
 
                 if is_accum_batch or is_last_batch:
                     optimizer.step()
@@ -406,11 +409,25 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%]{metrics_report}, Exam
 
                     if args.is_master:
                         total_progress = batch + epoch * train_batches_per_epoch
+                        # Match train.py logging format exactly
+                        writer.add_scalar("Loss/train", avg_loss, total_progress)
+                        writer.add_scalar("Jaccard/train", rpt_jaccard, total_progress)
+                        writer.add_scalar("Learning_rate", next_lr, total_progress)
+                        
+                        # Also keep original metrics for backward compatibility
                         writer.add_scalar("train/learn_rate", next_lr, total_progress)
                         writer.add_scalar("train/loss", avg_loss, total_progress)
                         writer.add_scalar("train/batch_jaccard", rpt_jaccard, total_progress)
                         
                         # Log additional metrics if calculated
+                        # First check if we have metrics in the main metrics dictionary
+                        for metric_name in ["precision_micro", "recall_micro", "f1_micro", 
+                                           "precision_macro", "recall_macro", "f1_macro",
+                                           "precision_weighted", "recall_weighted", "f1_weighted"]:
+                            if metric_name in rpt:
+                                writer.add_scalar(f'Metrics/{metric_name}', rpt[metric_name], total_progress)
+                        
+                        # Also log from metrics_dict if available (for backward compatibility)
                         for metric_name, metric_value in metrics_dict.items():
                             writer.add_scalar(f'Metrics/{metric_name}', metric_value, total_progress)
 
@@ -477,18 +494,19 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%]{metrics_report}, Exam
                     
                     # Calculate detailed metrics on the last batch only to avoid overhead
                     metrics_dict = {}
-                    if is_last_batch and args.is_master:
+                    if is_last_batch:
                         # Calculate precision, recall, F1 with different averaging methods
                         precision_micro, recall_micro, f1_micro = precision_recall_f1(
-                            output_probs, labels, threshold=0.5, average='micro'
+                            output_probs, labels, threshold=0.5, average='micro', verbose=args.is_master
                         )
                         precision_macro, recall_macro, f1_macro = precision_recall_f1(
-                            output_probs, labels, threshold=0.5, average='macro'
+                            output_probs, labels, threshold=0.5, average='macro', verbose=args.is_master
                         )
                         precision_weighted, recall_weighted, f1_weighted = precision_recall_f1(
-                            output_probs, labels, threshold=0.5, average='weighted'
+                            output_probs, labels, threshold=0.5, average='weighted', verbose=args.is_master
                         )
                         
+                        # Create metrics dictionary exactly as in train.py
                         metrics_dict = {
                             "precision_micro": precision_micro,
                             "recall_micro": recall_micro,
@@ -516,11 +534,10 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%]{metrics_report}, Exam
                         "jaccard": jaccard.item()
                     })
                     
-                    # Add detailed metrics if we calculated them
-                    for k, v in metrics_dict.items():
-                        if k not in metrics["test"].local:
-                            metrics["test"].local[k] = 0
-                        metrics["test"].local[k] += v
+                    # Store detailed metrics directly for test phase
+                    if metrics_dict:
+                        for k, v in metrics_dict.items():
+                            metrics["test"].local[k] = v
                     
                     # Reporting
                     if is_last_batch:
@@ -539,11 +556,26 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%]{metrics_report}, Exam
                         metrics["test"].reset_local()
 
                         if args.is_master:
+                            # Match train.py logging format exactly
+                            writer.add_scalar("Loss/test", avg_loss, epoch)
+                            writer.add_scalar("Jaccard/test", rpt_jaccard, epoch)
+                            
+                            # Also keep original metrics for backward compatibility
                             writer.add_scalar("test/loss", avg_loss, epoch)
                             writer.add_scalar("test/batch_jaccard", rpt_jaccard, epoch)
                             
-                            # Log additional metrics
+                            # Log additional metrics from both sources
+                            # First from the metrics tracked in local dict
+                            for metric_name in ["precision_micro", "recall_micro", "f1_micro", 
+                                               "precision_macro", "recall_macro", "f1_macro",
+                                               "precision_weighted", "recall_weighted", "f1_weighted"]:
+                                if metric_name in rpt:
+                                    writer.add_scalar(f'Metrics/{metric_name}', rpt[metric_name], epoch)
+                                    writer.add_scalar(f'Metrics/test_{metric_name}', rpt[metric_name], epoch)
+                            
+                            # Also log from metrics_dict if available (for backward compatibility)
                             for metric_name, metric_value in metrics_dict.items():
+                                writer.add_scalar(f'Metrics/{metric_name}', metric_value, epoch)
                                 writer.add_scalar(f'Metrics/test_{metric_name}', metric_value, epoch)
                     
                     # Saving
