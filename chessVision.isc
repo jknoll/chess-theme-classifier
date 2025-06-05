@@ -8,4 +8,4 @@ command = '''
 source /root/chess-theme-classifier/.chess-theme-classifier/bin/activate && 
 cd /root/chess-theme-classifier/ && 
 torchrun --nnodes=$NNODES --nproc-per-node=$N_PROC --master_addr=$MASTER_ADDR --master_port=$MASTER_PORT --node_rank=$RANK 
-train-isc.py --dataset-id uds-lovely-rhinestone-gerbera-250604'''
+train-isc.py --dataset-id uds-lovely-rhinestone-gerbera-250604 --grad-accum 6 --save-steps 50 --model-config model_config.yaml'''
