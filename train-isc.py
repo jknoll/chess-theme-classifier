@@ -1,3 +1,5 @@
+import sys
+# Continue with imports for backward compatibility
 from cycling_utils import TimestampedTimer
 
 timer = TimestampedTimer("Imported TimestampedTimer")
@@ -26,7 +28,7 @@ from cycling_utils import (
 
 from dataset import ChessPuzzleDataset
 from model import Model, Lamb
-from metrics import jaccard_similarity
+from metrics import jaccard_similarity, precision_recall_f1, get_classification_report
 
 timer.report("Completed imports")
 
@@ -257,7 +259,9 @@ def main(args, timer):
     metrics = {"train": MetricsTracker(), "test": MetricsTracker()}
 
     if args.is_master:
-        writer = SummaryWriter(log_dir=os.path.join(args.save_dir, "tb"))
+        tensorboard_log_dir=os.environ["LOSSY_ARTIFACT_PATH"]
+        writer = SummaryWriter(log_dir=tensorboard_log_dir)
+        print(f"Tensorboard logs saved to {tensorboard_log_dir}")
 
     checkpoint_path = None
     local_resume_path = os.path.join(args.save_dir, saver.symlink_name)
@@ -317,11 +321,61 @@ def main(args, timer):
                 output_probs = torch.sigmoid(logits)
                 jaccard = jaccard_similarity(output_probs, labels, threshold=0.5)
 
+                # Calculate detailed metrics every 100 steps to avoid overhead
+                calculate_detailed_metrics = (batch % 100 == 0)
+                metrics_dict = {}
+                
+                if calculate_detailed_metrics and args.is_master:
+                    # Calculate precision, recall, F1 with different averaging methods
+                    # Turn on verbose mode for the first calculation in each epoch
+                    first_in_epoch = (batch == 0 and epoch == train_dataloader.sampler.epoch)
+                    
+                    # First batch of each epoch uses verbose mode to show progress
+                    precision_micro, recall_micro, f1_micro = precision_recall_f1(
+                        output_probs, labels, threshold=0.5, average='micro', verbose=first_in_epoch
+                    )
+                    precision_macro, recall_macro, f1_macro = precision_recall_f1(
+                        output_probs, labels, threshold=0.5, average='macro', verbose=first_in_epoch
+                    )
+                    precision_weighted, recall_weighted, f1_weighted = precision_recall_f1(
+                        output_probs, labels, threshold=0.5, average='weighted', verbose=first_in_epoch
+                    )
+                    
+                    metrics_dict = {
+                        "precision_micro": precision_micro,
+                        "recall_micro": recall_micro,
+                        "f1_micro": f1_micro,
+                        "precision_macro": precision_macro,
+                        "recall_macro": recall_macro,
+                        "f1_macro": f1_macro,
+                        "precision_weighted": precision_weighted,
+                        "recall_weighted": recall_weighted,
+                        "f1_weighted": f1_weighted
+                    }
+                    
+                    # Generate and log full classification report every 1000 steps
+                    if batch % 1000 == 0:
+                        # Get label names for the report
+                        label_names = dataset.all_labels
+                        report = get_classification_report(
+                            output_probs, labels, threshold=0.5, labels=label_names,
+                            verbose=first_in_epoch  # Verbose on first report
+                        )
+                        print("\nClassification Report:")
+                        print(report)
+                        if args.is_master:
+                            writer.add_text('Classification Report', report, batch + epoch * train_batches_per_epoch)
+
                 metrics["train"].update({
                     "examples_seen": len(boards),
                     "accum_loss": loss.item() * args.grad_accum,  # undo loss scale
                     "jaccard": jaccard.item()
                 })
+                # Also update with detailed metrics if we calculated them
+                for k, v in metrics_dict.items():
+                    if k not in metrics["train"].local:
+                        metrics["train"].local[k] = 0
+                    metrics["train"].local[k] += v
 
                 if is_accum_batch or is_last_batch:
                     optimizer.step()
@@ -338,9 +392,15 @@ def main(args, timer):
                     rpt = metrics["train"].local
                     avg_loss = rpt["accum_loss"] / rpt["examples_seen"]
                     rpt_jaccard = 100 * rpt["jaccard"] / ((batch % args.grad_accum + 1) * args.world_size)
+                    
+                    # Add detailed metrics to report if available
+                    metrics_report = ""
+                    if "f1_micro" in rpt:
+                        metrics_report = f" F1-micro: {rpt['f1_micro']:.3f}, F1-macro: {rpt['f1_macro']:.3f}"
+                    
                     report = f"""\
 Epoch [{epoch:,}] Step [{step:,} / {train_steps_per_epoch:,}] Batch [{batch:,} / {train_batches_per_epoch:,}] Lr: [{lr_factor * args.lr:,.3}], \
-Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%], Examples: {rpt['examples_seen']:,.0f}"""
+Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%]{metrics_report}, Examples: {rpt['examples_seen']:,.0f}"""
                     timer.report(report)
                     metrics["train"].reset_local()
 
@@ -349,19 +409,39 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%], Examples: {rpt['exam
                         writer.add_scalar("train/learn_rate", next_lr, total_progress)
                         writer.add_scalar("train/loss", avg_loss, total_progress)
                         writer.add_scalar("train/batch_jaccard", rpt_jaccard, total_progress)
+                        
+                        # Log additional metrics if calculated
+                        for metric_name, metric_value in metrics_dict.items():
+                            writer.add_scalar(f'Metrics/{metric_name}', metric_value, total_progress)
 
                 # Saving
                 if (is_save_batch or is_last_batch) and args.is_master:
-                    # Save checkpoint
+                    # Get current learning rate
+                    current_lr = optimizer.param_groups[0]['lr']
+                    
+                    # Save checkpoint with more detailed information
+                    checkpoint_data = {
+                        "model": model.module.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                        "train_sampler": train_dataloader.sampler.state_dict(),
+                        "test_sampler": test_dataloader.sampler.state_dict(),
+                        "metrics": metrics,
+                        "timer": timer,
+                        "loss": loss.item(),
+                        "jaccard_loss": jaccard.item(),
+                        "learning_rate": current_lr,
+                        "epoch": epoch,
+                        "global_step": batch + epoch * train_batches_per_epoch
+                    }
+                    
+                    # Add any detailed metrics if available
+                    if metrics_dict:
+                        for k, v in metrics_dict.items():
+                            checkpoint_data[k] = v
+                    
+                    # Save the checkpoint
                     atomic_torch_save(
-                        {
-                            "model": model.module.state_dict(),
-                            "optimizer": optimizer.state_dict(),
-                            "train_sampler": train_dataloader.sampler.state_dict(),
-                            "test_sampler": test_dataloader.sampler.state_dict(),
-                            "metrics": metrics,
-                            "timer": timer
-                        },
+                        checkpoint_data,
                         os.path.join(checkpoint_directory, "checkpoint.pt"),
                     )
                     saver.symlink_latest(checkpoint_directory)
@@ -394,6 +474,41 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%], Examples: {rpt['exam
                     # Calculate jaccard similarity for this batch
                     output_probs = torch.sigmoid(logits)
                     jaccard = jaccard_similarity(output_probs, labels, threshold=0.5)
+                    
+                    # Calculate detailed metrics on the last batch only to avoid overhead
+                    metrics_dict = {}
+                    if is_last_batch and args.is_master:
+                        # Calculate precision, recall, F1 with different averaging methods
+                        precision_micro, recall_micro, f1_micro = precision_recall_f1(
+                            output_probs, labels, threshold=0.5, average='micro'
+                        )
+                        precision_macro, recall_macro, f1_macro = precision_recall_f1(
+                            output_probs, labels, threshold=0.5, average='macro'
+                        )
+                        precision_weighted, recall_weighted, f1_weighted = precision_recall_f1(
+                            output_probs, labels, threshold=0.5, average='weighted'
+                        )
+                        
+                        metrics_dict = {
+                            "precision_micro": precision_micro,
+                            "recall_micro": recall_micro,
+                            "f1_micro": f1_micro,
+                            "precision_macro": precision_macro,
+                            "recall_macro": recall_macro,
+                            "f1_macro": f1_macro,
+                            "precision_weighted": precision_weighted,
+                            "recall_weighted": recall_weighted,
+                            "f1_weighted": f1_weighted
+                        }
+                        
+                        # Generate classification report for the test set
+                        label_names = dataset.all_labels
+                        report = get_classification_report(
+                            output_probs, labels, threshold=0.5, labels=label_names
+                        )
+                        print("\nTest Classification Report:")
+                        print(report)
+                        writer.add_text('Test Classification Report', report, epoch)
 
                     metrics["test"].update({
                         "examples_seen": len(boards),
@@ -401,33 +516,67 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%], Examples: {rpt['exam
                         "jaccard": jaccard.item()
                     })
                     
+                    # Add detailed metrics if we calculated them
+                    for k, v in metrics_dict.items():
+                        if k not in metrics["test"].local:
+                            metrics["test"].local[k] = 0
+                        metrics["test"].local[k] += v
+                    
                     # Reporting
                     if is_last_batch:
                         metrics["test"].reduce()
                         rpt = metrics["test"].local
                         avg_loss = rpt["accum_loss"] / rpt["examples_seen"]
                         rpt_jaccard = 100 * rpt["jaccard"] / (test_batches_per_epoch * args.world_size)
-                        report = f"Epoch [{epoch}] Evaluation, Avg Loss [{avg_loss:,.3f}], Jaccard [{rpt_jaccard:,.3f}%]"
+                        
+                        # Add detailed metrics to report if available
+                        metrics_report = ""
+                        if "f1_micro" in rpt:
+                            metrics_report = f", F1-micro: {rpt['f1_micro']:.3f}, F1-macro: {rpt['f1_macro']:.3f}"
+                        
+                        report = f"Epoch [{epoch}] Evaluation, Avg Loss [{avg_loss:,.3f}], Jaccard [{rpt_jaccard:,.3f}%]{metrics_report}"
                         timer.report(report)
                         metrics["test"].reset_local()
 
                         if args.is_master:
                             writer.add_scalar("test/loss", avg_loss, epoch)
                             writer.add_scalar("test/batch_jaccard", rpt_jaccard, epoch)
+                            
+                            # Log additional metrics
+                            for metric_name, metric_value in metrics_dict.items():
+                                writer.add_scalar(f'Metrics/test_{metric_name}', metric_value, epoch)
                     
                     # Saving
                     if (is_save_batch or is_last_batch) and args.is_master:
                         timer.report(f"Saving after test batch [{batch} / {test_batches_per_epoch}]")
-                        # Save checkpoint
+                        
+                        # Get current learning rate
+                        current_lr = optimizer.param_groups[0]['lr']
+                        
+                        # Save checkpoint with more detailed information
+                        checkpoint_data = {
+                            "model": model.module.state_dict(),
+                            "optimizer": optimizer.state_dict(),
+                            "train_sampler": train_dataloader.sampler.state_dict(),
+                            "test_sampler": test_dataloader.sampler.state_dict(),
+                            "metrics": metrics,
+                            "timer": timer,
+                            "loss": loss.item(),
+                            "jaccard_loss": jaccard.item(),
+                            "learning_rate": current_lr,
+                            "epoch": epoch,
+                            "global_step": batch + epoch * test_batches_per_epoch,
+                            "is_test": True  # Mark as test checkpoint
+                        }
+                        
+                        # Add any detailed metrics if available
+                        if metrics_dict:
+                            for k, v in metrics_dict.items():
+                                checkpoint_data[k] = v
+                        
+                        # Save the checkpoint
                         atomic_torch_save(
-                            {
-                                "model": model.module.state_dict(),
-                                "optimizer": optimizer.state_dict(),
-                                "train_sampler": train_dataloader.sampler.state_dict(),
-                                "test_sampler": test_dataloader.sampler.state_dict(),
-                                "metrics": metrics,
-                                "timer": timer
-                            },
+                            checkpoint_data,
                             os.path.join(checkpoint_directory, "checkpoint.pt"),
                         )
                         saver.symlink_latest(checkpoint_directory)
