@@ -11,6 +11,7 @@ from cycling_utils import TimestampedTimer
 import time
 import argparse
 from torch.utils.tensorboard import SummaryWriter
+from pathlib import Path
 import subprocess
 import webbrowser
 import datetime
@@ -20,11 +21,11 @@ from torch.utils.data.distributed import DistributedSampler
 from metrics import jaccard_similarity, precision_recall_f1, get_classification_report
 import wandb
 import torch
+import yaml
 
 timer = TimestampedTimer("Imported TimestampedTimer")
 
 from dataset import ChessPuzzleDataset
-import torch
 from torch.utils.data import DataLoader, random_split
 from model import Model
 from class_weights import compute_label_weights
@@ -102,7 +103,7 @@ def init_distributed(distributed=None):
     torch.cuda.set_device(local_rank)
     return local_rank, True
 
-def parse_args():
+def parse_args(args=None):
     parser = argparse.ArgumentParser(description='Train chess puzzle classifier')
     parser.add_argument('--checkpoint_steps', type=int, default=50000,
                         help='Number of steps between checkpoints (default: 50000)')
@@ -132,11 +133,27 @@ def parse_args():
                         help='Use lower memory settings for dataset processing')
     parser.add_argument('--dataset-id', type=str, default=None,
                         help='Dataset ID for ISC training (overrides environment variable)')
-    return parser.parse_args()
+    parser.add_argument("--grad-accum", help="gradient accumulation steps", type=int, default=6)       
+    parser.add_argument("--save-steps", help="saving interval steps", type=int, default=50)           
+    parser.add_argument("--model-config", help="model config path", type=Path, default="/root/chess-theme-classifier/model_config.yaml")          
+    return parser.parse_args(args)
 
 def main():
     # Parse command line arguments
     args = parse_args()
+
+     # Check for ISC environment
+    isc_mode = "LOSSY_ARTIFACT_PATH" in os.environ
+    if isc_mode:
+        print(f"In cluster mode; NNODES: {os.environ['NNODES']}")
+        dist.init_process_group("nccl")  # Expects RANK set in environment variable
+        rank = int(os.environ["RANK"])  # Rank of this GPU in cluster
+        args.world_size = int(os.environ["WORLD_SIZE"]) # Total number of GPUs in the cluster
+        args.device_id = int(os.environ["LOCAL_RANK"])  # Rank on local node
+        args.is_master = rank == 0  # Master node for saving / reporting
+        torch.cuda.set_device(args.device_id)  # Enables calling 'cuda'
+    else:
+        print("In local mode")
     
     # Determine distributed mode based on command line args
     distributed_override = None
@@ -485,7 +502,47 @@ def main():
     # Create model with the correct number of labels
     # Original hacakthon-winner-3 model config with default nlayers=2.
     # model = Model(num_labels=num_labels)
-    model = Model(num_labels=num_labels, nlayers=5, embed_dim=64, inner_dim=320, attention_dim=64, use_1x1conv=True, dropout=0.5)
+
+    # Load model config or use default values
+    model_config = {}
+    if os.path.exists(args.model_config):
+        model_config = yaml.safe_load(open(args.model_config))
+        
+        # We'll use the full model architecture even with smaller datasets
+        if "num_labels" in model_config:
+            if model_config["num_labels"] < num_labels:
+                # If config has fewer labels than dataset, that's a problem
+                if args.is_master:
+                    print(f"⚠️  Warning: num_labels in model_config ({model_config['num_labels']}) is less than dataset ({num_labels})")
+                    print(f"⚠️  Increasing num_labels to match dataset: {num_labels}")
+                model_config["num_labels"] = num_labels
+            elif model_config["num_labels"] > num_labels:
+                # Using larger model (from full dataset) with smaller dataset (test mode)
+                if args.is_master:
+                    print(f"ℹ️  Using full model architecture with {model_config['num_labels']} output labels")
+                    print(f"ℹ️  Current dataset only has {num_labels} labels (likely using test dataset)")
+                    print(f"ℹ️  Extra outputs will be ignored during training")
+        else:
+            # No num_labels in config, use the dataset's value
+            model_config["num_labels"] = num_labels
+            
+        if args.is_master:
+            print(f"ModelConfig: {model_config}")
+    else:
+        # No config file, use the dataset's value
+        model_config = {
+            "num_labels": num_labels, 
+            "nlayers": 5, 
+            "embed_dim": 64, 
+            "inner_dim": 320, 
+            "attention_dim": 64, 
+            "use_1x1conv": True, 
+            "dropout": 0.5
+        }
+        if args.is_master:
+            print(f"Using default ModelConfig: {model_config}")
+    
+    model = Model(**model_config)
     model = model.to(device)
     
     # Wrap model in DDP if running in distributed mode
@@ -723,9 +780,20 @@ def main():
                 print(f"Batch {i}: Batch size: {batch_size}")
                 print(f"Batch {i}: Number of labels: {num_labels}")
             
-            # Handle shape issues - ensure outputs match labels exactly
-            if outputs.shape != labels.shape:
-                # For debugging
+            # Handle shape issues when using full model with smaller dataset
+            if outputs.shape[1] > labels.shape[1]:
+                # We're using a model with more output labels than in the current dataset
+                if debug_mode:
+                    print(f"Model has more outputs ({outputs.shape[1]}) than dataset labels ({labels.shape[1]})")
+                    print(f"Using only the first {labels.shape[1]} outputs for loss calculation")
+                
+                # Only use the first part of the outputs that match the dataset's labels
+                outputs_for_loss = outputs[:, :labels.shape[1]]
+                
+                if debug_mode:
+                    print(f"Using outputs subset with shape: {outputs_for_loss.shape}")
+            elif outputs.shape != labels.shape:
+                # Some other shape mismatch that needs fixing
                 if debug_mode:
                     print(f"Shape mismatch: outputs {outputs.shape} vs labels {labels.shape}")
                 
@@ -735,21 +803,25 @@ def main():
                 
                 if outputs.dim() == 1:
                     # 1D tensor needs to be reshaped to 2D
-                    outputs = outputs.view(batch_size, feature_dim)
+                    outputs_for_loss = outputs.view(batch_size, feature_dim)
                 elif outputs.dim() == 2:
                     # If dimensions don't match, force reshape
-                    outputs = outputs.view(batch_size, feature_dim)
+                    outputs_for_loss = outputs.view(batch_size, feature_dim)
                 
                 if debug_mode:
-                    print(f"Reshaped outputs to: {outputs.shape}")
+                    print(f"Reshaped outputs to: {outputs_for_loss.shape}")
+            else:
+                # Shapes match exactly
+                outputs_for_loss = outputs
             
-            loss = criterion(outputs, labels)
+            # Use the adjusted outputs for loss calculation
+            loss = criterion(outputs_for_loss, labels)
             
             # Apply sigmoid to get probabilities for metrics calculation
-            output_probs = torch.sigmoid(outputs)
+            # Use the same subset of outputs used for loss calculation
+            output_probs = torch.sigmoid(outputs_for_loss)
             
-            # Output probs should already have the correct shape since we fixed outputs
-            # But just to be safe, verify it matches the labels shape
+            # Verify output_probs matches the labels shape
             if output_probs.shape != labels.shape:
                 if debug_mode:
                     print(f"Warning: Need to reshape output_probs from {output_probs.shape} to {labels.shape}")

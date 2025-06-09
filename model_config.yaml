@@ -1,9 +1,11 @@
 # Model configuration for chess-theme-classifier
 # Based on the winning model architecture from chess-hackathon
-nlayers: 6
+nlayers: 8
 embed_dim: 64
 inner_dim: 320
 attention_dim: 64
 use_1x1conv: true
 dropout: 0.5
+# Number of labels from the full dataset
+# Keep this at 1616 even when using the smaller test dataset
 num_labels: 1616

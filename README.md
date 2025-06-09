@@ -143,5 +143,14 @@ conditional augmentation) and cost-sensitive learning (via weighted loss), and f
   - Example: Similar weighted and micro scores but lower macro scores suggest your model performs well overall but struggles with some rare themes
 
   These averages apply to precision (correct predictions/total predictions), recall (correct predictions/actual positives), and F1 (harmonic mean
-  of precision and recall). In your multi-label chess theme context, they help evaluate how well your model identifies all relevant themes for each
-   position.
+  of precision and recall). In your multi-label chess theme context, they help evaluate how well your model identifies all relevant themes for each 
+  position.
+
+### train.py vs. train-isc.py
+There are currently two separate scripts for training locally versus on the strong Compute ISC. We have undertaken to deduplicate them, and currently `train.py` can be referenced in `chessVision.isc`. Training completes successfully. The train-isc.py script should be considered deprecated. 
+
+### Test Automation
+See ['tests/README.md']('./tests/README.md') for details.
+
+```bash
+python -m pytest

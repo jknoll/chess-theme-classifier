@@ -207,9 +207,29 @@ def main(args, timer):
     model_config = {}
     if os.path.exists(args.model_config):
         model_config = yaml.safe_load(open(args.model_config))
+        
+        # We'll use the full model architecture even with smaller datasets
+        if "num_labels" in model_config:
+            if model_config["num_labels"] < num_labels:
+                # If config has fewer labels than dataset, that's a problem
+                if args.device_id == 0:
+                    print(f"⚠️  Warning: num_labels in model_config ({model_config['num_labels']}) is less than dataset ({num_labels})")
+                    print(f"⚠️  Increasing num_labels to match dataset: {num_labels}")
+                model_config["num_labels"] = num_labels
+            elif model_config["num_labels"] > num_labels:
+                # Using larger model (from full dataset) with smaller dataset (test mode)
+                if args.device_id == 0:
+                    print(f"ℹ️  Using full model architecture with {model_config['num_labels']} output labels")
+                    print(f"ℹ️  Current dataset only has {num_labels} labels (likely using test dataset)")
+                    print(f"ℹ️  Extra outputs will be ignored during training")
+        else:
+            # No num_labels in config, use the dataset's value
+            model_config["num_labels"] = num_labels
+            
         if args.device_id == 0:
             print(f"ModelConfig: {model_config}")
     else:
+        # No config file, use the dataset's value
         model_config = {
             "num_labels": num_labels, 
             "nlayers": 5, 
@@ -221,7 +241,7 @@ def main(args, timer):
         }
         if args.device_id == 0:
             print(f"Using default ModelConfig: {model_config}")
-
+    
     model = Model(**model_config)
     model = model.to(args.device_id)
 
@@ -312,13 +332,27 @@ def main(args, timer):
                     checkpoint_directory = saver.prepare_checkpoint_directory()
 
                 logits = model(boards)
-                loss = loss_fn(logits, labels) / args.grad_accum
+                
+                # Handle shape issues when using full model with smaller dataset
+                if logits.shape[1] > labels.shape[1]:
+                    # We're using a model with more output labels than in the current dataset
+                    if batch == 0 and args.device_id == 0:
+                        print(f"Model has more outputs ({logits.shape[1]}) than dataset labels ({labels.shape[1]})")
+                        print(f"Using only the first {labels.shape[1]} outputs for loss calculation")
+                    
+                    # Only use the first part of the outputs that match the dataset's labels
+                    logits_for_loss = logits[:, :labels.shape[1]]
+                else:
+                    # Shapes match exactly
+                    logits_for_loss = logits
+                
+                loss = loss_fn(logits_for_loss, labels) / args.grad_accum
 
                 loss.backward()
                 train_dataloader.sampler.advance(len(boards))
 
-                # Calculate jaccard similarity for this batch
-                output_probs = torch.sigmoid(logits)
+                # Calculate jaccard similarity for this batch - use the same subset of outputs
+                output_probs = torch.sigmoid(logits_for_loss)
                 jaccard = jaccard_similarity(output_probs, labels, threshold=0.5)
 
                 # Calculate detailed metrics every 100 steps to avoid overhead
@@ -374,11 +408,15 @@ def main(args, timer):
                     "jaccard": jaccard.item()
                 })
                 
-                # Store detailed metrics in the dictionary directly
+                # Store detailed metrics properly for distributed reduction
                 if calculate_detailed_metrics:
-                    # Make sure we store all the metrics we calculated for later logging
+                    # Update metrics dictionary with detailed metrics for proper reduction
+                    metrics_update = {}
                     for k, v in metrics_dict.items():
-                        metrics["train"].local[k] = v
+                        metrics_update[k] = v
+                    
+                    # Use update method to ensure proper handling in distributed settings
+                    metrics["train"].update(metrics_update)
 
                 if is_accum_batch or is_last_batch:
                     optimizer.step()
@@ -419,17 +457,27 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%]{metrics_report}, Exam
                         writer.add_scalar("train/loss", avg_loss, total_progress)
                         writer.add_scalar("train/batch_jaccard", rpt_jaccard, total_progress)
                         
-                        # Log additional metrics if calculated
-                        # First check if we have metrics in the main metrics dictionary
-                        for metric_name in ["precision_micro", "recall_micro", "f1_micro", 
-                                           "precision_macro", "recall_macro", "f1_macro",
-                                           "precision_weighted", "recall_weighted", "f1_weighted"]:
-                            if metric_name in rpt:
-                                writer.add_scalar(f'Metrics/{metric_name}', rpt[metric_name], total_progress)
+                        # Log all available metrics, prioritizing values from reduced metrics
+                        # These are the metrics we want to track
+                        metric_names = ["precision_micro", "recall_micro", "f1_micro", 
+                                       "precision_macro", "recall_macro", "f1_macro",
+                                       "precision_weighted", "recall_weighted", "f1_weighted"]
                         
-                        # Also log from metrics_dict if available (for backward compatibility)
+                        # First log metrics from the reduced metrics dictionary (these are properly synced across nodes)
+                        for metric_name in metric_names:
+                            if metric_name in rpt:
+                                # Found in reduced metrics - use this value
+                                metric_value = rpt[metric_name]
+                                writer.add_scalar(f'Metrics/{metric_name}', metric_value, total_progress)
+                            elif metric_name in metrics_dict:
+                                # Not in reduced metrics but in local metrics_dict - use as fallback
+                                metric_value = metrics_dict[metric_name]
+                                writer.add_scalar(f'Metrics/{metric_name}', metric_value, total_progress)
+                                
+                        # Log any additional metrics not in our standard list
                         for metric_name, metric_value in metrics_dict.items():
-                            writer.add_scalar(f'Metrics/{metric_name}', metric_value, total_progress)
+                            if metric_name not in metric_names:
+                                writer.add_scalar(f'Metrics/{metric_name}', metric_value, total_progress)
 
                 # Saving
                 if (is_save_batch or is_last_batch) and args.is_master:
@@ -485,11 +533,25 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%]{metrics_report}, Exam
                         checkpoint_directory = saver.prepare_checkpoint_directory()
 
                     logits = model(boards)
-                    loss = loss_fn(logits, labels)
+                    
+                    # Handle shape issues when using full model with smaller dataset
+                    if logits.shape[1] > labels.shape[1]:
+                        # We're using a model with more output labels than in the current dataset
+                        if batch == 0 and is_last_batch and args.device_id == 0:
+                            print(f"Test phase: Model has more outputs ({logits.shape[1]}) than dataset labels ({labels.shape[1]})")
+                            print(f"Using only the first {labels.shape[1]} outputs for loss calculation")
+                        
+                        # Only use the first part of the outputs that match the dataset's labels
+                        logits_for_loss = logits[:, :labels.shape[1]]
+                    else:
+                        # Shapes match exactly
+                        logits_for_loss = logits
+                    
+                    loss = loss_fn(logits_for_loss, labels)
                     test_dataloader.sampler.advance(len(boards))
 
-                    # Calculate jaccard similarity for this batch
-                    output_probs = torch.sigmoid(logits)
+                    # Calculate jaccard similarity for this batch - use the same subset of outputs
+                    output_probs = torch.sigmoid(logits_for_loss)
                     jaccard = jaccard_similarity(output_probs, labels, threshold=0.5)
                     
                     # Calculate detailed metrics on the last batch only to avoid overhead
@@ -534,10 +596,15 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%]{metrics_report}, Exam
                         "jaccard": jaccard.item()
                     })
                     
-                    # Store detailed metrics directly for test phase
+                    # Store detailed metrics properly for distributed reduction in test phase
                     if metrics_dict:
+                        # Update metrics dictionary with detailed metrics for proper reduction
+                        metrics_update = {}
                         for k, v in metrics_dict.items():
-                            metrics["test"].local[k] = v
+                            metrics_update[k] = v
+                        
+                        # Use update method to ensure proper handling in distributed settings
+                        metrics["test"].update(metrics_update)
                     
                     # Reporting
                     if is_last_batch:
@@ -564,19 +631,30 @@ Avg Loss [{avg_loss:,.3f}], Jaccard: [{rpt_jaccard:,.3f}%]{metrics_report}, Exam
                             writer.add_scalar("test/loss", avg_loss, epoch)
                             writer.add_scalar("test/batch_jaccard", rpt_jaccard, epoch)
                             
-                            # Log additional metrics from both sources
-                            # First from the metrics tracked in local dict
-                            for metric_name in ["precision_micro", "recall_micro", "f1_micro", 
-                                               "precision_macro", "recall_macro", "f1_macro",
-                                               "precision_weighted", "recall_weighted", "f1_weighted"]:
-                                if metric_name in rpt:
-                                    writer.add_scalar(f'Metrics/{metric_name}', rpt[metric_name], epoch)
-                                    writer.add_scalar(f'Metrics/test_{metric_name}', rpt[metric_name], epoch)
+                            # Log all available metrics for test phase, prioritizing values from reduced metrics
+                            # These are the metrics we want to track
+                            metric_names = ["precision_micro", "recall_micro", "f1_micro", 
+                                           "precision_macro", "recall_macro", "f1_macro",
+                                           "precision_weighted", "recall_weighted", "f1_weighted"]
                             
-                            # Also log from metrics_dict if available (for backward compatibility)
+                            # First log metrics from the reduced metrics dictionary (these are properly synced across nodes)
+                            for metric_name in metric_names:
+                                if metric_name in rpt:
+                                    # Found in reduced metrics - use this value
+                                    metric_value = rpt[metric_name]
+                                    writer.add_scalar(f'Metrics/{metric_name}', metric_value, epoch)
+                                    writer.add_scalar(f'Metrics/test_{metric_name}', metric_value, epoch)
+                                elif metric_name in metrics_dict:
+                                    # Not in reduced metrics but in local metrics_dict - use as fallback
+                                    metric_value = metrics_dict[metric_name]
+                                    writer.add_scalar(f'Metrics/{metric_name}', metric_value, epoch)
+                                    writer.add_scalar(f'Metrics/test_{metric_name}', metric_value, epoch)
+                                    
+                            # Log any additional metrics not in our standard list
                             for metric_name, metric_value in metrics_dict.items():
-                                writer.add_scalar(f'Metrics/{metric_name}', metric_value, epoch)
-                                writer.add_scalar(f'Metrics/test_{metric_name}', metric_value, epoch)
+                                if metric_name not in metric_names:
+                                    writer.add_scalar(f'Metrics/{metric_name}', metric_value, epoch)
+                                    writer.add_scalar(f'Metrics/test_{metric_name}', metric_value, epoch)
                     
                     # Saving
                     if (is_save_batch or is_last_batch) and args.is_master:
