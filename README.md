@@ -156,5 +156,7 @@ There are currently two separate scripts for training locally versus on the stro
 ### Test Automation
 See ['tests/README.md']('./tests/README.md') for details.
 
+Tests run on every push and pull request via github actions, as defined in ['.github/workflows/test.yml']('.github/workflows/test.yml')
+
 ```bash
 python -m pytest
