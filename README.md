@@ -1,3 +1,7 @@
+
+
+![CI](https://github.com/jknoll/chess-theme-classifier/actions/workflows/test.yml/badge.svg)
+
 ## Get Started
 ```bash
 apt update && apt install -y python3-dev python3-pip python3-virtualenv git nano
