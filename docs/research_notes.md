@@ -1,5 +1,18 @@
+2025-06-10
+We need a key metric for model performance. We could use
+F1 score
+Jaccard Similarity
+
+(or some of the micro/macro/precision versions)
+But it's not clear if they are being calculated or logged correctly right now.
+
+Let's focus on Jaccard similarity to start, then add a working F1 score before tackling the (micro/macro/precision) values.
+
+Prior notes:
+
 We are training a multilabel classifier to take an input chess game and output a set of label probabilities. We use Binary Cross Entropy with Logits as the loss function.
-The model at present is a very simple convnet. It doesn't use embeddings to represent the board.
+The model at present is a very simple convnet. It doesn't use embeddings to represent the board. (no longer the case, we're using the hackathon-3-winner regression model, adapted to the multilabel classification task (output layer size and activation, loss function))
+
 We then threshold the label probabilities (e.g. 0.5) to represent the chosen labels.
 We generate a co-occurrence matrix to see how well the classifier is performing. We also calculate the Jaccard Index.
 A strong/highlighted diagonal is the sign of a good classification result in the co-occurrence matrix.

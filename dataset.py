@@ -9,6 +9,7 @@ import time
 import concurrent.futures
 from functools import lru_cache
 import multiprocessing
+from torch.serialization import add_safe_globals
 
 # Limit OpenMP threads to avoid resource exhaustion
 os.environ['OMP_NUM_THREADS'] = '4'  # Limit OpenMP threads
@@ -296,7 +297,7 @@ class ChessPuzzleDataset(Dataset):
             if os.path.exists(tensors_cache_file):
                 print(f"CSV file not found. Loading tensor cache from: {tensors_cache_file}")
                 try:
-                    self.tensor_cache = torch.load(tensors_cache_file, map_location='cpu')
+                    self.tensor_cache = torch.load(tensors_cache_file, map_location='cpu', weights_only=False)
                     print(f"Loaded {len(self.tensor_cache)} tensors from cache")
                 except Exception as e:
                     print(f"Warning: Error loading tensor cache: {e}")
@@ -305,7 +306,7 @@ class ChessPuzzleDataset(Dataset):
                     if os.path.exists(conditional_cache_file):
                         print(f"Attempting to use class conditional tensor cache instead: {conditional_cache_file}")
                         try:
-                            self.tensor_cache = torch.load(conditional_cache_file, map_location='cpu')
+                            self.tensor_cache = torch.load(conditional_cache_file, map_location='cpu', weights_only=False)
                             print(f"Successfully loaded {len(self.tensor_cache)} tensors from conditional cache")
                             # Create an empty list if we're successful with conditional cache
                             return
@@ -322,7 +323,7 @@ class ChessPuzzleDataset(Dataset):
                     print(f"Regular tensor cache not found, but conditional cache exists: {conditional_cache_file}")
                     print(f"Attempting to use class conditional tensor cache instead")
                     try:
-                        self.tensor_cache = torch.load(conditional_cache_file, map_location='cpu')
+                        self.tensor_cache = torch.load(conditional_cache_file, map_location='cpu', weights_only=False)
                         print(f"Successfully loaded {len(self.tensor_cache)} tensors from conditional cache")
                         return
                     except Exception as e:
@@ -345,7 +346,7 @@ class ChessPuzzleDataset(Dataset):
             print(f"Loading tensors from cache file: {tensors_cache_file}")
             # Use memory mapping for efficient loading of large tensor files
             try:
-                self.tensor_cache = torch.load(tensors_cache_file, map_location='cpu')
+                self.tensor_cache = torch.load(tensors_cache_file, map_location='cpu', weights_only=False)
                 print(f"Loaded {len(self.tensor_cache)} tensors from cache")
             except Exception as e:
                 print(f"Error loading tensor cache: {e}")
@@ -653,6 +654,7 @@ class ChessPuzzleDataset(Dataset):
         """
         Load tensor cache if it exists and is newer than the CSV and co-occurrence cache,
         otherwise create it by selectively augmenting only the rare label combinations.
+        Handles both old (tensors only) and new (tensors and labels) cache formats.
         """
         # Define cache file with conditional suffix
         conditional_suffix = '_conditional'
@@ -663,7 +665,23 @@ class ChessPuzzleDataset(Dataset):
             if os.path.exists(tensors_cache_file):
                 print(f"CSV file not found. Loading tensor cache from: {tensors_cache_file}")
                 try:
-                    self.tensor_cache = torch.load(tensors_cache_file, map_location='cpu')
+                    # Load the cache file
+                    cache_data = torch.load(tensors_cache_file, map_location='cpu', weights_only=False)
+                    
+                    # Check if this is the new format (dictionary with tensors and labels)
+                    if isinstance(cache_data, dict) and 'tensors' in cache_data and 'labels' in cache_data:
+                        print(f"Found new format cache with tensors and labels (version {cache_data.get('format_version', 1)})")
+                        self.tensor_cache = cache_data['tensors']
+                        self.label_cache = cache_data['labels']
+                        has_labels = True
+                    else:
+                        # Old format (just tensors)
+                        print(f"Found old format cache (tensors only)")
+                        self.tensor_cache = cache_data
+                        # Create an empty label cache
+                        self.label_cache = None
+                        has_labels = False
+                    
                     # Load the augmented indices
                     augmented_indices_file = f"{tensors_cache_file}.augmented_indices.json"
                     if os.path.exists(augmented_indices_file):
@@ -671,6 +689,8 @@ class ChessPuzzleDataset(Dataset):
                             self.augmented_indices = set(json.load(f))
                         print(f"Loaded {len(self.tensor_cache)} tensors from cache")
                         print(f"Including {len(self.augmented_indices)} augmented (reflected) rare samples")
+                        if has_labels:
+                            print(f"Cache includes label data for use in cache-only mode")
                     else:
                         print(f"Warning: Augmented indices file not found: {augmented_indices_file}")
                         print(f"Continuing with empty augmented indices")
@@ -682,7 +702,13 @@ class ChessPuzzleDataset(Dataset):
                     if os.path.exists(regular_cache):
                         print(f"Attempting to use regular tensor cache instead: {regular_cache}")
                         try:
-                            self.tensor_cache = torch.load(regular_cache, map_location='cpu')
+                            cache_data = torch.load(regular_cache, map_location='cpu', weights_only=False)
+                            if isinstance(cache_data, dict) and 'tensors' in cache_data:
+                                self.tensor_cache = cache_data['tensors']
+                                self.label_cache = cache_data.get('labels')
+                            else:
+                                self.tensor_cache = cache_data
+                                self.label_cache = None
                             print(f"Successfully loaded {len(self.tensor_cache)} tensors from regular cache")
                             self.augmented_indices = set()  # No augmentation in regular cache
                             return
@@ -692,6 +718,7 @@ class ChessPuzzleDataset(Dataset):
                     # If we can't load either cache, create an empty tensor cache
                     print(f"Creating empty tensor cache as fallback")
                     self.tensor_cache = []
+                    self.label_cache = None
                     self.augmented_indices = set()
             else:
                 # Try to see if non-conditional cache exists as a fallback
@@ -700,7 +727,13 @@ class ChessPuzzleDataset(Dataset):
                     print(f"Conditional tensor cache not found, but regular cache exists: {regular_cache}")
                     print(f"Attempting to use regular tensor cache instead")
                     try:
-                        self.tensor_cache = torch.load(regular_cache, map_location='cpu')
+                        cache_data = torch.load(regular_cache, map_location='cpu', weights_only=False)
+                        if isinstance(cache_data, dict) and 'tensors' in cache_data:
+                            self.tensor_cache = cache_data['tensors']
+                            self.label_cache = cache_data.get('labels')
+                        else:
+                            self.tensor_cache = cache_data
+                            self.label_cache = None
                         print(f"Successfully loaded {len(self.tensor_cache)} tensors from regular cache")
                         self.augmented_indices = set()  # No augmentation in regular cache
                         return
@@ -710,6 +743,7 @@ class ChessPuzzleDataset(Dataset):
                 print(f"Warning: CSV file not found and all tensor cache files missing.")
                 print(f"Creating empty tensor cache as fallback")
                 self.tensor_cache = []
+                self.label_cache = None
                 self.augmented_indices = set()
             return
             
@@ -727,7 +761,19 @@ class ChessPuzzleDataset(Dataset):
             print(f"Loading conditionally augmented tensors from cache file: {tensors_cache_file}")
             # Use memory mapping for efficient loading of large tensor files
             try:
-                self.tensor_cache = torch.load(tensors_cache_file, map_location='cpu')
+                cache_data = torch.load(tensors_cache_file, map_location='cpu', weights_only=False)
+                
+                # Check if this is the new format (dictionary with tensors and labels)
+                if isinstance(cache_data, dict) and 'tensors' in cache_data and 'labels' in cache_data:
+                    print(f"Found new format cache with tensors and labels (version {cache_data.get('format_version', 1)})")
+                    self.tensor_cache = cache_data['tensors']
+                    self.label_cache = cache_data['labels']
+                else:
+                    # Old format (just tensors)
+                    print(f"Found old format cache (tensors only)")
+                    self.tensor_cache = cache_data
+                    self.label_cache = None
+                
                 # Load the augmented indices
                 augmented_indices_file = f"{tensors_cache_file}.augmented_indices.json"
                 if os.path.exists(augmented_indices_file):
@@ -735,6 +781,8 @@ class ChessPuzzleDataset(Dataset):
                         self.augmented_indices = set(json.load(f))
                 print(f"Loaded {len(self.tensor_cache)} tensors from cache")
                 print(f"Including {len(self.augmented_indices)} augmented (reflected) rare samples")
+                if self.label_cache is not None:
+                    print(f"Cache includes label data for use in cache-only mode")
             except Exception as e:
                 print(f"Error loading tensor cache: {e}")
                 print("Regenerating tensor cache...")
@@ -746,6 +794,7 @@ class ChessPuzzleDataset(Dataset):
         """
         Create a tensor cache with conditional augmentation based on label rarity.
         Only rare label combinations will be augmented with horizontal reflections.
+        Also includes labels in the cache for use in cache-only mode.
         """
         print(f"Creating conditional tensor cache for {len(self.puzzle_data):,} puzzles...")
         start_time = time.time()
@@ -770,7 +819,9 @@ class ChessPuzzleDataset(Dataset):
             
         # Now identify which indices should be augmented (those with rare theme combinations)
         self.augmented_indices = set()
-        augmented_tensors = []
+        
+        # Store both tensors and labels in the cache
+        cache_entries = []
         
         # Map from original index to tensor cache index
         original_to_cache_idx = {}
@@ -785,15 +836,37 @@ class ChessPuzzleDataset(Dataset):
             iterator = range(valid_indices)
         
         for idx in iterator:
-            # Add the original tensor
-            augmented_tensors.append(basic_tensors[idx])
+            # Create label vector for this item
+            label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
+            
+            # Get themes and opening tags
+            themes = self.puzzle_data.iloc[idx]['Themes'].split()
+            opening_tags = []
+            if pd.notna(self.puzzle_data.iloc[idx]['OpeningTags']):
+                opening_tags = self.puzzle_data.iloc[idx]['OpeningTags'].split()
+            
+            # Add themes to label vector
+            for theme in themes:
+                if theme in self.label_to_idx:  # Ensure theme exists in our index
+                    theme_idx = self.label_to_idx[theme]
+                    label_vector[theme_idx] = 1
+            
+            # Add opening tags to label vector
+            for tag in opening_tags:
+                if tag in self.label_to_idx:
+                    tag_idx = self.label_to_idx[tag]
+                    label_vector[tag_idx] = 1
+            
+            # Add the original tensor and label vector
+            cache_entries.append({
+                'tensor': basic_tensors[idx],
+                'labels': label_vector,
+                'is_reflection': False
+            })
             original_to_cache_idx[idx] = next_tensor_idx
             next_tensor_idx += 1
             
             # Check if this puzzle has rare theme combinations that should be augmented
-            # Get ONLY themes (ignoring opening tags as per updated requirements)
-            themes = self.puzzle_data.iloc[idx]['Themes'].split()
-            
             # Use only theme labels as the label set
             theme_labels = frozenset(themes)
             
@@ -801,19 +874,37 @@ class ChessPuzzleDataset(Dataset):
             if theme_labels in self.rare_combinations:
                 # Reflect the tensor horizontally
                 reflected_tensor = self.reflect_tensor_horizontally(basic_tensors[idx])
-                augmented_tensors.append(reflected_tensor)
+                
+                # Create label vector for reflection (only include themes, not opening tags)
+                reflection_label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
+                for theme in themes:
+                    if theme in self.label_to_idx:
+                        theme_idx = self.label_to_idx[theme]
+                        reflection_label_vector[theme_idx] = 1
+                
+                # Add the reflected tensor and label vector
+                cache_entries.append({
+                    'tensor': reflected_tensor,
+                    'labels': reflection_label_vector,
+                    'is_reflection': True
+                })
                 
                 # Track that this index was augmented
                 self.augmented_indices.add(idx)
                 next_tensor_idx += 1
         
-        # Set the tensor cache
-        self.tensor_cache = augmented_tensors
+        # Set the tensor cache (just the tensors for backward compatibility)
+        self.tensor_cache = [entry['tensor'] for entry in cache_entries]
+        self.label_cache = [entry['labels'] for entry in cache_entries]
         
         # Save to disk
         tensors_cache_file = f"{self.tensors_cache_file}_conditional"
-        print(f"Saving conditional tensor cache to: {tensors_cache_file}")
-        torch.save(self.tensor_cache, tensors_cache_file)
+        print(f"Saving conditional tensor cache with labels to: {tensors_cache_file}")
+        torch.save({
+            'tensors': self.tensor_cache,
+            'labels': self.label_cache,
+            'format_version': 2  # Add version to indicate the new format
+        }, tensors_cache_file)
         
         # Also save the augmented indices for future reference
         augmented_indices_file = f"{tensors_cache_file}.augmented_indices.json"
@@ -911,10 +1002,16 @@ class ChessPuzzleDataset(Dataset):
         # In cache-only mode, we won't have labels from the CSV
         # Instead, we'll rely on the labels embedded in the cache files
         if not self.csv_exists:
-            # In cache-only mode, since we don't have the original labels,
-            # we'll use an empty label vector
-            # The model will use this for prediction but not for training
-            pass
+            # In cache-only mode, we must have cached labels
+            if hasattr(self, 'label_cache') and self.label_cache is not None:
+                # Use the cached labels for this index
+                label_vector = self.label_cache[idx]
+            else:
+                # If no cached labels, raise an error - we can't train or predict without labels
+                raise RuntimeError(
+                    "Running in cache-only mode but no labels are available in the cache. "
+                    "Please regenerate the cache with the latest version of the code that stores labels."
+                )
         else:
             # Always include theme labels
             for theme in themes:
@@ -1017,7 +1114,8 @@ class ChessPuzzleDataset(Dataset):
         # Convert to list of (theme, count) tuples and sort by count in descending order
         freq_list = sorted(theme_counts.items(), key=lambda x: x[1], reverse=True)
         return freq_list
-    
+
+
     def get_opening_frequencies(self):
         """Return a list of opening tag frequencies sorted by count."""
         opening_counts = {}
@@ -1408,3 +1506,15 @@ class ChessPuzzleDataset(Dataset):
         
         return results
     
+
+# Add necessary classes to PyTorch's serialization allowlist to avoid FutureWarning
+add_safe_globals([
+    # Core modules and classes
+    np, torch, pd, lru_cache, Board, Piece, SQUARES, ChessPuzzleDataset, 
+    # Container types
+    list, dict, set, frozenset, tuple, 
+    # PyTorch tensor types
+    torch.Tensor, torch.int8, torch.float32,
+    # Basic Python types
+    int, float, bool, str
+])

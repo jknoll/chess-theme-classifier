@@ -2,6 +2,8 @@
 
 ![CI](https://github.com/jknoll/chess-theme-classifier/actions/workflows/test.yml/badge.svg)
 
+# Introduction
+
 ## Get Started
 ```bash
 apt update && apt install -y python3-dev python3-pip python3-virtualenv git nano
@@ -68,6 +70,7 @@ python train.py --distributed
 --checkpoint_steps  Number of steps between saving checkpoints (default: 50000)
 ```
 
+The test mode dataset is not specially constructed in any way. It is merely the first _n_ lines of the full dataset. 
 
 ## Testing Performance
 Generate a co-occurrence matrix for testing with:
@@ -83,7 +86,7 @@ Optional parameters:
 ```
 
 ## Tensorized Dataset
-
+The original dataset is a lichess puzzle CSV file. The training script and dataset class will parse this file and generate a set of board tensors and other dataset cache files. For example, the list of all classes, that is, themes and openings found in the input dataset as separate cache files. If the CSV file is not found, these cache files are found by default in `./processed_chess_puzzle_files`. Then training will run with these as input. 
 
 ## Class Imbalance and Corrected Dataset
 The dataset is class-imbalanced by default. There is a long-tail distribution of examples of particular openings (especially specialized branches of rarer openings) and of particular themes. We have generated 
@@ -112,6 +115,8 @@ python -c "from dataset import ChessPuzzleDataset; ChessPuzzleDataset('lichess_d
 ```bash
 python train_locally_single_gpu.py --test_mode --weighted_loss
 ```
+
+When running with both the class-balanced dataset and weighted loss, we see very unstable training. For example, Jaccard similarity will drop to zero and then spike up to very high values repeatedly.
 
 ### To view the co-occurrence matrices for the class-balanced dataset
 ```bash
@@ -156,7 +161,8 @@ There are currently two separate scripts for training locally versus on the stro
 ### Test Automation
 See ['tests/README.md']('./tests/README.md') for details.
 
-Tests run on every push and pull request via github actions, as defined in ['.github/workflows/test.yml']('.github/workflows/test.yml')
+Tests inside /tests run on every push and pull request via github actions, as defined in ['.github/workflows/test.yml']('.github/workflows/test.yml') There are some other tests located in the project root directory, which are preserved for historical purposes. Only those tests within `/tests` should be considered maintained. 
 
 ```bash
-python -m pytest
+python -m pytest /tests
+```

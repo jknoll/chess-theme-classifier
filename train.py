@@ -830,10 +830,39 @@ def main():
                 feature_dim = labels.size(1)
                 output_probs = output_probs.view(batch_size, feature_dim)
                 
-            jaccard_loss = jaccard_similarity(output_probs, labels, threshold=0.5)
+            # Calculate Jaccard similarity with detailed debugging on first batch of first epoch
+            # Force verbose mode for the first few batches regardless of dataset mode
+            debug_jaccard = detailed_debug or (i < 3 and epoch == start_epoch)
+            
+            # Add additional diagnostics for the first batch
+            if i == 0 and epoch == start_epoch:
+                # Print statistics about the predictions and targets
+                print("\n----- JACCARD SIMILARITY DIAGNOSTICS -----")
+                print(f"Output probabilities - min: {output_probs.min().item():.4f}, max: {output_probs.max().item():.4f}, mean: {output_probs.mean().item():.4f}")
+                print(f"Target labels - min: {labels.min().item():.4f}, max: {labels.max().item():.4f}, mean: {labels.mean().item():.4f}")
+                
+                # Check how many positive values are in labels
+                positive_labels = labels.sum().item()
+                total_labels = labels.numel()
+                print(f"Positive labels: {positive_labels} / {total_labels} = {positive_labels/total_labels:.6f}")
+                
+                # Print a few sample values
+                num_samples = min(5, output_probs.size(0))
+                num_features = min(10, output_probs.size(1))
+                print(f"Sample output probabilities (first {num_samples} samples, first {num_features} features):")
+                for s in range(num_samples):
+                    print(f"  Sample {s}: {output_probs[s, :num_features].cpu().tolist()}")
+                    
+                print(f"Sample labels (first {num_samples} samples, first {num_features} features):")
+                for s in range(num_samples):
+                    print(f"  Sample {s}: {labels[s, :num_features].cpu().tolist()}")
+                print("-----------------------------------------\n")
+            
+            jaccard_loss = jaccard_similarity(output_probs, labels, threshold=0.5, 
+                                             adaptive_threshold=True, verbose=debug_jaccard)
             
             # Calculate precision, recall, F1 metrics (every 100 steps to avoid overhead)
-            calculate_detailed_metrics = (i % 100 == 0)
+            calculate_detailed_metrics = (i % 10 == 0)
             
             loss.backward()
             optimizer.step()
@@ -855,13 +884,13 @@ def main():
                     
                     # First batch of each epoch uses verbose mode to show progress
                     precision_micro, recall_micro, f1_micro = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='micro', verbose=first_in_epoch
+                        output_probs, labels, threshold=0.5, average='micro', verbose=True, adaptive_threshold=True
                     )
                     precision_macro, recall_macro, f1_macro = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='macro', verbose=first_in_epoch
+                        output_probs, labels, threshold=0.5, average='macro', verbose=True, adaptive_threshold=True
                     )
                     precision_weighted, recall_weighted, f1_weighted = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='weighted', verbose=first_in_epoch
+                        output_probs, labels, threshold=0.5, average='weighted', verbose=True, adaptive_threshold=True
                     )
                     
                     metrics_dict = {
@@ -875,6 +904,7 @@ def main():
                         "recall_weighted": recall_weighted,
                         "f1_weighted": f1_weighted
                     }
+                    print(f"epoch: {epoch} step: {i} metrics_dict: {metrics_dict}")
                     
                     # Generate and log full classification report every 1000 steps
                     if i % 1000 == 0:
