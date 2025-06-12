@@ -191,3 +191,4 @@ lichess_db_puzzle_small.csv.themes.json
 lichess_db_puzzle_test.csv.tensors.pt
 
 **/.claude/settings.local.json
+dataset/lichess_db_puzzle.csv.tensors.pt_conditional
