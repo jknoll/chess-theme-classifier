@@ -11,8 +11,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Custom batch size: `python train.py --batch_size 8`
 - Custom epochs: `python train.py --epochs 5`
 - Legacy single GPU training: `python train_locally_single_gpu.py` (deprecated, use `--single_gpu` flag instead)
-- Model Evaluation: `python evaluate_model_classification.py` (evaluates trained model on 20,000 samples by default)
-- Running evaluation on specific sample size: `python evaluate_model_classification.py --num_samples 5000`
+
+### Model Evaluation
+- Standard evaluation (recommended): `python evaluate_model_classification.py` (with adaptive thresholding)
+- Evaluation with specific sample size: `python evaluate_model_classification.py --num_samples 1000`
+- Evaluation with fixed threshold: `python evaluate_model_classification.py --threshold 0.3`
+- Verbose evaluation output: `python evaluate_model_classification.py --verbose`
+- Minimized output for token efficiency: `python evaluate_model_classification.py --quiet`
+- Using cached tensor files: `python evaluate_model_classification.py --use_cache`
+- Alternative evaluation method: `python evaluate_model_fixed.py` (with adaptive thresholding)
+- Simple evaluation focused on key themes: `python evaluate_model_simple.py`
+- Direct cached tensor evaluation: `python evaluate_model_cache.py`
+
+### Testing
 - Unit testing: `python -m pytest test_model_unittest.py -v`
 
 ## Dependencies

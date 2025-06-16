@@ -166,3 +166,61 @@ Tests inside /tests run on every push and pull request via github actions, as de
 ```bash
 python -m pytest /tests
 ```
+
+### Model Evaluation
+
+We have several scripts for model evaluation:
+
+#### evaluate_model_classification.py (Recommended)
+
+This is the primary evaluation script with improved adaptive thresholding, optimized performance, and better token efficiency.
+
+```bash
+# With adaptive thresholding (default)
+python evaluate_model_classification.py --num_samples=100
+
+# With fixed threshold
+python evaluate_model_classification.py --num_samples=100 --threshold=0.3
+
+# With detailed verbose output
+python evaluate_model_classification.py --num_samples=50 --verbose
+
+# Minimize output for token efficiency
+python evaluate_model_classification.py --num_samples=100 --quiet
+
+# Use cached tensor files directly instead of test CSV
+python evaluate_model_classification.py --use_cache
+
+# With specific checkpoint
+python evaluate_model_classification.py --checkpoint=checkpoints/my_checkpoint.pth
+```
+
+#### evaluate_model_fixed.py
+
+This script properly maps between training and test dataset indices and supports adaptive thresholding.
+
+```bash
+# With adaptive thresholding
+python evaluate_model_fixed.py --num_samples=50
+
+# With fixed threshold
+python evaluate_model_fixed.py --num_samples=50 --threshold=0.3
+```
+
+#### evaluate_model_simple.py
+
+A simplified evaluation script focused only on key chess themes.
+
+```bash
+python evaluate_model_simple.py --num_samples=20 --threshold=0.3
+```
+
+#### evaluate_model_cache.py
+
+This script uses cached tensor files directly, bypassing the test CSV completely.
+
+```bash
+python evaluate_model_cache.py --num_samples=1000
+```
+
+See [docs/model_evaluation.md](docs/model_evaluation.md) for detailed information about each evaluation script.
