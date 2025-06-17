@@ -21,13 +21,14 @@ Note: on a non-clean system (i.e. one which already has other dependencies insta
 
 ## Install Dependencies
 ```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
 ## Get Lichess Chess Puzzles Dataset
 ```bash
 wget https://database.lichess.org/lichess_db_puzzle.csv.zst
-apt install -y zstd
+sudo apt install -y zstd
 unzstd lichess_db_puzzle.csv.zst
 ```
 
