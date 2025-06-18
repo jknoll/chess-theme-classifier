@@ -17,7 +17,8 @@ os.environ['MKL_NUM_THREADS'] = '4'  # Limit MKL threads
 
 class ChessPuzzleDataset(Dataset):
     def __init__(self, csv_file, cache_size=10000, num_workers=None, augment_with_reflections=False, 
-                 class_conditional_augmentation=False, rarity_threshold=None, low_memory=False):
+                 class_conditional_augmentation=False, rarity_threshold=None, low_memory=False,
+                 use_cache=False):
         """
         Args:
             csv_file (str): Path to the CSV file with chess puzzles
@@ -28,6 +29,7 @@ class ChessPuzzleDataset(Dataset):
             rarity_threshold (int): Optional threshold below which a label combination is considered rare.
                 If None, will be automatically determined based on distribution.
             low_memory (bool): If True, use fewer workers and smaller chunks to reduce memory usage.
+            use_cache (bool): If True, use cache files even if CSV exists and is newer than cache.
         """
         self.csv_file = csv_file
         self.cache_size = cache_size
@@ -41,11 +43,16 @@ class ChessPuzzleDataset(Dataset):
         self.low_memory = low_memory
         self.augment_with_reflections = augment_with_reflections
         self.class_conditional_augmentation = class_conditional_augmentation
+        self.use_cache = use_cache  # Store the use_cache parameter
         self.augmented_indices = set()  # Track which indices were augmented
         
         # Cache file paths
         csv_basename = os.path.basename(csv_file)
-        cache_dir = os.path.dirname(csv_file)
+        
+        # Use TENSOR_CACHE_DIR environment variable if set, otherwise use csv_file directory
+        cache_dir = os.environ.get('TENSOR_CACHE_DIR', os.path.dirname(csv_file))
+        print(f"Using cache directory: {cache_dir}")
+        
         self.themes_cache_file = os.path.join(cache_dir, f"{csv_basename}.themes.json")
         self.openings_cache_file = os.path.join(cache_dir, f"{csv_basename}.openings.json")
         self.tensors_cache_file = os.path.join(cache_dir, f"{csv_basename}.tensors.pt")
@@ -337,9 +344,13 @@ class ChessPuzzleDataset(Dataset):
         # Normal flow when CSV exists
         csv_mtime = os.path.getmtime(self.csv_file)
         
-        tensor_cache_is_valid = (
-            os.path.exists(tensors_cache_file) and
-            os.path.getmtime(tensors_cache_file) > csv_mtime
+        # Check if cache exists
+        tensor_cache_exists = os.path.exists(tensors_cache_file)
+        
+        # If use_cache is True, we'll use the cache file if it exists, regardless of modification time
+        # Otherwise, we'll only use it if it's newer than the CSV
+        tensor_cache_is_valid = tensor_cache_exists and (
+            self.use_cache or os.path.getmtime(tensors_cache_file) > csv_mtime
         )
         
         if tensor_cache_is_valid:
@@ -752,9 +763,13 @@ class ChessPuzzleDataset(Dataset):
         cooc_mtime = os.path.getmtime(self.label_cooccurrence_file) if os.path.exists(self.label_cooccurrence_file) else 0
         latest_mtime = max(csv_mtime, cooc_mtime)
         
-        tensor_cache_is_valid = (
-            os.path.exists(tensors_cache_file) and
-            os.path.getmtime(tensors_cache_file) > latest_mtime
+        # Check if cache exists
+        tensor_cache_exists = os.path.exists(tensors_cache_file)
+        
+        # If use_cache is True, we'll use the cache file if it exists, regardless of modification time
+        # Otherwise, we'll only use it if it's newer than the latest modification time of prerequisites
+        tensor_cache_is_valid = tensor_cache_exists and (
+            self.use_cache or os.path.getmtime(tensors_cache_file) > latest_mtime
         )
         
         if tensor_cache_is_valid:

@@ -85,4 +85,4 @@ This is a PyTorch-based chess puzzle classifier that predicts themes from chess 
 - Enable wandb with `--wandb` flag when running train.py
 
 ## Documenting Progress through Milestones in Markdown Documentation
-- When implementing changes listed in Markdown Documentation (in /docs) do not strikethrough completed work and subtasks; instead use [ ] and [x] before each item.
+- When implementing changes listed in Markdown Documentation (in /docs), be sure to update the document as you proceed. But do not strikethrough completed work and subtasks; instead use [ ] and [x] before each item.

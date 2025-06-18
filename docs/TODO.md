@@ -6,7 +6,7 @@
 6. [x] Generate the complete dataset and caches, import them to S3 and export them to SC as a dataset. This will eliminate the heavy preprocessing being run redundantly on each node in the training cluster.
 7. [x] Port metrics from train.py to train-isc.py.
 8. [x] Run train-isc.py in interruptible mode with GPUs=6,
-9. [ ] Create a tests folder with some simple pytest tests.
+9. [x] Create a tests folder with some simple pytest tests.
 10. [ ] Observe tensorboard output to see if stats are flowing into all reports when run for longer than a cycle job.
-11. [ ] Retrieve a checkpoint and run the co-occurrence analysis on it.
-
+11. [x] Retrieve a checkpoint and run the co-occurrence analysis on it.
+12. [ ] It appears that we have a venv inside a venv. Running commands when in the outer venv fails unless we activate an inner one? Fix.
