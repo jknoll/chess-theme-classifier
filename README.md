@@ -26,11 +26,56 @@ pip install -r requirements.txt
 ```
 
 ## Get Lichess Chess Puzzles Dataset
+
+### Option 1: Download and Process Raw Dataset
 ```bash
 wget https://database.lichess.org/lichess_db_puzzle.csv.zst
 sudo apt install -y zstd
 unzstd lichess_db_puzzle.csv.zst
 ```
+
+### Option 2: Download Pre-processed Dataset from S3 (Recommended)
+The pre-processed dataset includes cached tensors and other derived files which significantly speed up training by avoiding redundant preprocessing.
+
+You'll need to set up AWS credentials with access to the S3 bucket. You can do this in several ways:
+
+1. Using environment variables:
+```bash
+export AWS_ACCESS_KEY_ID="your_access_key"
+export AWS_SECRET_ACCESS_KEY="your_secret_key"
+```
+
+2. Using the AWS CLI (if installed):
+```bash
+pip install awscli
+aws configure
+```
+
+3. Creating a credentials file at `~/.aws/credentials`:
+```
+[default]
+aws_access_key_id = your_access_key
+aws_secret_access_key = your_secret_key
+```
+
+#### Download the Dataset
+Run the provided download script:
+```bash
+python download_dataset.py
+```
+
+This will download all processed dataset files to the `processed_lichess_puzzle_files` directory. You can specify a different output directory:
+```bash
+python download_dataset.py --output-dir custom_directory
+```
+
+Additional options:
+```
+--threads N     Use N threads for parallel downloads (default: 4)
+--verify        Verify that all critical files were downloaded successfully
+```
+
+After downloading, the training scripts will automatically detect and use these pre-processed files.
 
 ## Verify Training
 Test the training loop with a small test dataset
