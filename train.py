@@ -98,8 +98,12 @@ def init_distributed(distributed=None):
     if not torch.cuda.is_available():
         raise RuntimeError("Distributed training requires GPUs, but none were found.")
     
-    # Initialize the process group
-    dist.init_process_group(backend="nccl")
+    # Initialize the process group only if it's not already initialized
+    if not dist.is_initialized():
+        dist.init_process_group(backend="nccl")
+    else:
+        print("Process group already initialized, skipping initialization")
+        
     torch.cuda.set_device(local_rank)
     return local_rank, True
 
@@ -142,18 +146,8 @@ def main():
     # Parse command line arguments
     args = parse_args()
 
-     # Check for ISC environment
+    # Check for ISC environment
     isc_mode = "LOSSY_ARTIFACT_PATH" in os.environ
-    if isc_mode:
-        print(f"In cluster mode; NNODES: {os.environ['NNODES']}")
-        dist.init_process_group("nccl")  # Expects RANK set in environment variable
-        rank = int(os.environ["RANK"])  # Rank of this GPU in cluster
-        args.world_size = int(os.environ["WORLD_SIZE"]) # Total number of GPUs in the cluster
-        args.device_id = int(os.environ["LOCAL_RANK"])  # Rank on local node
-        args.is_master = rank == 0  # Master node for saving / reporting
-        torch.cuda.set_device(args.device_id)  # Enables calling 'cuda'
-    else:
-        print("In local mode")
     
     # Determine distributed mode based on command line args
     distributed_override = None
@@ -170,7 +164,30 @@ def main():
         distributed_override = False
     
     # Initialize distributed or local training
-    local_rank, is_distributed = init_distributed(distributed_override)
+    # Special handling for ISC mode to avoid duplicate process group initialization
+    if isc_mode and distributed_override is None:
+        print(f"In cluster mode; NNODES: {os.environ.get('NNODES', '1')}")
+        # Check if process group is already initialized
+        if not dist.is_initialized():
+            dist.init_process_group("nccl")  # Expects RANK set in environment variable
+        
+        rank = int(os.environ["RANK"])  # Rank of this GPU in cluster
+        args.world_size = int(os.environ["WORLD_SIZE"]) # Total number of GPUs in the cluster
+        args.device_id = int(os.environ["LOCAL_RANK"])  # Rank on local node
+        args.is_master = rank == 0  # Master node for saving / reporting
+        torch.cuda.set_device(args.device_id)  # Enables calling 'cuda'
+        
+        # Skip init_distributed since we've already initialized
+        local_rank = args.device_id
+        is_distributed = True
+    else:
+        if isc_mode:
+            print("In ISC mode but using command-line distributed settings override")
+        else:
+            print("In local mode")
+            
+        # Regular initialization path
+        local_rank, is_distributed = init_distributed(distributed_override)
     
     # Set device
     if is_distributed:

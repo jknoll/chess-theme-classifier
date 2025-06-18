@@ -10,3 +10,4 @@
 10. [ ] Observe tensorboard output to see if stats are flowing into all reports when run for longer than a cycle job.
 11. [x] Retrieve a checkpoint and run the co-occurrence analysis on it.
 12. [ ] It appears that we have a venv inside a venv. Running commands when in the outer venv fails unless we activate an inner one? Fix.
+13. [ ] Add instructions to README.md for installing S3 tool and downloading the processed dataset from S3 into the local filesystem.
