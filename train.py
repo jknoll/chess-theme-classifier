@@ -109,8 +109,8 @@ def init_distributed(distributed=None):
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description='Train chess puzzle classifier')
-    parser.add_argument('--checkpoint_steps', type=int, default=50000,
-                        help='Number of steps between checkpoints (default: 50000)')
+    parser.add_argument('--checkpoint_steps', type=int, default=1000,
+                        help='Number of steps between checkpoints (default: 1000)')
     parser.add_argument('--test_mode', action='store_true',
                         help='Run in test mode with a smaller dataset')
     parser.add_argument('--wandb', action='store_true',
@@ -744,7 +744,7 @@ def main():
     if args.epochs is not None:
         max_epochs = args.epochs
     else:
-        max_epochs = 3 if args.test_mode else 10
+        max_epochs = 3 if args.test_mode else 30
     
     if args.is_master:
         print(f"Training for {max_epochs} epochs")
