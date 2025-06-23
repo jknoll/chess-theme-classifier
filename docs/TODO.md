@@ -7,7 +7,16 @@
 7. [x] Port metrics from train.py to train-isc.py.
 8. [x] Run train-isc.py in interruptible mode with GPUs=6,
 9. [x] Create a tests folder with some simple pytest tests.
-10. [ ] Observe tensorboard output to see if stats are flowing into all reports when run for longer than a cycle job.
+10. [x] Observe tensorboard output to see if stats are flowing into all reports when run for longer than a cycle job.
 11. [x] Retrieve a checkpoint and run the co-occurrence analysis on it.
-12. [ ] It appears that we have a venv inside a venv. Running commands when in the outer venv fails unless we activate an inner one? Fix.
+12. [ ] It appears that we have a venv inside a venv. Running commands when in the outer venv fails unless we activate an inner one?
 13. [x] Add instructions to README.md for installing S3 tool and downloading the processed dataset from S3 into the local filesystem.
+14. [ ] We automatically open tensorboard when a train.py run starts, but it doesn't load correctly.
+
+Before a long training run on the ISC:
+15. [ ] Verify that the full dataset is contained in the tensor cache.
+16. [ ] Add epoch to the tensorboard and wandb logged metrics.
+17. [ ] Set nlayers=8 or something deeper; seems we have attempted to train with deeper architectures but have maxed out at 5 due to train.py bugs.
+18. [ ] Split into a themes model vs. an openings model?
+  18b. [ ] Possibly test with per-class adaptive thresholding to see how well a joint model can perform, but note that this can be done in parallel to or after training.
+    18c. [ ] Generate PR curves with the optimized F1 score point selected.
