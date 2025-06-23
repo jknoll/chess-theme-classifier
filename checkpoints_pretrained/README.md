@@ -2,7 +2,7 @@ The checkpoints in this directory are the pretrained models.
 
 # checkpoint_resume.pth
 
-This checkpoint was trained for 298,628 steps with the confifuration below. 
+This checkpoint was trained for 298,628 steps with the confifuration below. This was supposedly some large number of epochs, 40(?). Need to verify that cached tensor file derived from the full size .csv contains all board positions (plus the class-balancing additions)
 
 ## Model configuration
 
