@@ -141,15 +141,24 @@ def run_evaluation(use_cache=False, custom_threshold=None, quiet=False):
         print(f"Using device: {device}")
     model = model.to(device)
     
-    # Load checkpoint
+    # Load checkpoint using the unified checkpoint utilities
+    from checkpoint_utils import load_checkpoint
+    
     checkpoint_path = os.path.join("checkpoints", checkpoint_file)
     if not os.path.exists(checkpoint_path):
         checkpoint_path = checkpoint_file
     
     if not quiet:
         print(f"Loading checkpoint: {checkpoint_path}")
-    checkpoint = torch.load(checkpoint_path, weights_only=False)
-    model.load_state_dict(checkpoint['model_state_dict'])
+    
+    # Load the checkpoint with our utility function that handles different formats
+    # Set strict=False to allow loading checkpoints between models with different architectures
+    checkpoint_info = load_checkpoint(checkpoint_path, model, device=device, strict=False)
+    
+    if not quiet:
+        print(f"Loaded checkpoint from epoch {checkpoint_info['epoch']}, "
+              f"global step {checkpoint_info['global_step']}")
+        print(f"Note: Using non-strict loading to handle model architecture differences")
     
     # Set model to evaluation mode
     model.eval()
@@ -532,8 +541,16 @@ if __name__ == "__main__":
             if not os.path.exists(checkpoint_path):
                 checkpoint_path = checkpoint_file
             
-            checkpoint = torch.load(checkpoint_path, weights_only=False)
-            model.load_state_dict(checkpoint['model_state_dict'])
+            # Import the checkpoint utilities
+            from checkpoint_utils import load_checkpoint
+            
+            # Load the checkpoint with our utility function that handles different formats
+            checkpoint_info = load_checkpoint(checkpoint_path, model, device=device, strict=False)
+            
+            if not quiet:
+                print(f"Loaded checkpoint from epoch {checkpoint_info['epoch']}, "
+                      f"global step {checkpoint_info['global_step']}")
+                print(f"Note: Using non-strict loading to handle model architecture differences")
             
             # Set model to evaluation mode
             model.eval()

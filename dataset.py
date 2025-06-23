@@ -9,7 +9,11 @@ import time
 import concurrent.futures
 from functools import lru_cache
 import multiprocessing
-from torch.serialization import add_safe_globals
+try:
+    from torch.serialization import add_safe_globals
+except ImportError:
+    # Fallback for older PyTorch versions
+    add_safe_globals = None
 
 # Limit OpenMP threads to avoid resource exhaustion
 os.environ['OMP_NUM_THREADS'] = '4'  # Limit OpenMP threads
@@ -1523,13 +1527,14 @@ class ChessPuzzleDataset(Dataset):
     
 
 # Add necessary classes to PyTorch's serialization allowlist to avoid FutureWarning
-add_safe_globals([
-    # Core modules and classes
-    np, torch, pd, lru_cache, Board, Piece, SQUARES, ChessPuzzleDataset, 
-    # Container types
-    list, dict, set, frozenset, tuple, 
-    # PyTorch tensor types
-    torch.Tensor, torch.int8, torch.float32,
-    # Basic Python types
-    int, float, bool, str
-])
+if add_safe_globals is not None:
+    add_safe_globals([
+        # Core modules and classes
+        np, torch, pd, lru_cache, Board, Piece, SQUARES, ChessPuzzleDataset, 
+        # Container types
+        list, dict, set, frozenset, tuple, 
+        # PyTorch tensor types
+        torch.Tensor, torch.int8, torch.float32,
+        # Basic Python types
+        int, float, bool, str
+    ])

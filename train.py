@@ -622,6 +622,9 @@ def main():
         for param_group in optimizer.param_groups:
             return param_group['lr']
     
+    # Import the checkpoint utilities
+    from checkpoint_utils import load_checkpoint, get_checkpoint_info
+    
     # Check for checkpoint file, but skip if in test mode
     # Check for ISC environment - use OUTPUT_PATH if available for checkpoint loading
     if isc_mode and "OUTPUT_PATH" in os.environ:
@@ -634,73 +637,48 @@ def main():
         if args.is_master:
             print(f"Loading checkpoint from {checkpoint_path}")
         
-        checkpoint = torch.load(checkpoint_path, map_location=device)
-        # Support both formats - native format and ISC format
-        if 'model_state_dict' in checkpoint:
-            # Original format
-            if is_distributed or isinstance(model, torch.nn.DataParallel):
-                model.module.load_state_dict(checkpoint['model_state_dict'])
-            else:
-                model.load_state_dict(checkpoint['model_state_dict'])
-        elif 'model' in checkpoint:
-            # ISC format from StrongResearch
-            if args.is_master:
-                print("Loading checkpoint in ISC format")
-            if is_distributed or isinstance(model, torch.nn.DataParallel):
-                model.module.load_state_dict(checkpoint['model'])
-            else:
-                model.load_state_dict(checkpoint['model'])
-        else:
-            if args.is_master:
-                print("Warning: Checkpoint doesn't contain recognized model state format")
-        # Load optimizer state, supporting both formats
-        if 'optimizer_state_dict' in checkpoint:
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        elif 'optimizer' in checkpoint:
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            
-        # Get global step, supporting both formats
-        if 'global_step' in checkpoint:
-            global_step = checkpoint['global_step']
-        elif 'train_sampler' in checkpoint and hasattr(checkpoint['train_sampler'], 'progress'):
-            # ISC format uses the sampler progress as the global step
-            global_step = checkpoint['train_sampler'].progress
-        else:
-            global_step = 0
+        # Load the checkpoint using our utility function
+        # Set strict=False to allow loading checkpoints between models with different architectures
+        checkpoint_info = load_checkpoint(
+            checkpoint_path=checkpoint_path,
+            model=model,
+            optimizer=optimizer,
+            device=device,
+            strict=False
+        )
+        
+        # Get the global step and epoch from the checkpoint
+        global_step = checkpoint_info['global_step']
+        start_epoch = checkpoint_info['epoch']
         
         # Calculate if we completed the previous epoch
         train_size = int(0.8 * len(dataset))  # Same split as in training
-        steps_per_epoch = train_size // 4  # batch_size=4
+        steps_per_epoch = train_size // batch_size
         completed_epochs = global_step // steps_per_epoch
         
-        # Get epoch, supporting both formats
-        if 'epoch' in checkpoint:
-            start_epoch = checkpoint['epoch']
-        elif 'train_sampler' in checkpoint and hasattr(checkpoint['train_sampler'], 'epoch'):
-            # ISC format uses the sampler epoch
-            start_epoch = checkpoint['train_sampler'].epoch
-        else:
-            # Estimate from global step
-            start_epoch = global_step // steps_per_epoch
-            
         # Check if we completed the current epoch
         if global_step >= (start_epoch + 1) * steps_per_epoch:
             # We completed this epoch, start the next one
             start_epoch += 1
         
+        # Get detailed checkpoint info for display
+        detailed_info = get_checkpoint_info(checkpoint_path, device)
+        
         if args.is_master:
             print(f"Resumed from checkpoint:")
             print(f"  Epoch: {start_epoch}")
             print(f"  Global Step: {global_step}")
+            print(f"  Checkpoint format: {detailed_info['format']}")
+            print(f"  Note: Using non-strict loading to handle model architecture differences")
             
             # Show loss and metrics if available
-            if 'loss' in checkpoint:
-                print(f"  Loss: {checkpoint['loss']:.8f}")
-            if 'jaccard_loss' in checkpoint:
-                print(f"  Jaccard Loss: {checkpoint['jaccard_loss']:.8f}")
+            if 'loss' in detailed_info:
+                print(f"  Loss: {detailed_info['loss']:.8f}")
+            if 'jaccard_loss' in detailed_info:
+                print(f"  Jaccard Loss: {detailed_info['jaccard_loss']:.8f}")
                 
             # Get learning rate
-            lr_value = checkpoint.get('learning_rate', get_lr(optimizer))
+            lr_value = detailed_info.get('learning_rate', get_lr(optimizer))
             print(f"  Learning Rate: {lr_value:.8f}")
             print(f"  Steps per epoch: {steps_per_epoch}")
             print(f"  Completed epochs: {completed_epochs}")
@@ -959,43 +937,55 @@ def main():
                     wandb.log(log_dict)
                 
                 if args.is_master and i % args.checkpoint_steps == 0 and i > 0:
+                    # Import the checkpoint utilities
+                    from checkpoint_utils import save_checkpoint
+                    
                     # Check for ISC environment - use OUTPUT_PATH if available
                     if isc_mode and "OUTPUT_PATH" in os.environ:
                         checkpoint_dir = os.environ["OUTPUT_PATH"]
                     else:
                         checkpoint_dir = "checkpoints"
-                        
-                    # Create directory if it doesn't exist
-                    os.makedirs(checkpoint_dir, exist_ok=True)
                     
+                    # Create timestamped filename
                     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                    checkpoint_filename = os.path.join(checkpoint_dir, f"checkpoint_{timestamp}_{i}.pth")
-                    resume_filename = os.path.join(checkpoint_dir, "checkpoint_resume.pth")
+                    checkpoint_filename = f"checkpoint_{timestamp}_{i}.pth"
                     
-                    # Save the model state dict properly depending on model type
-                    if is_distributed or isinstance(model, torch.nn.DataParallel):
-                        model_state = model.module.state_dict()
-                    else:
-                        model_state = model.state_dict()
-                        
-                    checkpoint_data = {
-                        'epoch': epoch,
-                        'model_state_dict': model_state,
-                        'optimizer_state_dict': optimizer.state_dict(),
-                        'loss': loss,
-                        'global_step': global_step,
+                    # Additional data to include in the checkpoint
+                    additional_data = {
                         'jaccard_loss': jaccard_loss,
                         'learning_rate': current_lr,
                     }
                     
-                    # Save both the timestamped checkpoint and the resume checkpoint
-                    torch.save(checkpoint_data, checkpoint_filename)
-                    torch.save(checkpoint_data, resume_filename)
+                    # Save the checkpoint using our utility function
+                    checkpoint_path = save_checkpoint(
+                        model=model,
+                        optimizer=optimizer,
+                        epoch=epoch,
+                        loss=loss,
+                        global_step=global_step,
+                        output_path=checkpoint_dir,
+                        additional_data=additional_data,
+                        is_master=args.is_master,
+                        filename=checkpoint_filename
+                    )
+                    
+                    # Also save as the resume checkpoint
+                    save_checkpoint(
+                        model=model,
+                        optimizer=optimizer,
+                        epoch=epoch,
+                        loss=loss,
+                        global_step=global_step,
+                        output_path=checkpoint_dir,
+                        additional_data=additional_data,
+                        is_master=args.is_master,
+                        filename="checkpoint_resume.pth"
+                    )
                     
                     if writer is not None:
-                        writer.add_text('Checkpoint', f'Saved checkpoint: {checkpoint_filename}', global_step)
-                        print(f"Checkpoint saved at step {i} in {checkpoint_filename}")
-                        print(f"Resume checkpoint saved at {resume_filename}")
+                        writer.add_text('Checkpoint', f'Saved checkpoint: {checkpoint_path}', global_step)
+                        print(f"Checkpoint saved at step {i} in {checkpoint_path}")
+                        print(f"Resume checkpoint also saved as checkpoint_resume.pth")
             
             global_step += 1
     
