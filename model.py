@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+import yaml
+import os
 
 # Maps to: white king, queen, rook, bishop, knight, pawn, empty, black pawn, knight, bishop, rook, queen, king
 PIECE_CHARS = "♔♕♖♗♘♙⭘♟♞♝♜♛♚"  
@@ -115,6 +117,18 @@ class Lamb(torch.optim.Optimizer):
 
         return loss
 
+# Load model configuration from YAML file
+def load_model_config(config_path='model_config.yaml'):
+    """
+    Load model configuration from YAML file if it exists.
+    Returns a dictionary with configuration parameters.
+    """
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        return config if config is not None else {}
+    return {}
+
 # Learning rate scheduler with warmup
 def get_lr_with_warmup(step, total_steps, warmup_steps, base_lr):
     """
@@ -207,8 +221,18 @@ class Model(nn.Module):
     Modified version of the winning model that maintains multi-label classification
     """
     def __init__(self, num_labels=62, nlayers=2, embed_dim=64, inner_dim=320, 
-                 attention_dim=64, use_1x1conv=True, dropout=0.5):
+                 attention_dim=64, use_1x1conv=True, dropout=0.5, config_path='model_config.yaml'):
         super().__init__()
+        
+        # Load configuration from YAML file and override defaults
+        config = load_model_config(config_path)
+        num_labels = config.get('num_labels', num_labels)
+        nlayers = config.get('nlayers', nlayers)
+        embed_dim = config.get('embed_dim', embed_dim)
+        inner_dim = config.get('inner_dim', inner_dim)
+        attention_dim = config.get('attention_dim', attention_dim)
+        use_1x1conv = config.get('use_1x1conv', use_1x1conv)
+        dropout = config.get('dropout', dropout)
         self.vocab = PIECE_CHARS
         self.embed_dim = embed_dim
         self.inner_dim = inner_dim

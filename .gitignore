@@ -1,5 +1,4 @@
 # Training and dataset specific files
-*.pth
 *.zst
 events.out.tfevents.*
 wandb/
