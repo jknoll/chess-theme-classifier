@@ -135,6 +135,10 @@ def parse_args(args=None):
                         help='Number of epochs to train (default: 3 for test mode, 10 for full)')
     parser.add_argument('--low_memory', action='store_true',
                         help='Use lower memory settings for dataset processing')
+    parser.add_argument('--full_dataset', action='store_true',
+                        help='Use full dataset tensor cache instead of class conditional augmentation')
+    parser.add_argument('--max_steps', type=int, default=None,
+                        help='Maximum number of training steps per epoch (useful for testing with large datasets)')
     parser.add_argument('--dataset-id', type=str, default=None,
                         help='Dataset ID for ISC training (overrides environment variable)')
     parser.add_argument("--grad-accum", help="gradient accumulation steps", type=int, default=6)       
@@ -299,8 +303,12 @@ def main():
     low_memory = True
     
     if args.is_master:
-        print(f"Creating dataset from {csv_file} with class_conditional_augmentation=True and low_memory={low_memory}")
-        print(f"⚠️ Processing may take several minutes, especially for the full dataset")
+        mode_desc = "full dataset cache" if args.full_dataset else "class conditional augmentation"
+        print(f"Creating dataset from {csv_file} with {mode_desc} and low_memory={low_memory}")
+        if args.full_dataset:
+            print(f"✅ Using pre-built tensor cache for fast loading")
+        else:
+            print(f"⚠️ Processing may take several minutes, especially for the full dataset")
     
     # Thread limit is already set at the top of the file
     # No need to set it again here
@@ -509,12 +517,24 @@ def main():
                 )
     
     # Create dataset with memory-saving options
-    dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=True, low_memory=low_memory)
+    # Use full dataset if flag is set, otherwise use class conditional augmentation
+    use_class_conditional = not args.full_dataset
+    if args.full_dataset:
+        if args.is_master:
+            print(f"🚀 Using full dataset tensor cache (4.9M samples)")
+        dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=False, low_memory=low_memory, use_cache=True)
+    else:
+        if args.is_master:
+            print(f"🔄 Using class conditional augmentation (partial dataset)")
+        dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=True, low_memory=low_memory)
     
     # Get the number of labels from the dataset
     num_labels = len(dataset.all_labels)
     if args.is_master:
-        print(f"Number of unique labels (themes + opening tags): {num_labels}")
+        print(f"📊 Dataset loaded successfully:")
+        print(f"   Dataset size: {len(dataset):,} samples")
+        print(f"   Number of unique labels (themes + opening tags): {num_labels}")
+        print(f"   Mode: {'Full dataset cache' if args.full_dataset else 'Class conditional augmentation'}")
     
     # Create model with the correct number of labels
     # Original hacakthon-winner-3 model config with default nlayers=2.
@@ -650,6 +670,11 @@ def main():
         # Get the global step and epoch from the checkpoint
         global_step = checkpoint_info['global_step']
         start_epoch = checkpoint_info['epoch']
+
+        # Get batch size from args
+        batch_size = args.batch_size
+        if args.is_master:
+            print(f"Using batch size: {batch_size}")
         
         # Calculate if we completed the previous epoch
         train_size = int(0.8 * len(dataset))  # Same split as in training
@@ -695,9 +720,6 @@ def main():
     
     if args.is_master:
         timer.report(f"Initialized datasets with {len(train_dataset):,} training and {len(test_dataset):,} test board evaluations.")
-
-    # Get batch size from args
-    batch_size = args.batch_size
     
     # Create samplers based on distributed mode
     if is_distributed:
@@ -731,6 +753,11 @@ def main():
         train_sampler.set_epoch(epoch)  # Important for proper shuffling
         
         for i, data in enumerate(train_dataloader, 0):
+            # Check if we should stop early for testing with large datasets
+            if args.max_steps is not None and i >= args.max_steps:
+                if args.is_master:
+                    print(f"Stopping epoch {epoch} early after {args.max_steps} steps for testing")
+                break
             running_loss = 0.0
             running_jaccard_index = 0.0
             

@@ -22,7 +22,7 @@ os.environ['MKL_NUM_THREADS'] = '4'  # Limit MKL threads
 class ChessPuzzleDataset(Dataset):
     def __init__(self, csv_file, cache_size=10000, num_workers=None, augment_with_reflections=False, 
                  class_conditional_augmentation=False, rarity_threshold=None, low_memory=False,
-                 use_cache=False):
+                 use_cache=False, verbose_progress=False):
         """
         Args:
             csv_file (str): Path to the CSV file with chess puzzles
@@ -34,6 +34,7 @@ class ChessPuzzleDataset(Dataset):
                 If None, will be automatically determined based on distribution.
             low_memory (bool): If True, use fewer workers and smaller chunks to reduce memory usage.
             use_cache (bool): If True, use cache files even if CSV exists and is newer than cache.
+            verbose_progress (bool): If True, show detailed progress bars during processing.
         """
         self.csv_file = csv_file
         self.cache_size = cache_size
@@ -48,6 +49,7 @@ class ChessPuzzleDataset(Dataset):
         self.augment_with_reflections = augment_with_reflections
         self.class_conditional_augmentation = class_conditional_augmentation
         self.use_cache = use_cache  # Store the use_cache parameter
+        self.verbose_progress = verbose_progress  # Store verbose progress flag
         self.augmented_indices = set()  # Track which indices were augmented
         
         # Cache file paths
@@ -62,14 +64,16 @@ class ChessPuzzleDataset(Dataset):
         self.tensors_cache_file = os.path.join(cache_dir, f"{csv_basename}.tensors.pt")
         self.label_cooccurrence_file = os.path.join(cache_dir, f"{csv_basename}.cooccurrence.json")
         
+        # Check if the CSV file actually exists
+        self.csv_exists = os.path.exists(csv_file)
+        
         # Check if the path contains processed_lichess_puzzle_files
         # This means we're using the cache files directly from processed directory
         using_processed_dir = 'processed_lichess_puzzle_files' in csv_file
-        self.csv_exists = os.path.exists(csv_file)
         
-        # If we're using processed directory, we know CSV doesn't exist
-        # but we want to use cache files from that directory
-        if using_processed_dir:
+        # If we're using processed directory AND CSV doesn't exist, use cache-only mode
+        # If CSV exists, we can create cache files normally
+        if using_processed_dir and not self.csv_exists:
             # Extract the directory from csv_file
             cache_dir = os.path.dirname(csv_file)
             csv_basename = os.path.basename(csv_file)
@@ -111,8 +115,23 @@ class ChessPuzzleDataset(Dataset):
             # We're in cache-only mode since CSV doesn't exist
             self.csv_exists = False
             print(f"Using cache files from {cache_dir}")
+        elif using_processed_dir and self.csv_exists:
+            # We have CSV in processed directory, update cache paths to use the same directory
+            cache_dir = os.path.dirname(csv_file)
+            csv_basename = os.path.basename(csv_file)
             
-        # Handle normal case when not using processed directory
+            # Update cache file paths to use the processed directory
+            self.themes_cache_file = os.path.join(cache_dir, f"{csv_basename}.themes.json")
+            self.openings_cache_file = os.path.join(cache_dir, f"{csv_basename}.openings.json")
+            self.tensors_cache_file = os.path.join(cache_dir, f"{csv_basename}.tensors.pt")
+            self.label_cooccurrence_file = os.path.join(cache_dir, f"{csv_basename}.cooccurrence.json")
+            print(f"CSV found in processed directory, will create cache files there: {cache_dir}")
+            
+            # Load the CSV data
+            print(f"Loading CSV data from {csv_file}...")
+            self.puzzle_data = pd.read_csv(csv_file)
+            
+        # Handle normal case when not using processed directory and CSV doesn't exist
         elif not self.csv_exists:
             # CSV doesn't exist and we're not using the processed directory
             # Check which cache files are essential based on the training mode
@@ -147,7 +166,7 @@ class ChessPuzzleDataset(Dataset):
             # Create a minimal DataFrame with enough structure for other methods
             self.puzzle_data = pd.DataFrame(columns=['FEN', 'Themes', 'OpeningTags'])
         else:
-            # Read CSV data as usual
+            # Read CSV data as usual (for normal paths outside processed directory)
             self.puzzle_data = pd.read_csv(csv_file)
         
         # Load or create theme and opening tag caches
@@ -481,21 +500,20 @@ class ChessPuzzleDataset(Dataset):
         Returns:
             list: List of tensors representing the boards.
         """
-        # For extremely large datasets, consider processing a subset if class conditional augmentation is enabled
-        # This is because class conditional augmentation is memory intensive and can cause OOM errors
-        MAX_FENS = 100000  # Maximum number of FENs to process with class conditional aug
+        # Process the full dataset - no artificial limits
+        # Note: For very large datasets, we'll use memory-efficient processing instead of limiting samples
+        print(f"Processing full dataset: {len(fen_list):,} FENs")
         
-        # Check if this is for class conditional augmentation and the dataset is very large
-        if self.class_conditional_augmentation and len(fen_list) > MAX_FENS:
-            print(f"⚠️ Very large dataset detected ({len(fen_list):,} FENs) with class_conditional_augmentation.")
-            print(f"⚠️ For memory efficiency, processing first {MAX_FENS:,} samples only.")
-            fen_list = fen_list[:MAX_FENS]
-        
-        # Split the FEN list into chunks - smaller chunks in low memory mode
+        # Split the FEN list into chunks - optimize chunk size based on dataset size
         if self.low_memory:
             chunk_size = 50  # Very small chunks for low memory mode
+        elif len(fen_list) > 1000000:  # For very large datasets (>1M), use smaller chunks
+            chunk_size = 1000  # Process 1000 FENs per chunk to manage memory
         else:
             chunk_size = max(1, len(fen_list) // self.num_workers)
+            
+        # Ensure chunk size is reasonable for large datasets
+        chunk_size = min(chunk_size, 10000)  # Cap at 10K per chunk
             
         chunks = [fen_list[i:i+chunk_size] for i in range(0, len(fen_list), chunk_size)]
         
@@ -513,80 +531,181 @@ class ChessPuzzleDataset(Dataset):
                 # Use the wrapper function to avoid lambda pickling issues
                 try:
                     from tqdm import tqdm
-                    
-                    # Process chunks with a timeout to prevent hanging
-                    futures = []
-                    for chunk_arg in chunk_args:
-                        future = executor.submit(self._process_chunk_with_args_wrapper, chunk_arg)
-                        futures.append(future)
-                    
-                    # Use tqdm to show progress while waiting for results
-                    results = []
-                    for future in tqdm(concurrent.futures.as_completed(futures), 
-                                       total=len(futures),
-                                       desc="Converting FENs to tensors (with reflections)"):
+                    tqdm_available = True
+                except ImportError:
+                    tqdm_available = False
+                
+                # Process chunks with a timeout to prevent hanging
+                futures = []
+                for chunk_arg in chunk_args:
+                    future = executor.submit(self._process_chunk_with_args_wrapper, chunk_arg)
+                    futures.append(future)
+                
+                # Use tqdm to show progress while waiting for results
+                results = []
+                failed_chunks = []
+                
+                if tqdm_available and self.verbose_progress:
+                    progress_desc = "Converting FENs to tensors (with reflections)"
+                    iterator = tqdm(concurrent.futures.as_completed(futures), 
+                                   total=len(futures), desc=progress_desc)
+                elif self.verbose_progress:
+                    print("Converting FENs to tensors (with reflections)...")
+                    iterator = concurrent.futures.as_completed(futures)
+                else:
+                    iterator = concurrent.futures.as_completed(futures)
+                
+                for i, future in enumerate(iterator):
                         try:
-                            result = future.result(timeout=60)  # 60 second timeout
+                            result = future.result(timeout=120)  # Increased timeout to 120 seconds
                             results.append(result)
                         except concurrent.futures.TimeoutError:
-                            print("⚠️ Warning: A worker process timed out. This chunk will be skipped.")
+                            print(f"⚠️ Warning: A worker process timed out. Will retry this chunk.")
+                            failed_chunks.append(chunk_args[i])
                         except Exception as e:
-                            print(f"⚠️ Error processing chunk: {e}")
+                            print(f"⚠️ Error processing chunk: {e}. Will retry this chunk.")
+                            failed_chunks.append(chunk_args[i])
                             
-                except ImportError:
-                    print("Processing chunks with reflections (this may take a while)...")
-                    # Fallback method without tqdm
-                    futures = [executor.submit(self._process_chunk_with_args_wrapper, chunk_arg) 
-                              for chunk_arg in chunk_args]
-                    results = []
-                    for future in concurrent.futures.as_completed(futures):
+                # This code block is now handled above with conditional tqdm
+                
+                # Retry failed chunks sequentially to avoid further issues
+                if failed_chunks:
+                    retry_msg = f"Retrying {len(failed_chunks)} failed chunks sequentially..."
+                    print(retry_msg)
+                    
+                    if self.verbose_progress:
                         try:
-                            result = future.result(timeout=60)
+                            from tqdm import tqdm
+                            retry_iterator = tqdm(failed_chunks, desc="Retrying failed chunks")
+                        except ImportError:
+                            retry_iterator = failed_chunks
+                    else:
+                        retry_iterator = failed_chunks
+                        
+                    for chunk_arg in retry_iterator:
+                        try:
+                            result = self._process_chunk_with_args_wrapper(chunk_arg)
                             results.append(result)
+                            if self.verbose_progress:
+                                print(f"✅ Successfully retried chunk with {len(chunk_arg[0])} items")
                         except Exception as e:
-                            print(f"⚠️ Error processing chunk: {e}")
+                            if self.verbose_progress:
+                                print(f"❌ Failed to retry chunk even sequentially: {e}")
+                            # As last resort, process individual FENs
+                            chunk, augment_flag = chunk_arg
+                            individual_count = 0
+                            for fen in chunk:
+                                try:
+                                    if augment_flag:
+                                        individual_result = self._process_chunk_with_args([fen], True)
+                                    else:
+                                        individual_result = self._process_chunk([fen])
+                                    results.append(individual_result)
+                                    individual_count += 1
+                                except Exception as fen_error:
+                                    if self.verbose_progress:
+                                        print(f"❌ Failed to process individual FEN: {fen_error}")
+                                    continue
+                            if self.verbose_progress and individual_count > 0:
+                                print(f"✅ Processed {individual_count}/{len(chunk)} individual FENs")
             else:
                 # No reflections, use the original method but with improved error handling
                 try:
                     from tqdm import tqdm
-                    
-                    # Process chunks with a timeout to prevent hanging
-                    futures = []
-                    for chunk in chunks:
-                        future = executor.submit(self._process_chunk, chunk)
-                        futures.append(future)
-                    
-                    # Use tqdm to show progress while waiting for results
-                    results = []
-                    for future in tqdm(concurrent.futures.as_completed(futures), 
-                                       total=len(futures),
-                                       desc="Converting FENs to tensors"):
+                    tqdm_available = True
+                except ImportError:
+                    tqdm_available = False
+                
+                # Process chunks with a timeout to prevent hanging
+                futures = []
+                for chunk in chunks:
+                    future = executor.submit(self._process_chunk, chunk)
+                    futures.append(future)
+                
+                # Use tqdm to show progress while waiting for results
+                results = []
+                failed_chunks = []
+                
+                if tqdm_available and self.verbose_progress:
+                    progress_desc = "Converting FENs to tensors"
+                    iterator = tqdm(concurrent.futures.as_completed(futures), 
+                                   total=len(futures), desc=progress_desc)
+                elif self.verbose_progress:
+                    print("Converting FENs to tensors...")
+                    iterator = concurrent.futures.as_completed(futures)
+                else:
+                    iterator = concurrent.futures.as_completed(futures)
+                
+                for i, future in enumerate(iterator):
                         try:
-                            result = future.result(timeout=60)  # 60 second timeout
+                            result = future.result(timeout=120)  # Increased timeout to 120 seconds
                             results.append(result)
                         except concurrent.futures.TimeoutError:
-                            print("⚠️ Warning: A worker process timed out. This chunk will be skipped.")
+                            print(f"⚠️ Warning: A worker process timed out. Will retry this chunk.")
+                            failed_chunks.append(chunks[i])
                         except Exception as e:
-                            print(f"⚠️ Error processing chunk: {e}")
+                            print(f"⚠️ Error processing chunk: {e}. Will retry this chunk.")
+                            failed_chunks.append(chunks[i])
                             
-                except ImportError:
-                    # Fall back to no progress bar if tqdm is not available
-                    print("Processing chunks (this may take a while)...")
-                    # Fallback method without tqdm
-                    futures = [executor.submit(self._process_chunk, chunk) for chunk in chunks]
-                    results = []
-                    for future in concurrent.futures.as_completed(futures):
+                # This code block is now handled above with conditional tqdm
+                
+                # Retry failed chunks sequentially for non-reflection path
+                if failed_chunks:
+                    retry_msg = f"Retrying {len(failed_chunks)} failed chunks sequentially..."
+                    print(retry_msg)
+                    
+                    if self.verbose_progress:
                         try:
-                            result = future.result(timeout=60)
+                            from tqdm import tqdm
+                            retry_iterator = tqdm(failed_chunks, desc="Retrying failed chunks")
+                        except ImportError:
+                            retry_iterator = failed_chunks
+                    else:
+                        retry_iterator = failed_chunks
+                        
+                    for chunk in retry_iterator:
+                        try:
+                            result = self._process_chunk(chunk)
                             results.append(result)
+                            if self.verbose_progress:
+                                print(f"✅ Successfully retried chunk with {len(chunk)} items")
                         except Exception as e:
-                            print(f"⚠️ Error processing chunk: {e}")
+                            if self.verbose_progress:
+                                print(f"❌ Failed to retry chunk even sequentially: {e}")
+                            # As last resort, process individual FENs
+                            individual_count = 0
+                            for fen in chunk:
+                                try:
+                                    individual_result = self._process_chunk([fen])
+                                    results.append(individual_result)
+                                    individual_count += 1
+                                except Exception as fen_error:
+                                    if self.verbose_progress:
+                                        print(f"❌ Failed to process individual FEN: {fen_error}")
+                                    continue
+                            if self.verbose_progress and individual_count > 0:
+                                print(f"✅ Processed {individual_count}/{len(chunk)} individual FENs")
         
         # Combine results
         for result in results:
             all_tensors.extend(result)
         
-        print(f"✅ Successfully processed {len(all_tensors)} tensors")
+        # Detailed reporting
+        expected_count = len(fen_list)
+        actual_count = len(all_tensors)
+        success_rate = (actual_count / expected_count) * 100 if expected_count > 0 else 0
+        
+        print(f"📊 Processing Summary:")
+        print(f"   Expected: {expected_count:,} FENs")
+        print(f"   Processed: {actual_count:,} tensors")
+        print(f"   Success rate: {success_rate:.2f}%")
+        
+        if actual_count < expected_count:
+            missing_count = expected_count - actual_count
+            print(f"⚠️  Missing {missing_count:,} tensors ({(missing_count/expected_count)*100:.2f}%)")
+        else:
+            print(f"✅ Successfully processed all tensors!")
+            
         return all_tensors
     
     @staticmethod
@@ -847,11 +966,14 @@ class ChessPuzzleDataset(Dataset):
         next_tensor_idx = 0
         
         # Add progress bar for augmentation process
-        try:
-            from tqdm import tqdm
-            iterator = tqdm(range(valid_indices), desc="Creating augmented dataset")
-        except ImportError:
-            print("Processing tensors for augmentation (no progress bar available)...")
+        if self.verbose_progress:
+            try:
+                from tqdm import tqdm
+                iterator = tqdm(range(valid_indices), desc="Creating augmented dataset")
+            except ImportError:
+                print("Processing tensors for augmentation...")
+                iterator = range(valid_indices)
+        else:
             iterator = range(valid_indices)
         
         for idx in iterator:
@@ -1299,11 +1421,14 @@ class ChessPuzzleDataset(Dataset):
         label_combinations = {}
         
         # Process each puzzle with tqdm progress bar
-        try:
-            from tqdm import tqdm
-            iterator = tqdm(range(len(puzzle_subset)), desc="Analyzing theme co-occurrences")
-        except ImportError:
-            print("tqdm not available, no progress bar will be shown")
+        if self.verbose_progress:
+            try:
+                from tqdm import tqdm
+                iterator = tqdm(range(len(puzzle_subset)), desc="Analyzing theme co-occurrences")
+            except ImportError:
+                print("Analyzing theme co-occurrences...")
+                iterator = range(len(puzzle_subset))
+        else:
             iterator = range(len(puzzle_subset))
             
         for idx in iterator:
@@ -1364,11 +1489,14 @@ class ChessPuzzleDataset(Dataset):
         gains = {}
         
         # Add progress bar for gain calculation
-        try:
-            from tqdm import tqdm
-            items = tqdm(label_combinations.items(), desc="Calculating augmentation gains")
-        except ImportError:
-            print("Calculating augmentation gains...")
+        if self.verbose_progress:
+            try:
+                from tqdm import tqdm
+                items = tqdm(label_combinations.items(), desc="Calculating augmentation gains")
+            except ImportError:
+                print("Calculating augmentation gains...")
+                items = label_combinations.items()
+        else:
             items = label_combinations.items()
             
         for label_set, count in items:
@@ -1514,7 +1642,7 @@ class ChessPuzzleDataset(Dataset):
                 
                 # Try to validate the complete FEN
                 try:
-                    valid_board = Board(complete_fen)
+                    Board(complete_fen)  # Validate the FEN by creating a Board
                     results[reflection_type] = (board_tensor, complete_fen)
                 except ValueError:
                     # Invalid FEN string

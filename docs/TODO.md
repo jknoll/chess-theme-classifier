@@ -11,7 +11,7 @@
 11. [x] Retrieve a checkpoint and run the co-occurrence analysis on it.
 12. [ ] It appears that we have a venv inside a venv. Running commands when in the outer venv fails unless we activate an inner one?
 13. [x] Add instructions to README.md for installing S3 tool and downloading the processed dataset from S3 into the local filesystem.
-14. [ ] We automatically open tensorboard when a train.py run starts, but it doesn't load correctly.
+14. [x] We automatically open tensorboard when a train.py run starts, but it doesn't load correctly.
 
 Before a long training run on the ISC:
 15. [ ] Verify that the full dataset is contained in the tensor cache.

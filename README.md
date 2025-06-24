@@ -36,6 +36,14 @@ sudo apt install -y zstd
 unzstd lichess_db_puzzle.csv.zst
 ```
 
+To generate the tensor cache from the downloaded .csv, place it inside `processed_lichess_puzzle_files` and then call:
+
+```bash
+python create_full_dataset_cache.py
+```
+
+It should also be possible to place it there and simply instantiate a ChessPuzzleDataset, but the method above is more recently tested.
+
 ### Option 2: Download Pre-processed Dataset from S3 (Recommended)
 The pre-processed dataset includes cached tensors and other derived files which significantly speed up training by avoiding redundant preprocessing.
 

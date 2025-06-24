@@ -31,7 +31,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - When adding new dependencies, add them to requirements.txt
 - The project uses a Python virtual environment located at `.chess-theme-classifier/`
 - Always activate the virtual environment before running any commands: `source .chess-theme-classifier/bin/activate`
-- If new dependencies are needed, add them to requirements.txt and run `pip install -r requirements.txt`
+- If new dependencies are needed, add them to requirements.txt and run then run `pip install -r requirements.txt`
 - Required third-party packages include: PyTorch, torchvision, pandas, numpy, scikit-learn, matplotlib, etc. (see requirements.txt)
 - Verify that installation succeeds before committing changes
 
@@ -84,5 +84,12 @@ This is a PyTorch-based chess puzzle classifier that predicts themes from chess 
 - To use wandb: set WANDB_API_KEY environment variable or run `wandb login`
 - Enable wandb with `--wandb` flag when running train.py
 
-## Documenting Progress through Milestones in Markdown Documentation
-- When implementing changes listed in Markdown Documentation (in /docs), be sure to update the document as you proceed. But do not strikethrough completed work and subtasks; instead use [ ] and [x] before each item.
+## Progress Reporting
+- 
+When performing operations over a large dataset, whether testing, training, evaluating, or generating dataset derivatives like cache tensor files, provide `tqdm` progress and estimated time of completion output for the user. Be sure to put this `tqdm` progress output behind a verbose flag as described in the verbose output section below, so that it can be omitted from output when you call scripts, where you should generally prefer not to pass `--verbose` for token efficiency. 
+
+## Verbose output
+- Add a `--verbose` flag option when you create new scripts. Be sure to put particularly long output behind the verbose flag. `tqdm` output is one example that should be put behind a verbose flag, which you do not invoke unnecessarily for purposes of token efficiency. 
+
+## Emojis
+Don't use Emojis in code or documentation.
