@@ -219,7 +219,21 @@ python -m pytest /tests
 
 We have several scripts for model evaluation:
 
-#### evaluate_model_classification.py (Recommended)
+#### evaluate_model_metrics.py (Recommended)
+
+This will calculate per class and global adaptive thresholds and save related CSVs in `analysis/f1`. 
+
+```bash
+python evaluate_model_metrics.py
+```
+
+You can follow Up when this run is complete and generate precision-recall curves which will be output in `analysis/pr-curves`
+```bash
+python evaluate_model_metrics_pr_curves.py
+```
+
+
+#### evaluate_model_classification.py
 
 This is the primary evaluation script with improved adaptive thresholding, optimized performance, and better token efficiency.
 
