@@ -1,0 +1,2 @@
+## Documenting Progress through Milestones in Markdown Documentation
+- When implementing changes listed in Markdown Documentation (in /docs), be sure to update the document as you proceed. But do not strikethrough completed work and subtasks; instead use [ ] and [x] before each item.

@@ -18,14 +18,22 @@ num_labels = len(dataset.all_labels)
 model = Model(num_labels=num_labels)
 print(f"Model initialized with {num_labels} labels")
 
+# Import the checkpoint utilities
+from checkpoint_utils import load_checkpoint
+
 # Load the checkpoint
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 checkpoint_path = "checkpoint_20250403-215449_190.pth"
-checkpoint = torch.load(checkpoint_path, map_location=device)
-model.load_state_dict(checkpoint['model_state_dict'])
+
+# Use the unified checkpoint loading function
 model = model.to(device)
+# Set strict=False to allow loading checkpoints between models with different architectures
+checkpoint_info = load_checkpoint(checkpoint_path, model, device=device, strict=False)
 model.eval()
+
 print(f"Loaded checkpoint: {checkpoint_path}")
+print(f"Checkpoint epoch: {checkpoint_info['epoch']}, global step: {checkpoint_info['global_step']}")
+print(f"Note: Using non-strict loading to handle model architecture differences")
 
 # Create a dataloader for the test set
 test_dataloader = DataLoader(test_dataset, batch_size=4, shuffle=False)

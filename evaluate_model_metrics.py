@@ -22,6 +22,8 @@ def parse_args():
                         help='Number of samples to test (default: 1000)')
     parser.add_argument('--threshold', type=float, default=None,
                         help='Prediction threshold for classification (if not specified, adaptive thresholding will be used)')
+    parser.add_argument('--threshold_steps', type=int, default=35,
+                        help='Number of threshold values to test for per-class adaptive thresholding (default: 35)')
     parser.add_argument('--checkpoint', type=str, default="checkpoint_resume.pth",
                         help='Checkpoint file to use for testing')
     parser.add_argument('--output_dir', type=str, default="analysis/f1",
@@ -74,7 +76,7 @@ def calculate_per_label_metrics(confusion_stats, theme_labels, min_occurrences=5
     
     return theme_metrics
 
-def run_evaluation(use_cache=False, custom_threshold=None, quiet=False):
+def run_evaluation(use_cache=False, custom_threshold=None, per_class_thresholds=None, quiet=False):
     """Main function that evaluates the model and generates metrics."""
     # Use the global prediction_threshold or the custom_threshold if provided
     global prediction_threshold
@@ -200,7 +202,11 @@ def run_evaluation(use_cache=False, custom_threshold=None, quiet=False):
         predicted = out_raw
         
         # Calculate metrics using the direct model outputs
-        stats = compute_multilabel_confusion_matrix(predicted, target, threshold=prediction_threshold)
+        stats = compute_multilabel_confusion_matrix(
+            predicted, target, 
+            threshold=prediction_threshold,
+            per_class_thresholds=per_class_thresholds
+        )
         
         # Update totals
         for key in confusion_stats:
@@ -242,64 +248,101 @@ def run_evaluation(use_cache=False, custom_threshold=None, quiet=False):
         'tn': tn_sum
     }
 
-def calculate_adaptive_threshold(outputs, targets, theme_names=None, verbose=True):
+def calculate_adaptive_threshold(outputs, targets, theme_names=None, verbose=True, output_dir="analysis/f1", threshold_steps=35):
     """
-    Calculate adaptive thresholds for improved metrics calculation in early training stages.
-    This implements the approach described in docs/adaptive_thresholding.md.
-    
-    There are two approaches implemented:
-    1. Class-specific thresholds based on output distribution (primary approach)
-    2. Global F1-optimized threshold (fallback approach)
+    Calculate per-class F1-optimized adaptive thresholds and generate precision-recall curves.
+    This implements the approach described in docs/per-class-adaptive-thresholding.md.
     
     Args:
         outputs: Model predictions (after sigmoid) - shape [num_samples, num_classes]
         targets: Ground truth labels - shape [num_samples, num_classes]
         theme_names: List of theme names corresponding to the class indices
         verbose: Whether to print detailed threshold information
+        output_dir: Directory to save per-class threshold and PR curve data
+        threshold_steps: Number of threshold values to test for each class (default: 35)
         
     Returns:
-        best_threshold: The threshold that maximizes F1 score
+        dict: Dictionary containing per-class thresholds and global fallback threshold
     """
-    # Class-specific adaptive thresholding (primary approach)
     num_classes = outputs.shape[1]
     class_thresholds = np.zeros(num_classes)
+    per_class_pr_data = {}  # Store precision-recall curve data for each class
     
-    # Calculate statistics
+    # Create threshold range for sweeping (configurable density)
+    # Split the threshold_steps between logarithmic and linear ranges
+    log_steps = max(1, threshold_steps * 2 // 3)  # ~67% logarithmic
+    linear_steps = max(1, threshold_steps - log_steps)  # ~33% linear
+    
+    log_thresholds = np.logspace(-4, -0.3, log_steps)  # From 0.0001 to 0.5
+    linear_thresholds = np.linspace(0.01, 0.5, linear_steps)
+    all_thresholds = np.unique(np.sort(np.concatenate([log_thresholds, linear_thresholds])))
+    
     if verbose:
-        print("\nCalculating class-specific adaptive thresholds...")
+        print("\nCalculating per-class F1-optimized adaptive thresholds...")
     
-    # For each class, calculate the mean and std of predictions
+    # Calculate F1-optimized threshold for each class
     for i in range(num_classes):
         class_outputs = outputs[:, i]
-        class_mean = np.mean(class_outputs)
-        class_std = np.std(class_outputs)
+        class_targets = targets[:, i]
         
-        # Calculate adaptive threshold for this class using the formula from docs
-        # threshold = clamp(mean - 0.5 * std, min=0.05, max=0.5)
-        class_threshold = max(0.05, min(0.5, class_mean - 0.5 * class_std))
-        class_thresholds[i] = class_threshold
+        # Skip classes with no positive examples
+        if class_targets.sum() == 0:
+            class_thresholds[i] = 0.5  # Default threshold
+            if verbose and i < 10:
+                class_label = theme_names[i] if theme_names and i < len(theme_names) else f"Class {i}"
+                print(f"{class_label}: No positive examples, using default threshold=0.5000")
+            continue
         
-        if verbose and i < 10:  # Print details for first few classes to avoid token explosion
-            # Use theme name if available, otherwise use index
+        best_f1 = 0
+        best_threshold = 0.5
+        pr_curve_data = []
+        
+        # Sweep thresholds to find F1-optimizing threshold
+        for threshold in all_thresholds:
+            binary_preds = (class_outputs > threshold).astype(np.int64)
+            
+            # Calculate metrics
+            tp = np.sum((binary_preds == 1) & (class_targets == 1))
+            fp = np.sum((binary_preds == 1) & (class_targets == 0))
+            fn = np.sum((binary_preds == 0) & (class_targets == 1))
+            
+            # Calculate precision, recall, F1
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+            f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+            
+            # Store data for precision-recall curve
+            pr_curve_data.append({
+                'threshold': threshold,
+                'precision': precision,
+                'recall': recall,
+                'f1': f1,
+                'tp': tp,
+                'fp': fp,
+                'fn': fn
+            })
+            
+            # Update best threshold
+            if f1 > best_f1:
+                best_f1 = f1
+                best_threshold = threshold
+        
+        class_thresholds[i] = best_threshold
+        per_class_pr_data[i] = pr_curve_data
+        
+        if verbose and i < 10:  # Print details for first few classes
             class_label = theme_names[i] if theme_names and i < len(theme_names) else f"Class {i}"
-            print(f"{class_label}: mean={class_mean:.4f}, std={class_std:.4f}, threshold={class_threshold:.4f}")
+            print(f"{class_label}: optimal_threshold={best_threshold:.4f}, best_f1={best_f1:.4f}")
     
-    # Calculate average threshold across all classes
-    avg_threshold = np.mean(class_thresholds)
-    
-    if verbose:
-        print(f"\nAverage adaptive threshold across all classes: {avg_threshold:.4f}")
-        print(f"Min class threshold: {np.min(class_thresholds):.4f}")
-        print(f"Max class threshold: {np.max(class_thresholds):.4f}")
-    
-    # Also calculate global F1-optimized threshold as a fallback
-    
-    # Flatten the outputs and targets for global threshold calculation
+    # Calculate global F1-optimized threshold as fallback
     flat_outputs = outputs.reshape(-1)
     flat_targets = targets.reshape(-1)
     
     if verbose:
-        # Print statistics about the inputs
+        print(f"\nAverage per-class threshold: {np.mean(class_thresholds):.4f}")
+        print(f"Min class threshold: {np.min(class_thresholds):.4f}")
+        print(f"Max class threshold: {np.max(class_thresholds):.4f}")
+        
         print("\nGlobal prediction statistics:")
         print(f"Shape of outputs: {outputs.shape}")
         print(f"Shape of targets: {targets.shape}")
@@ -307,55 +350,79 @@ def calculate_adaptive_threshold(outputs, targets, theme_names=None, verbose=Tru
         print(f"Positive targets: {flat_targets.sum()} ({flat_targets.sum() / len(flat_targets):.2%})")
         print(f"Output stats - min: {flat_outputs.min():.6f}, max: {flat_outputs.max():.6f}, mean: {flat_outputs.mean():.6f}")
         
-    # Create logarithmic thresholds for better coverage of low values
-    # This is especially important if the model outputs are very small
-    log_thresholds = np.logspace(-4, -0.3, 15)  # From 0.0001 to 0.5
-    linear_thresholds = np.linspace(0.01, 0.5, 10)
-    all_thresholds = np.unique(np.sort(np.concatenate([log_thresholds, linear_thresholds, [avg_threshold]])))
-    
-    best_f1 = 0
-    best_threshold = avg_threshold  # Default to class average
-    
-    # Test thresholds to find optimal F1 score
-    if verbose:
         print("\nFinding optimal global threshold...")
         print(f"{'Threshold':>10} {'F1 Score':>10} {'Positives %':>11}")
         print("-" * 35)
     
+    best_global_f1 = 0
+    best_global_threshold = np.mean(class_thresholds)
+    
     for threshold in all_thresholds:
-        # Convert continuous predictions to binary using threshold
         binary_preds = (flat_outputs > threshold).astype(np.int64)
-        
-        # Calculate percentage of positive predictions
         positives_percent = binary_preds.sum() / len(binary_preds) * 100
         
-        # Skip thresholds that produce no positive predictions
         if positives_percent == 0:
             if verbose:
                 print(f"{threshold:10.4f} {'N/A':>10} {positives_percent:10.2f}% (skipped - no positives)")
             continue
         
-        # Calculate F1 score
         f1 = f1_score(flat_targets, binary_preds, average='macro', zero_division=0)
         
         if verbose:
             print(f"{threshold:10.4f} {f1:10.4f} {positives_percent:10.2f}%")
         
-        # Update best threshold if this one is better
-        if f1 > best_f1:
-            best_f1 = f1
-            best_threshold = threshold
+        if f1 > best_global_f1:
+            best_global_f1 = f1
+            best_global_threshold = threshold
     
-    # Choose the best approach
-    if best_f1 > 0:
-        if verbose:
-            print(f"\nOptimal global threshold: {best_threshold:.4f} (F1 score: {best_f1:.4f})")
-        return best_threshold
-    else:
-        if verbose:
-            print(f"\nNo threshold produced positive predictions with good F1 score.")
-            print(f"Using class-specific average threshold: {avg_threshold:.4f}")
-        return avg_threshold
+    if verbose:
+        print(f"\nOptimal global threshold: {best_global_threshold:.4f} (F1 score: {best_global_f1:.4f})")
+    
+    # Save per-class threshold and PR curve data
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Save per-class thresholds
+    threshold_data = []
+    for i in range(num_classes):
+        class_label = theme_names[i] if theme_names and i < len(theme_names) else f"Class_{i}"
+        threshold_data.append({
+            'class_index': i,
+            'class_name': class_label,
+            'optimal_threshold': class_thresholds[i],
+            'num_positive_examples': int(targets[:, i].sum())
+        })
+    
+    # Save thresholds to CSV
+    import pandas as pd
+    df_thresholds = pd.DataFrame(threshold_data)
+    threshold_file = os.path.join(output_dir, 'per_class_thresholds.csv')
+    df_thresholds.to_csv(threshold_file, index=False)
+    
+    # Save precision-recall curve data
+    pr_curve_file = os.path.join(output_dir, 'per_class_pr_curves.csv')
+    pr_rows = []
+    for class_idx, pr_data in per_class_pr_data.items():
+        class_label = theme_names[class_idx] if theme_names and class_idx < len(theme_names) else f"Class_{class_idx}"
+        for point in pr_data:
+            pr_rows.append({
+                'class_index': class_idx,
+                'class_name': class_label,
+                **point
+            })
+    
+    df_pr_curves = pd.DataFrame(pr_rows)
+    df_pr_curves.to_csv(pr_curve_file, index=False)
+    
+    if verbose:
+        print(f"\nPer-class thresholds saved to: {threshold_file}")
+        print(f"Precision-recall curve data saved to: {pr_curve_file}")
+    
+    return {
+        'per_class_thresholds': class_thresholds,
+        'global_threshold': best_global_threshold,
+        'pr_curve_data': per_class_pr_data,
+        'threshold_data': threshold_data
+    }
 
 def print_metrics_table(metrics, top=None):
     """Print metrics in a formatted table, optionally limiting to top N rows."""
@@ -575,19 +642,28 @@ if __name__ == "__main__":
             all_outputs_array = np.vstack(all_outputs)
             all_targets_array = np.vstack(all_targets)
             
-            # Calculate and set the optimal threshold
-            optimal_threshold = calculate_adaptive_threshold(all_outputs_array, all_targets_array, theme_names=dataset.get_theme_names(), verbose=verbose)
-            prediction_threshold = optimal_threshold
+            # Calculate per-class optimal thresholds
+            threshold_results = calculate_adaptive_threshold(
+                all_outputs_array, all_targets_array, 
+                theme_names=dataset.get_theme_names(), 
+                verbose=verbose, 
+                output_dir=args.output_dir,
+                threshold_steps=args.threshold_steps
+            )
+            per_class_thresholds = threshold_results['per_class_thresholds']
+            global_threshold = threshold_results['global_threshold']
+            prediction_threshold = global_threshold  # For compatibility
             
             if not quiet:
-                print(f"\nUsing adaptive threshold: {prediction_threshold:.4f}")
+                print(f"\nUsing per-class adaptive thresholds (global fallback: {global_threshold:.4f})")
         
-        # Run the evaluation with the determined threshold
+        # Run the evaluation with per-class thresholds
         if not quiet:
             print("\nRunning evaluation...")
         theme_metrics, overall_metrics = run_evaluation(
             use_cache=use_cache,
-            custom_threshold=prediction_threshold, 
+            custom_threshold=prediction_threshold,
+            per_class_thresholds=per_class_thresholds if adaptive_threshold else None,
             quiet=quiet
         )
         

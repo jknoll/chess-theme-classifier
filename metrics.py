@@ -2,14 +2,15 @@ import torch
 import numpy as np
 from sklearn.metrics import precision_recall_fscore_support, classification_report
 
-def compute_multilabel_confusion_matrix(pred, target, threshold=0.5):
+def compute_multilabel_confusion_matrix(pred, target, threshold=0.5, per_class_thresholds=None):
     """
     Compute confusion matrix statistics for multilabel classification.
     
     Args:
         pred: PyTorch tensor of predicted probabilities (shape: [batch_size, num_classes] or [num_classes])
         target: PyTorch tensor of binary ground truth labels (same shape as pred)
-        threshold: Float between 0 and 1, threshold for positive prediction
+        threshold: Float between 0 and 1, threshold for positive prediction (used if per_class_thresholds is None)
+        per_class_thresholds: Array of per-class thresholds (shape: [num_classes]), overrides threshold if provided
     
     Returns:
         Dictionary containing arrays of TP, FP, FN, TN counts per class
@@ -20,7 +21,18 @@ def compute_multilabel_confusion_matrix(pred, target, threshold=0.5):
             pred = pred.unsqueeze(0)
             target = target.unsqueeze(0)
             
-        pred_binary = (pred > threshold).float()
+        # Apply thresholds
+        if per_class_thresholds is not None:
+            # Use per-class thresholds
+            pred_binary = torch.zeros_like(pred, dtype=torch.bool)
+            for i in range(pred.shape[1]):
+                class_threshold = per_class_thresholds[i] if i < len(per_class_thresholds) else threshold
+                pred_binary[:, i] = (pred[:, i] > class_threshold)
+            pred_binary = pred_binary.float()
+        else:
+            # Use global threshold
+            pred_binary = (pred > threshold).float()
+            
         target = target.float()
         
         true_positive = (pred_binary * target).sum(dim=0)
