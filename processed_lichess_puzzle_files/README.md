@@ -2,6 +2,14 @@
 
 This directory contains pre-processed cache files derived from the original `lichess_db_puzzle.csv` dataset. These files enable faster training by skipping the time-consuming preprocessing steps.
 
+The source file is distributed as a .csv.zst. After decompressing, it has this hash. These files can be re-derived automatically by placing a newer version of the .csv (i.e. a newer mtime) in the directory and loading the dataset.
+
+Beware, however, as newer versions of the file from lichess may contain incrementally more labels (when a previously-unobserved opening subcategory is observed in an included puzzle), which implies a change in model architecture at the output layer.
+
+```bash
+md5sum processed_lichess_puzzle_files/lichess_db_puzzle.csv
+7b58528b802e297d71e130c4b604f9e6  processed_lichess_puzzle_files/lichess_db_puzzle.csv
+```
 ## Files and Their Purpose
 
 1. **lichess_db_puzzle.csv.themes.json**
