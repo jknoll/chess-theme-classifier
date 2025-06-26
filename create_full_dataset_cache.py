@@ -46,7 +46,8 @@ def create_full_dataset_cache(verbose=False):
         'class_conditional_augmentation': False,  # Milestone 2 feature
         'low_memory': True,  # Safe for large datasets
         'use_cache': False,  # Force regeneration
-        'verbose_progress': verbose  # Pass verbose flag to dataset
+        'verbose_progress': verbose,  # Pass verbose flag to dataset
+        'num_workers': 0  # Force single-threaded processing to avoid multiprocessing issues
     }
     
     print(f"📋 Processing Parameters:")

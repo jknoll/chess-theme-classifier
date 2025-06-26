@@ -252,3 +252,5 @@ if memory_usage > 25:  # Above 25GB threshold
 - Resume functionality allows restarting from partial progress
 
 **Dependencies**: Requires completion of Milestone 1 first (uses full dataset cache as foundation).
+
+Note/TODO: _does_ generating the full class conditional dataset depend on the full dataset cache? When run, its output is the number of FEN positions, leading me to believe that it perhaps has a file system check enforcement that the output file is on disk, but that it may not leverage that output file in generating the full class conditional data set. 

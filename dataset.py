@@ -15,6 +15,12 @@ except ImportError:
     # Fallback for older PyTorch versions
     add_safe_globals = None
 
+try:
+    import psutil
+    psutil_available = True
+except ImportError:
+    psutil_available = False
+
 # Limit OpenMP threads to avoid resource exhaustion
 os.environ['OMP_NUM_THREADS'] = '4'  # Limit OpenMP threads
 os.environ['MKL_NUM_THREADS'] = '4'  # Limit MKL threads
@@ -40,11 +46,13 @@ class ChessPuzzleDataset(Dataset):
         self.csv_file = csv_file
         self.cache_size = cache_size
         
-        # Set num_workers based on low_memory flag
-        if low_memory:
+        # Set num_workers based on low_memory flag and explicit parameter
+        if num_workers is not None:
+            self.num_workers = num_workers  # Use explicitly provided value (including 0)
+        elif low_memory:
             self.num_workers = 1  # Use just 1 worker in low memory mode
         else:
-            self.num_workers = num_workers or max(1, multiprocessing.cpu_count() - 1)
+            self.num_workers = max(1, multiprocessing.cpu_count() - 1)
             
         self.low_memory = low_memory
         self.augment_with_reflections = augment_with_reflections
@@ -521,7 +529,7 @@ class ChessPuzzleDataset(Dataset):
         
         # Split the FEN list into chunks - optimize chunk size based on dataset size
         if self.low_memory:
-            chunk_size = 50  # Very small chunks for low memory mode
+            chunk_size = 500  # Moderate chunks for low memory mode - balance memory vs efficiency
         elif len(fen_list) > 1000000:  # For very large datasets (>1M), use smaller chunks
             chunk_size = 1000  # Process 1000 FENs per chunk to manage memory
         else:
@@ -538,6 +546,15 @@ class ChessPuzzleDataset(Dataset):
         all_tensors = []
         
         # Use ProcessPoolExecutor with a timeout to prevent hanging
+        # In low memory mode with many chunks, use batched processing to avoid overwhelming the process queue
+        max_pending_futures = 100 if self.low_memory else 1000
+        
+        # If num_workers is 0, use single-threaded processing to avoid multiprocessing issues
+        if self.num_workers == 0:
+            if self.verbose_progress:
+                print("Using single-threaded processing to avoid multiprocessing issues")
+            return self._sequential_batch_conversion(fen_list, augment_with_reflections)
+        
         with concurrent.futures.ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             # Process each chunk, with info about whether to include reflections
             if augment_with_reflections:
@@ -550,36 +567,50 @@ class ChessPuzzleDataset(Dataset):
                 except ImportError:
                     tqdm_available = False
                 
-                # Process chunks with a timeout to prevent hanging
-                futures = []
-                for chunk_arg in chunk_args:
-                    future = executor.submit(self._process_chunk_with_args_wrapper, chunk_arg)
-                    futures.append(future)
-                
-                # Use tqdm to show progress while waiting for results
+                # Process chunks in batches to avoid overwhelming the process queue
                 results = []
                 failed_chunks = []
                 
-                if tqdm_available and self.verbose_progress:
-                    progress_desc = "Converting FENs to tensors (with reflections)"
-                    iterator = tqdm(concurrent.futures.as_completed(futures), 
-                                   total=len(futures), desc=progress_desc)
-                elif self.verbose_progress:
-                    print("Converting FENs to tensors (with reflections)...")
-                    iterator = concurrent.futures.as_completed(futures)
-                else:
-                    iterator = concurrent.futures.as_completed(futures)
+                # Process chunks in batches
+                total_chunks = len(chunk_args)
+                processed_count = 0
                 
-                for i, future in enumerate(iterator):
+                if tqdm_available and self.verbose_progress:
+                    overall_progress = tqdm(total=total_chunks, desc="Processing chunks (with reflections)")
+                elif self.verbose_progress:
+                    print("Processing chunks (with reflections)...")
+                
+                for batch_start in range(0, total_chunks, max_pending_futures):
+                    batch_end = min(batch_start + max_pending_futures, total_chunks)
+                    batch_chunk_args = chunk_args[batch_start:batch_end]
+                    
+                    # Submit batch of futures
+                    futures = []
+                    for chunk_arg in batch_chunk_args:
+                        future = executor.submit(self._process_chunk_with_args_wrapper, chunk_arg)
+                        futures.append(future)
+                    
+                    # Process results from this batch
+                    for i, future in enumerate(concurrent.futures.as_completed(futures)):
                         try:
-                            result = future.result(timeout=120)  # Increased timeout to 120 seconds
+                            result = future.result(timeout=120)
                             results.append(result)
+                            processed_count += 1
+                            
+                            if tqdm_available and self.verbose_progress:
+                                overall_progress.update(1)
+                            elif self.verbose_progress and processed_count % 1000 == 0:
+                                print(f"Processed {processed_count:,}/{total_chunks:,} chunks...")
+                                
                         except concurrent.futures.TimeoutError:
                             print(f"⚠️ Warning: A worker process timed out. Will retry this chunk.")
-                            failed_chunks.append(chunk_args[i])
+                            failed_chunks.append(batch_chunk_args[i])
                         except Exception as e:
                             print(f"⚠️ Error processing chunk: {e}. Will retry this chunk.")
-                            failed_chunks.append(chunk_args[i])
+                            failed_chunks.append(batch_chunk_args[i])
+                
+                if tqdm_available and self.verbose_progress:
+                    overall_progress.close()
                             
                 # This code block is now handled above with conditional tqdm
                 
@@ -631,36 +662,67 @@ class ChessPuzzleDataset(Dataset):
                 except ImportError:
                     tqdm_available = False
                 
-                # Process chunks with a timeout to prevent hanging
-                futures = []
-                for chunk in chunks:
-                    future = executor.submit(self._process_chunk, chunk)
-                    futures.append(future)
-                
-                # Use tqdm to show progress while waiting for results
+                # Process chunks in batches to avoid overwhelming the process queue
                 results = []
                 failed_chunks = []
                 
-                if tqdm_available and self.verbose_progress:
-                    progress_desc = "Converting FENs to tensors"
-                    iterator = tqdm(concurrent.futures.as_completed(futures), 
-                                   total=len(futures), desc=progress_desc)
-                elif self.verbose_progress:
-                    print("Converting FENs to tensors...")
-                    iterator = concurrent.futures.as_completed(futures)
-                else:
-                    iterator = concurrent.futures.as_completed(futures)
+                # Process chunks in batches
+                total_chunks = len(chunks)
+                processed_count = 0
                 
-                for i, future in enumerate(iterator):
+                if tqdm_available and self.verbose_progress:
+                    overall_progress = tqdm(total=total_chunks, desc="Processing chunks")
+                elif self.verbose_progress:
+                    print("Processing chunks...")
+                
+                # Initial memory logging
+                if self.verbose_progress and psutil_available:
+                    mem = psutil.virtual_memory()
+                    current_proc = psutil.Process()
+                    child_count = len(current_proc.children(recursive=True))
+                    print(f"Initial memory: {mem.percent:.1f}% used ({mem.used/1024**3:.1f}GB/{mem.total/1024**3:.1f}GB)")
+                    print(f"Initial process count: {child_count} child processes")
+                
+                for batch_start in range(0, total_chunks, max_pending_futures):
+                    batch_end = min(batch_start + max_pending_futures, total_chunks)
+                    batch_chunks = chunks[batch_start:batch_end]
+                    
+                    # Submit batch of futures
+                    futures = []
+                    for chunk in batch_chunks:
+                        future = executor.submit(self._process_chunk, chunk)
+                        futures.append(future)
+                    
+                    # Process results from this batch
+                    for i, future in enumerate(concurrent.futures.as_completed(futures)):
                         try:
-                            result = future.result(timeout=120)  # Increased timeout to 120 seconds
+                            result = future.result(timeout=120)
                             results.append(result)
+                            processed_count += 1
+                            
+                            if tqdm_available and self.verbose_progress:
+                                overall_progress.update(1)
+                            elif self.verbose_progress and processed_count % 1000 == 0:
+                                print(f"Processed {processed_count:,}/{total_chunks:,} chunks...")
+                            
+                            # Memory logging every 100 chunks
+                            if self.verbose_progress and psutil_available and processed_count % 100 == 0:
+                                mem = psutil.virtual_memory()
+                                if not tqdm_available:  # Only print if not using tqdm to avoid cluttering
+                                    print(f"Memory: {mem.percent:.1f}% used ({mem.used/1024**3:.1f}GB)")
+                                # Check if memory usage is getting high
+                                if mem.percent > 80:
+                                    print(f"⚠️ High memory usage: {mem.percent:.1f}%")
+                                
                         except concurrent.futures.TimeoutError:
                             print(f"⚠️ Warning: A worker process timed out. Will retry this chunk.")
-                            failed_chunks.append(chunks[i])
+                            failed_chunks.append(batch_chunks[i])
                         except Exception as e:
                             print(f"⚠️ Error processing chunk: {e}. Will retry this chunk.")
-                            failed_chunks.append(chunks[i])
+                            failed_chunks.append(batch_chunks[i])
+                
+                if tqdm_available and self.verbose_progress:
+                    overall_progress.close()
                             
                 # This code block is now handled above with conditional tqdm
                 
@@ -711,6 +773,82 @@ class ChessPuzzleDataset(Dataset):
         success_rate = (actual_count / expected_count) * 100 if expected_count > 0 else 0
         
         print(f"📊 Processing Summary:")
+        print(f"   Expected: {expected_count:,} FENs")
+        print(f"   Processed: {actual_count:,} tensors")
+        print(f"   Success rate: {success_rate:.2f}%")
+        
+        if actual_count < expected_count:
+            missing_count = expected_count - actual_count
+            print(f"⚠️  Missing {missing_count:,} tensors ({(missing_count/expected_count)*100:.2f}%)")
+        else:
+            print(f"✅ Successfully processed all tensors!")
+            
+        return all_tensors
+    
+    def _sequential_batch_conversion(self, fen_list, augment_with_reflections):
+        """Sequential (single-threaded) batch conversion to avoid multiprocessing issues."""
+        print(f"Processing {len(fen_list):,} FENs sequentially")
+        
+        # Process chunks sequentially
+        if self.low_memory:
+            chunk_size = 500  # Same as parallel version
+        elif len(fen_list) > 1000000:
+            chunk_size = 1000
+        else:
+            chunk_size = 5000  # Larger chunks for sequential processing
+            
+        chunk_size = min(chunk_size, 10000)
+        chunks = [fen_list[i:i+chunk_size] for i in range(0, len(fen_list), chunk_size)]
+        
+        print(f"Processing {len(fen_list):,} FENs in {len(chunks)} chunks sequentially")
+        
+        all_tensors = []
+        
+        # Memory monitoring setup
+        if self.verbose_progress and psutil_available:
+            mem = psutil.virtual_memory()
+            print(f"Initial memory: {mem.percent:.1f}% used ({mem.used/1024**3:.1f}GB/{mem.total/1024**3:.1f}GB)")
+        
+        # Progress bar setup
+        if self.verbose_progress:
+            try:
+                from tqdm import tqdm
+                chunk_iterator = tqdm(chunks, desc="Processing chunks sequentially")
+            except ImportError:
+                chunk_iterator = chunks
+                print("Processing chunks sequentially...")
+        else:
+            chunk_iterator = chunks
+        
+        processed_count = 0
+        for chunk in chunk_iterator:
+            try:
+                if augment_with_reflections:
+                    result = self._process_chunk_with_args(chunk, True)
+                else:
+                    result = self._process_chunk(chunk)
+                
+                if result is not None and len(result) > 0:
+                    all_tensors.extend(result)
+                
+                processed_count += 1
+                
+                # Memory monitoring
+                if self.verbose_progress and psutil_available and processed_count % 100 == 0:
+                    mem = psutil.virtual_memory()
+                    if mem.percent > 80:
+                        print(f"⚠️ High memory usage: {mem.percent:.1f}%")
+                        
+            except Exception as e:
+                print(f"⚠️ Error processing chunk: {e}")
+                continue
+        
+        # Detailed reporting like parallel version
+        expected_count = len(fen_list)
+        actual_count = len(all_tensors)
+        success_rate = (actual_count / expected_count) * 100 if expected_count > 0 else 0
+        
+        print(f"📊 Sequential Processing Summary:")
         print(f"   Expected: {expected_count:,} FENs")
         print(f"   Processed: {actual_count:,} tensors")
         print(f"   Success rate: {success_rate:.2f}%")

@@ -70,7 +70,8 @@ def create_full_class_conditional_dataset(verbose=False, test_resume=None):
         'verbose_progress': verbose,  # Pass verbose flag
         'rarity_threshold': None,  # Auto-determine from full dataset
         'full_class_conditional': True,  # Enable full class-conditional mode (Milestone 2)
-        'test_resume': test_resume  # Pass test_resume parameter for testing
+        'test_resume': test_resume,  # Pass test_resume parameter for testing
+        'num_workers': 0  # Force single-threaded processing to avoid multiprocessing issues
     }
     
     print("Class-Conditional Augmentation Parameters:")
