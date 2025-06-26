@@ -6,6 +6,9 @@
 
 This project implements a deep convolutional neural network to perform multi-label classification on board positions sourced from the lichess puzzles dataset. Each board position is labeled with applicable themes (for example, _back rank mate_, _zugzwang_, _advanced pawn_, etc.) as well as openings, if relevant (for example, _Sicilian Defense_, _The English_, etc.) Instructions are included for training and evaluating the mode, along with a trained checkpoint.
 
+The lichess puzzle database contains about 5M labeled boards as of 2025-06-24:
+`4956460 processed_lichess_puzzle_files/lichess_db_puzzle.csv`
+
 ## Get Started
 ```bash
 apt update && apt install -y python3-dev python3-pip python3-virtualenv git nano
