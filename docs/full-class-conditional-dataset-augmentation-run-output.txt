@@ -1,0 +1,3133 @@
+|███████████████████████████████████████████████████████████████████████   | 4758328/4956459 [48:14<02:03, 1608.68it/s]Memory usage: 6.0 GB, saved chunk 2434, processed 4,870,048 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████   | 4760653/4956459 [48:16<01:39, 1968.74it/s]Memory usage: 6.0 GB, saved chunk 2435, processed 4,872,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████   | 4762190/4956459 [48:17<02:01, 1597.20it/s]Memory usage: 6.0 GB, saved chunk 2436, processed 4,874,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████▏  | 4764596/4956459 [48:19<01:36, 1995.09it/s]Memory usage: 6.0 GB, saved chunk 2437, processed 4,876,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████▏  | 4766122/4956459 [48:20<01:58, 1602.44it/s]Memory usage: 6.0 GB, saved chunk 2438, processed 4,878,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████▏  | 4768531/4956459 [48:21<01:33, 2007.15it/s]Memory usage: 6.0 GB, saved chunk 2439, processed 4,880,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████▏  | 4770069/4956459 [48:23<01:55, 1612.24it/s]Memory usage: 6.0 GB, saved chunk 2440, processed 4,882,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████▎  | 4772407/4956459 [48:24<01:33, 1976.57it/s]Memory usage: 6.0 GB, saved chunk 2441, processed 4,884,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████▎  | 4773953/4956459 [48:26<01:53, 1604.79it/s]Memory usage: 6.0 GB, saved chunk 2442, processed 4,886,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████▎  | 4776295/4956459 [48:27<01:31, 1974.28it/s]Memory usage: 6.0 GB, saved chunk 2443, processed 4,888,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████▎  | 4777816/4956459 [48:29<01:52, 1589.23it/s]Memory usage: 6.0 GB, saved chunk 2444, processed 4,890,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████▎  | 4780192/4956459 [48:30<01:29, 1972.20it/s]Memory usage: 6.0 GB, saved chunk 2445, processed 4,892,049 entries
+Creating augmented dataset:  96%|███████████████████████████████████████████████████████████████████████▍  | 4781731/4956459 [48:31<01:48, 1605.17it/s]Memory usage: 6.0 GB, saved chunk 2446, processed 4,894,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▍  | 4784097/4956459 [48:33<01:27, 1976.28it/s]Memory usage: 6.0 GB, saved chunk 2447, processed 4,896,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▍  | 4785616/4956459 [48:34<01:47, 1591.11it/s]Memory usage: 6.0 GB, saved chunk 2448, processed 4,898,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▍  | 4788046/4956459 [48:36<01:24, 1995.08it/s]Memory usage: 6.0 GB, saved chunk 2449, processed 4,900,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▌  | 4789580/4956459 [48:37<01:44, 1604.20it/s]Memory usage: 6.0 GB, saved chunk 2450, processed 4,902,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▌  | 4791928/4956459 [48:39<01:23, 1965.32it/s]Memory usage: 6.0 GB, saved chunk 2451, processed 4,904,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▌  | 4793448/4956459 [48:40<01:42, 1587.06it/s]Memory usage: 6.0 GB, saved chunk 2452, processed 4,906,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▌  | 4795886/4956459 [48:41<01:20, 2000.68it/s]Memory usage: 6.0 GB, saved chunk 2453, processed 4,908,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▋  | 4797409/4956459 [48:43<01:39, 1602.72it/s]Memory usage: 6.0 GB, saved chunk 2454, processed 4,910,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▋  | 4799758/4956459 [48:44<01:19, 1976.01it/s]Memory usage: 6.0 GB, saved chunk 2455, processed 4,912,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▋  | 4801279/4956459 [48:46<01:37, 1591.51it/s]Memory usage: 6.0 GB, saved chunk 2456, processed 4,914,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▋  | 4803658/4956459 [48:47<01:17, 1974.44it/s]Memory usage: 6.0 GB, saved chunk 2457, processed 4,916,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▋  | 4805188/4956459 [48:48<01:34, 1596.84it/s]Memory usage: 6.0 GB, saved chunk 2458, processed 4,918,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▊  | 4807529/4956459 [48:50<01:15, 1960.31it/s]Memory usage: 6.0 GB, saved chunk 2459, processed 4,920,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▊  | 4809040/4956459 [48:51<01:33, 1583.26it/s]Memory usage: 6.0 GB, saved chunk 2460, processed 4,922,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▊  | 4811449/4956459 [48:53<01:13, 1973.82it/s]Memory usage: 6.0 GB, saved chunk 2461, processed 4,924,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▊  | 4812957/4956459 [48:54<01:30, 1583.46it/s]Memory usage: 6.0 GB, saved chunk 2462, processed 4,926,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▉  | 4815397/4956459 [48:56<01:10, 1988.61it/s]Memory usage: 6.0 GB, saved chunk 2463, processed 4,928,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▉  | 4816913/4956459 [48:57<01:27, 1591.84it/s]Memory usage: 6.0 GB, saved chunk 2464, processed 4,930,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▉  | 4819294/4956459 [48:59<01:09, 1974.44it/s]Memory usage: 6.0 GB, saved chunk 2465, processed 4,932,049 entries
+Creating augmented dataset:  97%|███████████████████████████████████████████████████████████████████████▉  | 4820812/4956459 [49:00<01:25, 1586.90it/s]Memory usage: 6.0 GB, saved chunk 2466, processed 4,934,049 entries
+Creating augmented dataset:  97%|████████████████████████████████████████████████████████████████████████  | 4823188/4956459 [49:01<01:07, 1969.44it/s]Memory usage: 6.0 GB, saved chunk 2467, processed 4,936,049 entries
+Creating augmented dataset:  97%|████████████████████████████████████████████████████████████████████████  | 4824689/4956459 [49:03<01:23, 1573.07it/s]Memory usage: 6.0 GB, saved chunk 2468, processed 4,938,049 entries
+Creating augmented dataset:  97%|████████████████████████████████████████████████████████████████████████  | 4827102/4956459 [49:04<01:05, 1979.50it/s]Memory usage: 6.0 GB, saved chunk 2469, processed 4,940,049 entries
+Creating augmented dataset:  97%|████████████████████████████████████████████████████████████████████████  | 4828620/4956459 [49:06<01:20, 1584.04it/s]Memory usage: 6.0 GB, saved chunk 2470, processed 4,942,049 entries
+Creating augmented dataset:  97%|████████████████████████████████████████████████████████████████████████▏ | 4831007/4956459 [49:07<01:03, 1969.03it/s]Memory usage: 6.0 GB, saved chunk 2471, processed 4,944,049 entries
+Creating augmented dataset:  97%|████████████████████████████████████████████████████████████████████████▏ | 4832541/4956459 [49:09<01:17, 1594.77it/s]Memory usage: 6.0 GB, saved chunk 2472, processed 4,946,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▏ | 4834878/4956459 [49:10<01:02, 1952.33it/s]Memory usage: 6.0 GB, saved chunk 2473, processed 4,948,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▏ | 4836401/4956459 [49:11<01:15, 1579.78it/s]Memory usage: 6.0 GB, saved chunk 2474, processed 4,950,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▏ | 4838799/4956459 [49:13<00:59, 1964.97it/s]Memory usage: 6.0 GB, saved chunk 2475, processed 4,952,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▎ | 4840316/4956459 [49:14<01:13, 1585.65it/s]Memory usage: 6.0 GB, saved chunk 2476, processed 4,954,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▎ | 4842726/4956459 [49:16<00:57, 1969.90it/s]Memory usage: 6.0 GB, saved chunk 2477, processed 4,956,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▎ | 4844248/4956459 [49:17<01:10, 1589.65it/s]Memory usage: 6.0 GB, saved chunk 2478, processed 4,958,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▎ | 4846693/4956459 [49:19<00:54, 2002.32it/s]Memory usage: 6.0 GB, saved chunk 2479, processed 4,960,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▍ | 4848235/4956459 [49:20<01:07, 1612.17it/s]Memory usage: 6.0 GB, saved chunk 2480, processed 4,962,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▍ | 4850580/4956459 [49:21<00:53, 1976.56it/s]Memory usage: 6.0 GB, saved chunk 2481, processed 4,964,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▍ | 4852106/4956459 [49:23<01:05, 1589.60it/s]Memory usage: 6.0 GB, saved chunk 2482, processed 4,966,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▍ | 4854483/4956459 [49:24<00:51, 1976.93it/s]Memory usage: 6.0 GB, saved chunk 2483, processed 4,968,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▌ | 4855992/4956459 [49:26<01:03, 1579.91it/s]Memory usage: 6.0 GB, saved chunk 2484, processed 4,970,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▌ | 4858396/4956459 [49:27<00:49, 1975.78it/s]Memory usage: 6.0 GB, saved chunk 2485, processed 4,972,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▌ | 4859942/4956459 [49:29<01:00, 1606.34it/s]Memory usage: 6.0 GB, saved chunk 2486, processed 4,974,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▌ | 4862301/4956459 [49:30<00:47, 1962.70it/s]Memory usage: 6.0 GB, saved chunk 2487, processed 4,976,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▌ | 4863838/4956459 [49:31<00:58, 1582.98it/s]Memory usage: 6.0 GB, saved chunk 2488, processed 4,978,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▋ | 4866221/4956459 [49:33<00:45, 1965.59it/s]Memory usage: 6.0 GB, saved chunk 2489, processed 4,980,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▋ | 4867753/4956459 [49:34<00:55, 1593.86it/s]Memory usage: 6.0 GB, saved chunk 2490, processed 4,982,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▋ | 4870162/4956459 [49:36<00:43, 1980.59it/s]Memory usage: 6.0 GB, saved chunk 2491, processed 4,984,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▋ | 4871688/4956459 [49:37<00:53, 1587.45it/s]Memory usage: 6.0 GB, saved chunk 2492, processed 4,986,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▊ | 4874078/4956459 [49:39<00:41, 1976.96it/s]Memory usage: 6.0 GB, saved chunk 2493, processed 4,988,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▊ | 4875595/4956459 [49:40<00:51, 1585.04it/s]Memory usage: 6.0 GB, saved chunk 2494, processed 4,990,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▊ | 4877966/4956459 [49:42<00:40, 1959.49it/s]Memory usage: 6.0 GB, saved chunk 2495, processed 4,992,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▊ | 4879485/4956459 [49:43<00:48, 1578.79it/s]Memory usage: 6.0 GB, saved chunk 2496, processed 4,994,049 entries
+Creating augmented dataset:  98%|████████████████████████████████████████████████████████████████████████▉ | 4881914/4956459 [49:44<00:37, 1990.74it/s]Memory usage: 6.0 GB, saved chunk 2497, processed 4,996,049 entries
+Creating augmented dataset:  99%|████████████████████████████████████████████████████████████████████████▉ | 4883443/4956459 [49:46<00:45, 1594.97it/s]Memory usage: 6.0 GB, saved chunk 2498, processed 4,998,049 entries
+Creating augmented dataset:  99%|████████████████████████████████████████████████████████████████████████▉ | 4885817/4956459 [49:47<00:35, 1969.27it/s]Memory usage: 6.0 GB, saved chunk 2499, processed 5,000,049 entries
+Creating augmented dataset:  99%|████████████████████████████████████████████████████████████████████████▉ | 4887351/4956459 [49:49<00:43, 1594.34it/s]Memory usage: 6.0 GB, saved chunk 2500, processed 5,002,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████ | 4889726/4956459 [49:50<00:33, 1972.68it/s]Memory usage: 6.0 GB, saved chunk 2501, processed 5,004,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████ | 4891242/4956459 [49:52<00:41, 1581.65it/s]Memory usage: 6.0 GB, saved chunk 2502, processed 5,006,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████ | 4893628/4956459 [49:53<00:32, 1962.82it/s]Memory usage: 6.0 GB, saved chunk 2503, processed 5,008,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████ | 4895150/4956459 [49:54<00:38, 1585.65it/s]Memory usage: 6.0 GB, saved chunk 2504, processed 5,010,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████ | 4897544/4956459 [49:56<00:29, 1973.33it/s]Memory usage: 6.0 GB, saved chunk 2505, processed 5,012,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▏| 4899075/4956459 [49:57<00:36, 1587.63it/s]Memory usage: 6.0 GB, saved chunk 2506, processed 5,014,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▏| 4901443/4956459 [49:59<00:28, 1960.09it/s]Memory usage: 6.0 GB, saved chunk 2507, processed 5,016,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▏| 4902955/4956459 [50:00<00:33, 1574.36it/s]Memory usage: 6.0 GB, saved chunk 2508, processed 5,018,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▏| 4905341/4956459 [50:02<00:26, 1950.80it/s]Memory usage: 6.0 GB, saved chunk 2509, processed 5,020,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▎| 4906859/4956459 [50:03<00:31, 1574.03it/s]Memory usage: 6.0 GB, saved chunk 2510, processed 5,022,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▎| 4909278/4956459 [50:04<00:23, 1980.01it/s]Memory usage: 6.0 GB, saved chunk 2511, processed 5,024,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▎| 4910809/4956459 [50:06<00:28, 1588.89it/s]Memory usage: 6.0 GB, saved chunk 2512, processed 5,026,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▎| 4913179/4956459 [50:07<00:22, 1956.58it/s]Memory usage: 6.0 GB, saved chunk 2513, processed 5,028,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▍| 4914702/4956459 [50:09<00:26, 1583.63it/s]Memory usage: 6.0 GB, saved chunk 2514, processed 5,030,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▍| 4917098/4956459 [50:10<00:19, 1971.52it/s]Memory usage: 6.0 GB, saved chunk 2515, processed 5,032,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▍| 4918599/4956459 [50:12<00:24, 1572.81it/s]Memory usage: 6.0 GB, saved chunk 2516, processed 5,034,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▍| 4921028/4956459 [50:13<00:17, 1973.98it/s]Memory usage: 6.0 GB, saved chunk 2517, processed 5,036,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▍| 4922553/4956459 [50:15<00:21, 1591.83it/s]Memory usage: 6.1 GB, saved chunk 2518, processed 5,038,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▌| 4924939/4956459 [50:16<00:16, 1968.01it/s]Memory usage: 6.1 GB, saved chunk 2519, processed 5,040,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▌| 4926458/4956459 [50:17<00:19, 1576.97it/s]Memory usage: 6.0 GB, saved chunk 2520, processed 5,042,049 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▌| 4928808/4956459 [50:19<00:14, 1943.39it/s]Memory usage: 6.1 GB, saved chunk 2521, processed 5,044,050 entries
+Creating augmented dataset:  99%|█████████████████████████████████████████████████████████████████████████▌| 4930317/4956459 [50:20<00:16, 1568.70it/s]Memory usage: 6.1 GB, saved chunk 2522, processed 5,046,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▋| 4932748/4956459 [50:22<00:12, 1961.76it/s]Memory usage: 6.1 GB, saved chunk 2523, processed 5,048,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▋| 4934286/4956459 [50:23<00:13, 1588.38it/s]Memory usage: 6.1 GB, saved chunk 2524, processed 5,050,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▋| 4936669/4956459 [50:25<00:10, 1973.79it/s]Memory usage: 6.1 GB, saved chunk 2525, processed 5,052,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▋| 4938188/4956459 [50:26<00:11, 1579.65it/s]Memory usage: 6.1 GB, saved chunk 2526, processed 5,054,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▊| 4940552/4956459 [50:28<00:08, 1940.72it/s]Memory usage: 6.1 GB, saved chunk 2527, processed 5,056,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▊| 4942062/4956459 [50:29<00:09, 1564.91it/s]Memory usage: 6.1 GB, saved chunk 2528, processed 5,058,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▊| 4944473/4956459 [50:30<00:06, 1964.63it/s]Memory usage: 6.1 GB, saved chunk 2529, processed 5,060,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▊| 4946001/4956459 [50:32<00:06, 1580.96it/s]Memory usage: 6.1 GB, saved chunk 2530, processed 5,062,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▉| 4948391/4956459 [50:33<00:04, 1959.14it/s]Memory usage: 6.1 GB, saved chunk 2531, processed 5,064,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▉| 4949918/4956459 [50:35<00:04, 1582.66it/s]Memory usage: 6.1 GB, saved chunk 2532, processed 5,066,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▉| 4952343/4956459 [50:36<00:02, 1984.21it/s]Memory usage: 6.1 GB, saved chunk 2533, processed 5,068,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▉| 4953850/4956459 [50:38<00:01, 1575.09it/s]Memory usage: 6.1 GB, saved chunk 2534, processed 5,070,050 entries
+Creating augmented dataset: 100%|█████████████████████████████████████████████████████████████████████████▉| 4956218/4956459 [50:39<00:00, 1950.38it/s]Memory usage: 6.1 GB, saved chunk 2535, processed 5,072,050 entries
+Creating augmented dataset: 100%|██████████████████████████████████████████████████████████████████████████| 4956459/4956459 [50:40<00:00, 1629.98it/s]
+Streaming 2537 chunks directly to final cache file...
+Memory: 5.8 GB, processing chunk 1/2537
+Memory: 5.8 GB, processing chunk 2/2537
+Memory: 5.8 GB, processing chunk 3/2537
+Memory: 5.8 GB, processing chunk 4/2537
+Memory: 5.8 GB, processing chunk 5/2537
+Memory: 5.8 GB, processing chunk 6/2537
+Memory: 5.8 GB, processing chunk 7/2537
+Memory: 5.8 GB, processing chunk 8/2537
+Memory: 5.8 GB, processing chunk 9/2537
+Memory: 5.8 GB, processing chunk 10/2537
+Memory: 5.8 GB, processing chunk 11/2537
+Memory: 5.8 GB, processing chunk 12/2537
+Memory: 5.8 GB, processing chunk 13/2537
+Memory: 5.8 GB, processing chunk 14/2537
+Memory: 5.8 GB, processing chunk 15/2537
+Memory: 5.8 GB, processing chunk 16/2537
+Memory: 5.8 GB, processing chunk 17/2537
+Memory: 5.8 GB, processing chunk 18/2537
+Memory: 5.8 GB, processing chunk 19/2537
+Memory: 5.8 GB, processing chunk 20/2537
+Saving segment 1 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 21/2537
+Memory: 5.8 GB, processing chunk 22/2537
+Memory: 5.8 GB, processing chunk 23/2537
+Memory: 5.8 GB, processing chunk 24/2537
+Memory: 5.8 GB, processing chunk 25/2537
+Memory: 5.8 GB, processing chunk 26/2537
+Memory: 5.8 GB, processing chunk 27/2537
+Memory: 5.8 GB, processing chunk 28/2537
+Memory: 5.8 GB, processing chunk 29/2537
+Memory: 5.8 GB, processing chunk 30/2537
+Memory: 5.8 GB, processing chunk 31/2537
+Memory: 5.8 GB, processing chunk 32/2537
+Memory: 5.8 GB, processing chunk 33/2537
+Memory: 5.8 GB, processing chunk 34/2537
+Memory: 5.8 GB, processing chunk 35/2537
+Memory: 5.8 GB, processing chunk 36/2537
+Memory: 5.8 GB, processing chunk 37/2537
+Memory: 5.8 GB, processing chunk 38/2537
+Memory: 5.8 GB, processing chunk 39/2537
+Memory: 5.8 GB, processing chunk 40/2537
+Saving segment 2 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 41/2537
+Memory: 5.8 GB, processing chunk 42/2537
+Memory: 5.8 GB, processing chunk 43/2537
+Memory: 5.8 GB, processing chunk 44/2537
+Memory: 5.8 GB, processing chunk 45/2537
+Memory: 5.8 GB, processing chunk 46/2537
+Memory: 5.8 GB, processing chunk 47/2537
+Memory: 5.8 GB, processing chunk 48/2537
+Memory: 5.8 GB, processing chunk 49/2537
+Memory: 5.8 GB, processing chunk 50/2537
+Memory: 5.8 GB, processing chunk 51/2537
+Memory: 5.8 GB, processing chunk 52/2537
+Memory: 5.8 GB, processing chunk 53/2537
+Memory: 5.8 GB, processing chunk 54/2537
+Memory: 5.8 GB, processing chunk 55/2537
+Memory: 5.8 GB, processing chunk 56/2537
+Memory: 5.8 GB, processing chunk 57/2537
+Memory: 5.8 GB, processing chunk 58/2537
+Memory: 5.8 GB, processing chunk 59/2537
+Memory: 5.8 GB, processing chunk 60/2537
+Saving segment 3 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 61/2537
+Memory: 5.8 GB, processing chunk 62/2537
+Memory: 5.8 GB, processing chunk 63/2537
+Memory: 5.8 GB, processing chunk 64/2537
+Memory: 5.8 GB, processing chunk 65/2537
+Memory: 5.8 GB, processing chunk 66/2537
+Memory: 5.8 GB, processing chunk 67/2537
+Memory: 5.8 GB, processing chunk 68/2537
+Memory: 5.8 GB, processing chunk 69/2537
+Memory: 5.8 GB, processing chunk 70/2537
+Memory: 5.8 GB, processing chunk 71/2537
+Memory: 5.8 GB, processing chunk 72/2537
+Memory: 5.8 GB, processing chunk 73/2537
+Memory: 5.8 GB, processing chunk 74/2537
+Memory: 5.8 GB, processing chunk 75/2537
+Memory: 5.8 GB, processing chunk 76/2537
+Memory: 5.8 GB, processing chunk 77/2537
+Memory: 5.8 GB, processing chunk 78/2537
+Memory: 5.8 GB, processing chunk 79/2537
+Memory: 5.8 GB, processing chunk 80/2537
+Saving segment 4 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 81/2537
+Memory: 5.8 GB, processing chunk 82/2537
+Memory: 5.8 GB, processing chunk 83/2537
+Memory: 5.8 GB, processing chunk 84/2537
+Memory: 5.8 GB, processing chunk 85/2537
+Memory: 5.8 GB, processing chunk 86/2537
+Memory: 5.8 GB, processing chunk 87/2537
+Memory: 5.8 GB, processing chunk 88/2537
+Memory: 5.8 GB, processing chunk 89/2537
+Memory: 5.8 GB, processing chunk 90/2537
+Memory: 5.8 GB, processing chunk 91/2537
+Memory: 5.8 GB, processing chunk 92/2537
+Memory: 5.8 GB, processing chunk 93/2537
+Memory: 5.8 GB, processing chunk 94/2537
+Memory: 5.8 GB, processing chunk 95/2537
+Memory: 5.8 GB, processing chunk 96/2537
+Memory: 5.8 GB, processing chunk 97/2537
+Memory: 5.8 GB, processing chunk 98/2537
+Memory: 5.8 GB, processing chunk 99/2537
+Memory: 5.8 GB, processing chunk 100/2537
+Saving segment 5 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 101/2537
+Memory: 5.8 GB, processing chunk 102/2537
+Memory: 5.8 GB, processing chunk 103/2537
+Memory: 5.8 GB, processing chunk 104/2537
+Memory: 5.8 GB, processing chunk 105/2537
+Memory: 5.8 GB, processing chunk 106/2537
+Memory: 5.8 GB, processing chunk 107/2537
+Memory: 5.8 GB, processing chunk 108/2537
+Memory: 5.8 GB, processing chunk 109/2537
+Memory: 5.8 GB, processing chunk 110/2537
+Memory: 5.8 GB, processing chunk 111/2537
+Memory: 5.8 GB, processing chunk 112/2537
+Memory: 5.8 GB, processing chunk 113/2537
+Memory: 5.8 GB, processing chunk 114/2537
+Memory: 5.8 GB, processing chunk 115/2537
+Memory: 5.8 GB, processing chunk 116/2537
+Memory: 5.8 GB, processing chunk 117/2537
+Memory: 5.8 GB, processing chunk 118/2537
+Memory: 5.8 GB, processing chunk 119/2537
+Memory: 5.8 GB, processing chunk 120/2537
+Saving segment 6 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 121/2537
+Memory: 5.8 GB, processing chunk 122/2537
+Memory: 5.8 GB, processing chunk 123/2537
+Memory: 5.8 GB, processing chunk 124/2537
+Memory: 5.8 GB, processing chunk 125/2537
+Memory: 5.8 GB, processing chunk 126/2537
+Memory: 5.8 GB, processing chunk 127/2537
+Memory: 5.8 GB, processing chunk 128/2537
+Memory: 5.8 GB, processing chunk 129/2537
+Memory: 5.8 GB, processing chunk 130/2537
+Memory: 5.8 GB, processing chunk 131/2537
+Memory: 5.8 GB, processing chunk 132/2537
+Memory: 5.8 GB, processing chunk 133/2537
+Memory: 5.8 GB, processing chunk 134/2537
+Memory: 5.8 GB, processing chunk 135/2537
+Memory: 5.8 GB, processing chunk 136/2537
+Memory: 5.8 GB, processing chunk 137/2537
+Memory: 5.8 GB, processing chunk 138/2537
+Memory: 5.8 GB, processing chunk 139/2537
+Memory: 5.8 GB, processing chunk 140/2537
+Saving segment 7 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 141/2537
+Memory: 5.8 GB, processing chunk 142/2537
+Memory: 5.8 GB, processing chunk 143/2537
+Memory: 5.8 GB, processing chunk 144/2537
+Memory: 5.8 GB, processing chunk 145/2537
+Memory: 5.8 GB, processing chunk 146/2537
+Memory: 5.8 GB, processing chunk 147/2537
+Memory: 5.8 GB, processing chunk 148/2537
+Memory: 5.8 GB, processing chunk 149/2537
+Memory: 5.8 GB, processing chunk 150/2537
+Memory: 5.8 GB, processing chunk 151/2537
+Memory: 5.8 GB, processing chunk 152/2537
+Memory: 5.8 GB, processing chunk 153/2537
+Memory: 5.8 GB, processing chunk 154/2537
+Memory: 5.8 GB, processing chunk 155/2537
+Memory: 5.8 GB, processing chunk 156/2537
+Memory: 5.8 GB, processing chunk 157/2537
+Memory: 5.8 GB, processing chunk 158/2537
+Memory: 5.8 GB, processing chunk 159/2537
+Memory: 5.8 GB, processing chunk 160/2537
+Saving segment 8 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 161/2537
+Memory: 5.8 GB, processing chunk 162/2537
+Memory: 5.8 GB, processing chunk 163/2537
+Memory: 5.8 GB, processing chunk 164/2537
+Memory: 5.8 GB, processing chunk 165/2537
+Memory: 5.8 GB, processing chunk 166/2537
+Memory: 5.8 GB, processing chunk 167/2537
+Memory: 5.8 GB, processing chunk 168/2537
+Memory: 5.8 GB, processing chunk 169/2537
+Memory: 5.8 GB, processing chunk 170/2537
+Memory: 5.8 GB, processing chunk 171/2537
+Memory: 5.8 GB, processing chunk 172/2537
+Memory: 5.8 GB, processing chunk 173/2537
+Memory: 5.8 GB, processing chunk 174/2537
+Memory: 5.8 GB, processing chunk 175/2537
+Memory: 5.8 GB, processing chunk 176/2537
+Memory: 5.8 GB, processing chunk 177/2537
+Memory: 5.8 GB, processing chunk 178/2537
+Memory: 5.8 GB, processing chunk 179/2537
+Memory: 5.8 GB, processing chunk 180/2537
+Saving segment 9 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 181/2537
+Memory: 5.8 GB, processing chunk 182/2537
+Memory: 5.8 GB, processing chunk 183/2537
+Memory: 5.8 GB, processing chunk 184/2537
+Memory: 5.8 GB, processing chunk 185/2537
+Memory: 5.8 GB, processing chunk 186/2537
+Memory: 5.8 GB, processing chunk 187/2537
+Memory: 5.8 GB, processing chunk 188/2537
+Memory: 5.8 GB, processing chunk 189/2537
+Memory: 5.8 GB, processing chunk 190/2537
+Memory: 5.8 GB, processing chunk 191/2537
+Memory: 5.8 GB, processing chunk 192/2537
+Memory: 5.8 GB, processing chunk 193/2537
+Memory: 5.8 GB, processing chunk 194/2537
+Memory: 5.8 GB, processing chunk 195/2537
+Memory: 5.8 GB, processing chunk 196/2537
+Memory: 5.8 GB, processing chunk 197/2537
+Memory: 5.8 GB, processing chunk 198/2537
+Memory: 5.8 GB, processing chunk 199/2537
+Memory: 5.8 GB, processing chunk 200/2537
+Saving segment 10 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 201/2537
+Memory: 5.8 GB, processing chunk 202/2537
+Memory: 5.8 GB, processing chunk 203/2537
+Memory: 5.8 GB, processing chunk 204/2537
+Memory: 5.8 GB, processing chunk 205/2537
+Memory: 5.8 GB, processing chunk 206/2537
+Memory: 5.8 GB, processing chunk 207/2537
+Memory: 5.8 GB, processing chunk 208/2537
+Memory: 5.8 GB, processing chunk 209/2537
+Memory: 5.8 GB, processing chunk 210/2537
+Memory: 5.8 GB, processing chunk 211/2537
+Memory: 5.8 GB, processing chunk 212/2537
+Memory: 5.8 GB, processing chunk 213/2537
+Memory: 5.8 GB, processing chunk 214/2537
+Memory: 5.8 GB, processing chunk 215/2537
+Memory: 5.8 GB, processing chunk 216/2537
+Memory: 5.8 GB, processing chunk 217/2537
+Memory: 5.8 GB, processing chunk 218/2537
+Memory: 5.8 GB, processing chunk 219/2537
+Memory: 5.8 GB, processing chunk 220/2537
+Saving segment 11 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 221/2537
+Memory: 5.8 GB, processing chunk 222/2537
+Memory: 5.8 GB, processing chunk 223/2537
+Memory: 5.8 GB, processing chunk 224/2537
+Memory: 5.8 GB, processing chunk 225/2537
+Memory: 5.8 GB, processing chunk 226/2537
+Memory: 5.8 GB, processing chunk 227/2537
+Memory: 5.8 GB, processing chunk 228/2537
+Memory: 5.8 GB, processing chunk 229/2537
+Memory: 5.8 GB, processing chunk 230/2537
+Memory: 5.8 GB, processing chunk 231/2537
+Memory: 5.8 GB, processing chunk 232/2537
+Memory: 5.8 GB, processing chunk 233/2537
+Memory: 5.8 GB, processing chunk 234/2537
+Memory: 5.8 GB, processing chunk 235/2537
+Memory: 5.8 GB, processing chunk 236/2537
+Memory: 5.8 GB, processing chunk 237/2537
+Memory: 5.8 GB, processing chunk 238/2537
+Memory: 5.8 GB, processing chunk 239/2537
+Memory: 5.8 GB, processing chunk 240/2537
+Saving segment 12 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 241/2537
+Memory: 5.8 GB, processing chunk 242/2537
+Memory: 5.8 GB, processing chunk 243/2537
+Memory: 5.8 GB, processing chunk 244/2537
+Memory: 5.8 GB, processing chunk 245/2537
+Memory: 5.8 GB, processing chunk 246/2537
+Memory: 5.8 GB, processing chunk 247/2537
+Memory: 5.8 GB, processing chunk 248/2537
+Memory: 5.8 GB, processing chunk 249/2537
+Memory: 5.8 GB, processing chunk 250/2537
+Memory: 5.8 GB, processing chunk 251/2537
+Memory: 5.8 GB, processing chunk 252/2537
+Memory: 5.8 GB, processing chunk 253/2537
+Memory: 5.8 GB, processing chunk 254/2537
+Memory: 5.8 GB, processing chunk 255/2537
+Memory: 5.8 GB, processing chunk 256/2537
+Memory: 5.8 GB, processing chunk 257/2537
+Memory: 5.8 GB, processing chunk 258/2537
+Memory: 5.8 GB, processing chunk 259/2537
+Memory: 5.8 GB, processing chunk 260/2537
+Saving segment 13 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 261/2537
+Memory: 5.8 GB, processing chunk 262/2537
+Memory: 5.8 GB, processing chunk 263/2537
+Memory: 5.8 GB, processing chunk 264/2537
+Memory: 5.8 GB, processing chunk 265/2537
+Memory: 5.8 GB, processing chunk 266/2537
+Memory: 5.8 GB, processing chunk 267/2537
+Memory: 5.8 GB, processing chunk 268/2537
+Memory: 5.8 GB, processing chunk 269/2537
+Memory: 5.8 GB, processing chunk 270/2537
+Memory: 5.8 GB, processing chunk 271/2537
+Memory: 5.8 GB, processing chunk 272/2537
+Memory: 5.8 GB, processing chunk 273/2537
+Memory: 5.8 GB, processing chunk 274/2537
+Memory: 5.8 GB, processing chunk 275/2537
+Memory: 5.8 GB, processing chunk 276/2537
+Memory: 5.8 GB, processing chunk 277/2537
+Memory: 5.8 GB, processing chunk 278/2537
+Memory: 5.8 GB, processing chunk 279/2537
+Memory: 5.8 GB, processing chunk 280/2537
+Saving segment 14 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 281/2537
+Memory: 5.8 GB, processing chunk 282/2537
+Memory: 5.8 GB, processing chunk 283/2537
+Memory: 5.8 GB, processing chunk 284/2537
+Memory: 5.8 GB, processing chunk 285/2537
+Memory: 5.8 GB, processing chunk 286/2537
+Memory: 5.8 GB, processing chunk 287/2537
+Memory: 5.8 GB, processing chunk 288/2537
+Memory: 5.8 GB, processing chunk 289/2537
+Memory: 5.8 GB, processing chunk 290/2537
+Memory: 5.8 GB, processing chunk 291/2537
+Memory: 5.8 GB, processing chunk 292/2537
+Memory: 5.8 GB, processing chunk 293/2537
+Memory: 5.8 GB, processing chunk 294/2537
+Memory: 5.8 GB, processing chunk 295/2537
+Memory: 5.8 GB, processing chunk 296/2537
+Memory: 5.8 GB, processing chunk 297/2537
+Memory: 5.8 GB, processing chunk 298/2537
+Memory: 5.8 GB, processing chunk 299/2537
+Memory: 5.8 GB, processing chunk 300/2537
+Saving segment 15 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 301/2537
+Memory: 5.8 GB, processing chunk 302/2537
+Memory: 5.8 GB, processing chunk 303/2537
+Memory: 5.8 GB, processing chunk 304/2537
+Memory: 5.8 GB, processing chunk 305/2537
+Memory: 5.8 GB, processing chunk 306/2537
+Memory: 5.8 GB, processing chunk 307/2537
+Memory: 5.8 GB, processing chunk 308/2537
+Memory: 5.8 GB, processing chunk 309/2537
+Memory: 5.8 GB, processing chunk 310/2537
+Memory: 5.8 GB, processing chunk 311/2537
+Memory: 5.8 GB, processing chunk 312/2537
+Memory: 5.8 GB, processing chunk 313/2537
+Memory: 5.8 GB, processing chunk 314/2537
+Memory: 5.8 GB, processing chunk 315/2537
+Memory: 5.8 GB, processing chunk 316/2537
+Memory: 5.8 GB, processing chunk 317/2537
+Memory: 5.8 GB, processing chunk 318/2537
+Memory: 5.8 GB, processing chunk 319/2537
+Memory: 5.8 GB, processing chunk 320/2537
+Saving segment 16 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 321/2537
+Memory: 5.8 GB, processing chunk 322/2537
+Memory: 5.8 GB, processing chunk 323/2537
+Memory: 5.8 GB, processing chunk 324/2537
+Memory: 5.8 GB, processing chunk 325/2537
+Memory: 5.8 GB, processing chunk 326/2537
+Memory: 5.8 GB, processing chunk 327/2537
+Memory: 5.8 GB, processing chunk 328/2537
+Memory: 5.8 GB, processing chunk 329/2537
+Memory: 5.8 GB, processing chunk 330/2537
+Memory: 5.8 GB, processing chunk 331/2537
+Memory: 5.8 GB, processing chunk 332/2537
+Memory: 5.8 GB, processing chunk 333/2537
+Memory: 5.8 GB, processing chunk 334/2537
+Memory: 5.8 GB, processing chunk 335/2537
+Memory: 5.8 GB, processing chunk 336/2537
+Memory: 5.8 GB, processing chunk 337/2537
+Memory: 5.8 GB, processing chunk 338/2537
+Memory: 5.8 GB, processing chunk 339/2537
+Memory: 5.8 GB, processing chunk 340/2537
+Saving segment 17 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 341/2537
+Memory: 5.8 GB, processing chunk 342/2537
+Memory: 5.8 GB, processing chunk 343/2537
+Memory: 5.8 GB, processing chunk 344/2537
+Memory: 5.8 GB, processing chunk 345/2537
+Memory: 5.8 GB, processing chunk 346/2537
+Memory: 5.8 GB, processing chunk 347/2537
+Memory: 5.8 GB, processing chunk 348/2537
+Memory: 5.8 GB, processing chunk 349/2537
+Memory: 5.8 GB, processing chunk 350/2537
+Memory: 5.8 GB, processing chunk 351/2537
+Memory: 5.8 GB, processing chunk 352/2537
+Memory: 5.8 GB, processing chunk 353/2537
+Memory: 5.8 GB, processing chunk 354/2537
+Memory: 5.8 GB, processing chunk 355/2537
+Memory: 5.8 GB, processing chunk 356/2537
+Memory: 5.8 GB, processing chunk 357/2537
+Memory: 5.8 GB, processing chunk 358/2537
+Memory: 5.8 GB, processing chunk 359/2537
+Memory: 5.8 GB, processing chunk 360/2537
+Saving segment 18 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 361/2537
+Memory: 5.8 GB, processing chunk 362/2537
+Memory: 5.8 GB, processing chunk 363/2537
+Memory: 5.8 GB, processing chunk 364/2537
+Memory: 5.8 GB, processing chunk 365/2537
+Memory: 5.8 GB, processing chunk 366/2537
+Memory: 5.8 GB, processing chunk 367/2537
+Memory: 5.8 GB, processing chunk 368/2537
+Memory: 5.8 GB, processing chunk 369/2537
+Memory: 5.8 GB, processing chunk 370/2537
+Memory: 5.8 GB, processing chunk 371/2537
+Memory: 5.8 GB, processing chunk 372/2537
+Memory: 5.8 GB, processing chunk 373/2537
+Memory: 5.8 GB, processing chunk 374/2537
+Memory: 5.8 GB, processing chunk 375/2537
+Memory: 5.8 GB, processing chunk 376/2537
+Memory: 5.8 GB, processing chunk 377/2537
+Memory: 5.8 GB, processing chunk 378/2537
+Memory: 5.8 GB, processing chunk 379/2537
+Memory: 5.8 GB, processing chunk 380/2537
+Saving segment 19 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 381/2537
+Memory: 5.8 GB, processing chunk 382/2537
+Memory: 5.8 GB, processing chunk 383/2537
+Memory: 5.8 GB, processing chunk 384/2537
+Memory: 5.8 GB, processing chunk 385/2537
+Memory: 5.8 GB, processing chunk 386/2537
+Memory: 5.8 GB, processing chunk 387/2537
+Memory: 5.8 GB, processing chunk 388/2537
+Memory: 5.8 GB, processing chunk 389/2537
+Memory: 5.8 GB, processing chunk 390/2537
+Memory: 5.8 GB, processing chunk 391/2537
+Memory: 5.8 GB, processing chunk 392/2537
+Memory: 5.8 GB, processing chunk 393/2537
+Memory: 5.8 GB, processing chunk 394/2537
+Memory: 5.8 GB, processing chunk 395/2537
+Memory: 5.8 GB, processing chunk 396/2537
+Memory: 5.8 GB, processing chunk 397/2537
+Memory: 5.8 GB, processing chunk 398/2537
+Memory: 5.8 GB, processing chunk 399/2537
+Memory: 5.8 GB, processing chunk 400/2537
+Saving segment 20 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 401/2537
+Memory: 5.8 GB, processing chunk 402/2537
+Memory: 5.8 GB, processing chunk 403/2537
+Memory: 5.8 GB, processing chunk 404/2537
+Memory: 5.8 GB, processing chunk 405/2537
+Memory: 5.8 GB, processing chunk 406/2537
+Memory: 5.8 GB, processing chunk 407/2537
+Memory: 5.8 GB, processing chunk 408/2537
+Memory: 5.8 GB, processing chunk 409/2537
+Memory: 5.8 GB, processing chunk 410/2537
+Memory: 5.8 GB, processing chunk 411/2537
+Memory: 5.8 GB, processing chunk 412/2537
+Memory: 5.8 GB, processing chunk 413/2537
+Memory: 5.8 GB, processing chunk 414/2537
+Memory: 5.8 GB, processing chunk 415/2537
+Memory: 5.8 GB, processing chunk 416/2537
+Memory: 5.8 GB, processing chunk 417/2537
+Memory: 5.8 GB, processing chunk 418/2537
+Memory: 5.8 GB, processing chunk 419/2537
+Memory: 5.8 GB, processing chunk 420/2537
+Saving segment 21 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 421/2537
+Memory: 5.8 GB, processing chunk 422/2537
+Memory: 5.8 GB, processing chunk 423/2537
+Memory: 5.8 GB, processing chunk 424/2537
+Memory: 5.8 GB, processing chunk 425/2537
+Memory: 5.8 GB, processing chunk 426/2537
+Memory: 5.8 GB, processing chunk 427/2537
+Memory: 5.8 GB, processing chunk 428/2537
+Memory: 5.8 GB, processing chunk 429/2537
+Memory: 5.8 GB, processing chunk 430/2537
+Memory: 5.8 GB, processing chunk 431/2537
+Memory: 5.8 GB, processing chunk 432/2537
+Memory: 5.8 GB, processing chunk 433/2537
+Memory: 5.8 GB, processing chunk 434/2537
+Memory: 5.8 GB, processing chunk 435/2537
+Memory: 5.8 GB, processing chunk 436/2537
+Memory: 5.8 GB, processing chunk 437/2537
+Memory: 5.8 GB, processing chunk 438/2537
+Memory: 5.8 GB, processing chunk 439/2537
+Memory: 5.8 GB, processing chunk 440/2537
+Saving segment 22 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 441/2537
+Memory: 5.8 GB, processing chunk 442/2537
+Memory: 5.8 GB, processing chunk 443/2537
+Memory: 5.8 GB, processing chunk 444/2537
+Memory: 5.8 GB, processing chunk 445/2537
+Memory: 5.8 GB, processing chunk 446/2537
+Memory: 5.8 GB, processing chunk 447/2537
+Memory: 5.8 GB, processing chunk 448/2537
+Memory: 5.8 GB, processing chunk 449/2537
+Memory: 5.8 GB, processing chunk 450/2537
+Memory: 5.8 GB, processing chunk 451/2537
+Memory: 5.8 GB, processing chunk 452/2537
+Memory: 5.8 GB, processing chunk 453/2537
+Memory: 5.8 GB, processing chunk 454/2537
+Memory: 5.8 GB, processing chunk 455/2537
+Memory: 5.8 GB, processing chunk 456/2537
+Memory: 5.8 GB, processing chunk 457/2537
+Memory: 5.8 GB, processing chunk 458/2537
+Memory: 5.8 GB, processing chunk 459/2537
+Memory: 5.8 GB, processing chunk 460/2537
+Saving segment 23 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 461/2537
+Memory: 5.8 GB, processing chunk 462/2537
+Memory: 5.8 GB, processing chunk 463/2537
+Memory: 5.8 GB, processing chunk 464/2537
+Memory: 5.8 GB, processing chunk 465/2537
+Memory: 5.8 GB, processing chunk 466/2537
+Memory: 5.8 GB, processing chunk 467/2537
+Memory: 5.8 GB, processing chunk 468/2537
+Memory: 5.8 GB, processing chunk 469/2537
+Memory: 5.8 GB, processing chunk 470/2537
+Memory: 5.8 GB, processing chunk 471/2537
+Memory: 5.8 GB, processing chunk 472/2537
+Memory: 5.8 GB, processing chunk 473/2537
+Memory: 5.8 GB, processing chunk 474/2537
+Memory: 5.8 GB, processing chunk 475/2537
+Memory: 5.8 GB, processing chunk 476/2537
+Memory: 5.8 GB, processing chunk 477/2537
+Memory: 5.8 GB, processing chunk 478/2537
+Memory: 5.8 GB, processing chunk 479/2537
+Memory: 5.8 GB, processing chunk 480/2537
+Saving segment 24 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 481/2537
+Memory: 5.8 GB, processing chunk 482/2537
+Memory: 5.8 GB, processing chunk 483/2537
+Memory: 5.8 GB, processing chunk 484/2537
+Memory: 5.8 GB, processing chunk 485/2537
+Memory: 5.8 GB, processing chunk 486/2537
+Memory: 5.8 GB, processing chunk 487/2537
+Memory: 5.8 GB, processing chunk 488/2537
+Memory: 5.8 GB, processing chunk 489/2537
+Memory: 5.8 GB, processing chunk 490/2537
+Memory: 5.8 GB, processing chunk 491/2537
+Memory: 5.8 GB, processing chunk 492/2537
+Memory: 5.8 GB, processing chunk 493/2537
+Memory: 5.8 GB, processing chunk 494/2537
+Memory: 5.8 GB, processing chunk 495/2537
+Memory: 5.8 GB, processing chunk 496/2537
+Memory: 5.8 GB, processing chunk 497/2537
+Memory: 5.8 GB, processing chunk 498/2537
+Memory: 5.8 GB, processing chunk 499/2537
+Memory: 5.8 GB, processing chunk 500/2537
+Saving segment 25 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 501/2537
+Memory: 5.8 GB, processing chunk 502/2537
+Memory: 5.8 GB, processing chunk 503/2537
+Memory: 5.8 GB, processing chunk 504/2537
+Memory: 5.8 GB, processing chunk 505/2537
+Memory: 5.8 GB, processing chunk 506/2537
+Memory: 5.8 GB, processing chunk 507/2537
+Memory: 5.8 GB, processing chunk 508/2537
+Memory: 5.8 GB, processing chunk 509/2537
+Memory: 5.8 GB, processing chunk 510/2537
+Memory: 5.8 GB, processing chunk 511/2537
+Memory: 5.8 GB, processing chunk 512/2537
+Memory: 5.8 GB, processing chunk 513/2537
+Memory: 5.8 GB, processing chunk 514/2537
+Memory: 5.8 GB, processing chunk 515/2537
+Memory: 5.8 GB, processing chunk 516/2537
+Memory: 5.8 GB, processing chunk 517/2537
+Memory: 5.8 GB, processing chunk 518/2537
+Memory: 5.8 GB, processing chunk 519/2537
+Memory: 5.8 GB, processing chunk 520/2537
+Saving segment 26 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 521/2537
+Memory: 5.8 GB, processing chunk 522/2537
+Memory: 5.8 GB, processing chunk 523/2537
+Memory: 5.8 GB, processing chunk 524/2537
+Memory: 5.8 GB, processing chunk 525/2537
+Memory: 5.8 GB, processing chunk 526/2537
+Memory: 5.8 GB, processing chunk 527/2537
+Memory: 5.8 GB, processing chunk 528/2537
+Memory: 5.8 GB, processing chunk 529/2537
+Memory: 5.8 GB, processing chunk 530/2537
+Memory: 5.8 GB, processing chunk 531/2537
+Memory: 5.8 GB, processing chunk 532/2537
+Memory: 5.8 GB, processing chunk 533/2537
+Memory: 5.8 GB, processing chunk 534/2537
+Memory: 5.8 GB, processing chunk 535/2537
+Memory: 5.8 GB, processing chunk 536/2537
+Memory: 5.8 GB, processing chunk 537/2537
+Memory: 5.8 GB, processing chunk 538/2537
+Memory: 5.8 GB, processing chunk 539/2537
+Memory: 5.8 GB, processing chunk 540/2537
+Saving segment 27 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 541/2537
+Memory: 5.8 GB, processing chunk 542/2537
+Memory: 5.8 GB, processing chunk 543/2537
+Memory: 5.8 GB, processing chunk 544/2537
+Memory: 5.8 GB, processing chunk 545/2537
+Memory: 5.8 GB, processing chunk 546/2537
+Memory: 5.8 GB, processing chunk 547/2537
+Memory: 5.8 GB, processing chunk 548/2537
+Memory: 5.8 GB, processing chunk 549/2537
+Memory: 5.8 GB, processing chunk 550/2537
+Memory: 5.8 GB, processing chunk 551/2537
+Memory: 5.8 GB, processing chunk 552/2537
+Memory: 5.8 GB, processing chunk 553/2537
+Memory: 5.8 GB, processing chunk 554/2537
+Memory: 5.8 GB, processing chunk 555/2537
+Memory: 5.8 GB, processing chunk 556/2537
+Memory: 5.8 GB, processing chunk 557/2537
+Memory: 5.8 GB, processing chunk 558/2537
+Memory: 5.8 GB, processing chunk 559/2537
+Memory: 5.8 GB, processing chunk 560/2537
+Saving segment 28 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 561/2537
+Memory: 5.8 GB, processing chunk 562/2537
+Memory: 5.8 GB, processing chunk 563/2537
+Memory: 5.8 GB, processing chunk 564/2537
+Memory: 5.8 GB, processing chunk 565/2537
+Memory: 5.8 GB, processing chunk 566/2537
+Memory: 5.8 GB, processing chunk 567/2537
+Memory: 5.8 GB, processing chunk 568/2537
+Memory: 5.8 GB, processing chunk 569/2537
+Memory: 5.8 GB, processing chunk 570/2537
+Memory: 5.8 GB, processing chunk 571/2537
+Memory: 5.8 GB, processing chunk 572/2537
+Memory: 5.8 GB, processing chunk 573/2537
+Memory: 5.8 GB, processing chunk 574/2537
+Memory: 5.8 GB, processing chunk 575/2537
+Memory: 5.8 GB, processing chunk 576/2537
+Memory: 5.8 GB, processing chunk 577/2537
+Memory: 5.8 GB, processing chunk 578/2537
+Memory: 5.8 GB, processing chunk 579/2537
+Memory: 5.8 GB, processing chunk 580/2537
+Saving segment 29 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 581/2537
+Memory: 5.8 GB, processing chunk 582/2537
+Memory: 5.8 GB, processing chunk 583/2537
+Memory: 5.8 GB, processing chunk 584/2537
+Memory: 5.8 GB, processing chunk 585/2537
+Memory: 5.8 GB, processing chunk 586/2537
+Memory: 5.8 GB, processing chunk 587/2537
+Memory: 5.8 GB, processing chunk 588/2537
+Memory: 5.8 GB, processing chunk 589/2537
+Memory: 5.8 GB, processing chunk 590/2537
+Memory: 5.8 GB, processing chunk 591/2537
+Memory: 5.8 GB, processing chunk 592/2537
+Memory: 5.8 GB, processing chunk 593/2537
+Memory: 5.8 GB, processing chunk 594/2537
+Memory: 5.8 GB, processing chunk 595/2537
+Memory: 5.8 GB, processing chunk 596/2537
+Memory: 5.8 GB, processing chunk 597/2537
+Memory: 5.8 GB, processing chunk 598/2537
+Memory: 5.8 GB, processing chunk 599/2537
+Memory: 5.8 GB, processing chunk 600/2537
+Saving segment 30 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 601/2537
+Memory: 5.8 GB, processing chunk 602/2537
+Memory: 5.8 GB, processing chunk 603/2537
+Memory: 5.8 GB, processing chunk 604/2537
+Memory: 5.8 GB, processing chunk 605/2537
+Memory: 5.8 GB, processing chunk 606/2537
+Memory: 5.8 GB, processing chunk 607/2537
+Memory: 5.8 GB, processing chunk 608/2537
+Memory: 5.8 GB, processing chunk 609/2537
+Memory: 5.8 GB, processing chunk 610/2537
+Memory: 5.8 GB, processing chunk 611/2537
+Memory: 5.8 GB, processing chunk 612/2537
+Memory: 5.8 GB, processing chunk 613/2537
+Memory: 5.8 GB, processing chunk 614/2537
+Memory: 5.8 GB, processing chunk 615/2537
+Memory: 5.8 GB, processing chunk 616/2537
+Memory: 5.8 GB, processing chunk 617/2537
+Memory: 5.8 GB, processing chunk 618/2537
+Memory: 5.8 GB, processing chunk 619/2537
+Memory: 5.8 GB, processing chunk 620/2537
+Saving segment 31 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 621/2537
+Memory: 5.8 GB, processing chunk 622/2537
+Memory: 5.8 GB, processing chunk 623/2537
+Memory: 5.8 GB, processing chunk 624/2537
+Memory: 5.8 GB, processing chunk 625/2537
+Memory: 5.8 GB, processing chunk 626/2537
+Memory: 5.8 GB, processing chunk 627/2537
+Memory: 5.8 GB, processing chunk 628/2537
+Memory: 5.8 GB, processing chunk 629/2537
+Memory: 5.8 GB, processing chunk 630/2537
+Memory: 5.8 GB, processing chunk 631/2537
+Memory: 5.8 GB, processing chunk 632/2537
+Memory: 5.8 GB, processing chunk 633/2537
+Memory: 5.8 GB, processing chunk 634/2537
+Memory: 5.8 GB, processing chunk 635/2537
+Memory: 5.8 GB, processing chunk 636/2537
+Memory: 5.8 GB, processing chunk 637/2537
+Memory: 5.8 GB, processing chunk 638/2537
+Memory: 5.8 GB, processing chunk 639/2537
+Memory: 5.8 GB, processing chunk 640/2537
+Saving segment 32 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 641/2537
+Memory: 5.8 GB, processing chunk 642/2537
+Memory: 5.8 GB, processing chunk 643/2537
+Memory: 5.8 GB, processing chunk 644/2537
+Memory: 5.8 GB, processing chunk 645/2537
+Memory: 5.8 GB, processing chunk 646/2537
+Memory: 5.8 GB, processing chunk 647/2537
+Memory: 5.8 GB, processing chunk 648/2537
+Memory: 5.8 GB, processing chunk 649/2537
+Memory: 5.8 GB, processing chunk 650/2537
+Memory: 5.8 GB, processing chunk 651/2537
+Memory: 5.8 GB, processing chunk 652/2537
+Memory: 5.8 GB, processing chunk 653/2537
+Memory: 5.8 GB, processing chunk 654/2537
+Memory: 5.8 GB, processing chunk 655/2537
+Memory: 5.8 GB, processing chunk 656/2537
+Memory: 5.8 GB, processing chunk 657/2537
+Memory: 5.8 GB, processing chunk 658/2537
+Memory: 5.8 GB, processing chunk 659/2537
+Memory: 5.8 GB, processing chunk 660/2537
+Saving segment 33 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 661/2537
+Memory: 5.8 GB, processing chunk 662/2537
+Memory: 5.8 GB, processing chunk 663/2537
+Memory: 5.8 GB, processing chunk 664/2537
+Memory: 5.8 GB, processing chunk 665/2537
+Memory: 5.8 GB, processing chunk 666/2537
+Memory: 5.8 GB, processing chunk 667/2537
+Memory: 5.8 GB, processing chunk 668/2537
+Memory: 5.8 GB, processing chunk 669/2537
+Memory: 5.8 GB, processing chunk 670/2537
+Memory: 5.8 GB, processing chunk 671/2537
+Memory: 5.8 GB, processing chunk 672/2537
+Memory: 5.8 GB, processing chunk 673/2537
+Memory: 5.8 GB, processing chunk 674/2537
+Memory: 5.8 GB, processing chunk 675/2537
+Memory: 5.8 GB, processing chunk 676/2537
+Memory: 5.8 GB, processing chunk 677/2537
+Memory: 5.8 GB, processing chunk 678/2537
+Memory: 5.8 GB, processing chunk 679/2537
+Memory: 5.8 GB, processing chunk 680/2537
+Saving segment 34 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 681/2537
+Memory: 5.8 GB, processing chunk 682/2537
+Memory: 5.8 GB, processing chunk 683/2537
+Memory: 5.8 GB, processing chunk 684/2537
+Memory: 5.8 GB, processing chunk 685/2537
+Memory: 5.8 GB, processing chunk 686/2537
+Memory: 5.8 GB, processing chunk 687/2537
+Memory: 5.8 GB, processing chunk 688/2537
+Memory: 5.8 GB, processing chunk 689/2537
+Memory: 5.8 GB, processing chunk 690/2537
+Memory: 5.8 GB, processing chunk 691/2537
+Memory: 5.8 GB, processing chunk 692/2537
+Memory: 5.8 GB, processing chunk 693/2537
+Memory: 5.8 GB, processing chunk 694/2537
+Memory: 5.8 GB, processing chunk 695/2537
+Memory: 5.8 GB, processing chunk 696/2537
+Memory: 5.8 GB, processing chunk 697/2537
+Memory: 5.8 GB, processing chunk 698/2537
+Memory: 5.8 GB, processing chunk 699/2537
+Memory: 5.8 GB, processing chunk 700/2537
+Saving segment 35 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 701/2537
+Memory: 5.8 GB, processing chunk 702/2537
+Memory: 5.8 GB, processing chunk 703/2537
+Memory: 5.8 GB, processing chunk 704/2537
+Memory: 5.8 GB, processing chunk 705/2537
+Memory: 5.8 GB, processing chunk 706/2537
+Memory: 5.8 GB, processing chunk 707/2537
+Memory: 5.8 GB, processing chunk 708/2537
+Memory: 5.8 GB, processing chunk 709/2537
+Memory: 5.8 GB, processing chunk 710/2537
+Memory: 5.8 GB, processing chunk 711/2537
+Memory: 5.8 GB, processing chunk 712/2537
+Memory: 5.8 GB, processing chunk 713/2537
+Memory: 5.8 GB, processing chunk 714/2537
+Memory: 5.8 GB, processing chunk 715/2537
+Memory: 5.8 GB, processing chunk 716/2537
+Memory: 5.8 GB, processing chunk 717/2537
+Memory: 5.8 GB, processing chunk 718/2537
+Memory: 5.8 GB, processing chunk 719/2537
+Memory: 5.8 GB, processing chunk 720/2537
+Saving segment 36 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 721/2537
+Memory: 5.8 GB, processing chunk 722/2537
+Memory: 5.8 GB, processing chunk 723/2537
+Memory: 5.8 GB, processing chunk 724/2537
+Memory: 5.8 GB, processing chunk 725/2537
+Memory: 5.8 GB, processing chunk 726/2537
+Memory: 5.8 GB, processing chunk 727/2537
+Memory: 5.8 GB, processing chunk 728/2537
+Memory: 5.8 GB, processing chunk 729/2537
+Memory: 5.8 GB, processing chunk 730/2537
+Memory: 5.8 GB, processing chunk 731/2537
+Memory: 5.8 GB, processing chunk 732/2537
+Memory: 5.8 GB, processing chunk 733/2537
+Memory: 5.8 GB, processing chunk 734/2537
+Memory: 5.8 GB, processing chunk 735/2537
+Memory: 5.8 GB, processing chunk 736/2537
+Memory: 5.8 GB, processing chunk 737/2537
+Memory: 5.8 GB, processing chunk 738/2537
+Memory: 5.8 GB, processing chunk 739/2537
+Memory: 5.8 GB, processing chunk 740/2537
+Saving segment 37 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 741/2537
+Memory: 5.8 GB, processing chunk 742/2537
+Memory: 5.8 GB, processing chunk 743/2537
+Memory: 5.8 GB, processing chunk 744/2537
+Memory: 5.8 GB, processing chunk 745/2537
+Memory: 5.8 GB, processing chunk 746/2537
+Memory: 5.8 GB, processing chunk 747/2537
+Memory: 5.8 GB, processing chunk 748/2537
+Memory: 5.8 GB, processing chunk 749/2537
+Memory: 5.8 GB, processing chunk 750/2537
+Memory: 5.8 GB, processing chunk 751/2537
+Memory: 5.8 GB, processing chunk 752/2537
+Memory: 5.8 GB, processing chunk 753/2537
+Memory: 5.8 GB, processing chunk 754/2537
+Memory: 5.8 GB, processing chunk 755/2537
+Memory: 5.8 GB, processing chunk 756/2537
+Memory: 5.8 GB, processing chunk 757/2537
+Memory: 5.8 GB, processing chunk 758/2537
+Memory: 5.8 GB, processing chunk 759/2537
+Memory: 5.8 GB, processing chunk 760/2537
+Saving segment 38 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 761/2537
+Memory: 5.8 GB, processing chunk 762/2537
+Memory: 5.8 GB, processing chunk 763/2537
+Memory: 5.8 GB, processing chunk 764/2537
+Memory: 5.8 GB, processing chunk 765/2537
+Memory: 5.8 GB, processing chunk 766/2537
+Memory: 5.8 GB, processing chunk 767/2537
+Memory: 5.8 GB, processing chunk 768/2537
+Memory: 5.8 GB, processing chunk 769/2537
+Memory: 5.8 GB, processing chunk 770/2537
+Memory: 5.8 GB, processing chunk 771/2537
+Memory: 5.8 GB, processing chunk 772/2537
+Memory: 5.8 GB, processing chunk 773/2537
+Memory: 5.8 GB, processing chunk 774/2537
+Memory: 5.8 GB, processing chunk 775/2537
+Memory: 5.8 GB, processing chunk 776/2537
+Memory: 5.8 GB, processing chunk 777/2537
+Memory: 5.8 GB, processing chunk 778/2537
+Memory: 5.8 GB, processing chunk 779/2537
+Memory: 5.8 GB, processing chunk 780/2537
+Saving segment 39 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 781/2537
+Memory: 5.8 GB, processing chunk 782/2537
+Memory: 5.8 GB, processing chunk 783/2537
+Memory: 5.8 GB, processing chunk 784/2537
+Memory: 5.8 GB, processing chunk 785/2537
+Memory: 5.8 GB, processing chunk 786/2537
+Memory: 5.8 GB, processing chunk 787/2537
+Memory: 5.8 GB, processing chunk 788/2537
+Memory: 5.8 GB, processing chunk 789/2537
+Memory: 5.8 GB, processing chunk 790/2537
+Memory: 5.8 GB, processing chunk 791/2537
+Memory: 5.8 GB, processing chunk 792/2537
+Memory: 5.8 GB, processing chunk 793/2537
+Memory: 5.8 GB, processing chunk 794/2537
+Memory: 5.8 GB, processing chunk 795/2537
+Memory: 5.8 GB, processing chunk 796/2537
+Memory: 5.8 GB, processing chunk 797/2537
+Memory: 5.8 GB, processing chunk 798/2537
+Memory: 5.8 GB, processing chunk 799/2537
+Memory: 5.8 GB, processing chunk 800/2537
+Saving segment 40 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 801/2537
+Memory: 5.8 GB, processing chunk 802/2537
+Memory: 5.8 GB, processing chunk 803/2537
+Memory: 5.8 GB, processing chunk 804/2537
+Memory: 5.8 GB, processing chunk 805/2537
+Memory: 5.8 GB, processing chunk 806/2537
+Memory: 5.8 GB, processing chunk 807/2537
+Memory: 5.8 GB, processing chunk 808/2537
+Memory: 5.8 GB, processing chunk 809/2537
+Memory: 5.8 GB, processing chunk 810/2537
+Memory: 5.8 GB, processing chunk 811/2537
+Memory: 5.8 GB, processing chunk 812/2537
+Memory: 5.8 GB, processing chunk 813/2537
+Memory: 5.8 GB, processing chunk 814/2537
+Memory: 5.8 GB, processing chunk 815/2537
+Memory: 5.8 GB, processing chunk 816/2537
+Memory: 5.8 GB, processing chunk 817/2537
+Memory: 5.8 GB, processing chunk 818/2537
+Memory: 5.8 GB, processing chunk 819/2537
+Memory: 5.8 GB, processing chunk 820/2537
+Saving segment 41 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 821/2537
+Memory: 5.8 GB, processing chunk 822/2537
+Memory: 5.8 GB, processing chunk 823/2537
+Memory: 5.8 GB, processing chunk 824/2537
+Memory: 5.8 GB, processing chunk 825/2537
+Memory: 5.8 GB, processing chunk 826/2537
+Memory: 5.8 GB, processing chunk 827/2537
+Memory: 5.8 GB, processing chunk 828/2537
+Memory: 5.8 GB, processing chunk 829/2537
+Memory: 5.8 GB, processing chunk 830/2537
+Memory: 5.8 GB, processing chunk 831/2537
+Memory: 5.8 GB, processing chunk 832/2537
+Memory: 5.8 GB, processing chunk 833/2537
+Memory: 5.8 GB, processing chunk 834/2537
+Memory: 5.8 GB, processing chunk 835/2537
+Memory: 5.8 GB, processing chunk 836/2537
+Memory: 5.8 GB, processing chunk 837/2537
+Memory: 5.8 GB, processing chunk 838/2537
+Memory: 5.8 GB, processing chunk 839/2537
+Memory: 5.8 GB, processing chunk 840/2537
+Saving segment 42 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 841/2537
+Memory: 5.8 GB, processing chunk 842/2537
+Memory: 5.8 GB, processing chunk 843/2537
+Memory: 5.8 GB, processing chunk 844/2537
+Memory: 5.8 GB, processing chunk 845/2537
+Memory: 5.8 GB, processing chunk 846/2537
+Memory: 5.8 GB, processing chunk 847/2537
+Memory: 5.8 GB, processing chunk 848/2537
+Memory: 5.8 GB, processing chunk 849/2537
+Memory: 5.8 GB, processing chunk 850/2537
+Memory: 5.8 GB, processing chunk 851/2537
+Memory: 5.8 GB, processing chunk 852/2537
+Memory: 5.8 GB, processing chunk 853/2537
+Memory: 5.8 GB, processing chunk 854/2537
+Memory: 5.8 GB, processing chunk 855/2537
+Memory: 5.8 GB, processing chunk 856/2537
+Memory: 5.8 GB, processing chunk 857/2537
+Memory: 5.8 GB, processing chunk 858/2537
+Memory: 5.8 GB, processing chunk 859/2537
+Memory: 5.8 GB, processing chunk 860/2537
+Saving segment 43 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 861/2537
+Memory: 5.8 GB, processing chunk 862/2537
+Memory: 5.8 GB, processing chunk 863/2537
+Memory: 5.8 GB, processing chunk 864/2537
+Memory: 5.8 GB, processing chunk 865/2537
+Memory: 5.8 GB, processing chunk 866/2537
+Memory: 5.8 GB, processing chunk 867/2537
+Memory: 5.8 GB, processing chunk 868/2537
+Memory: 5.8 GB, processing chunk 869/2537
+Memory: 5.8 GB, processing chunk 870/2537
+Memory: 5.8 GB, processing chunk 871/2537
+Memory: 5.8 GB, processing chunk 872/2537
+Memory: 5.8 GB, processing chunk 873/2537
+Memory: 5.8 GB, processing chunk 874/2537
+Memory: 5.8 GB, processing chunk 875/2537
+Memory: 5.8 GB, processing chunk 876/2537
+Memory: 5.8 GB, processing chunk 877/2537
+Memory: 5.8 GB, processing chunk 878/2537
+Memory: 5.8 GB, processing chunk 879/2537
+Memory: 5.8 GB, processing chunk 880/2537
+Saving segment 44 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 881/2537
+Memory: 5.8 GB, processing chunk 882/2537
+Memory: 5.8 GB, processing chunk 883/2537
+Memory: 5.8 GB, processing chunk 884/2537
+Memory: 5.8 GB, processing chunk 885/2537
+Memory: 5.8 GB, processing chunk 886/2537
+Memory: 5.8 GB, processing chunk 887/2537
+Memory: 5.8 GB, processing chunk 888/2537
+Memory: 5.8 GB, processing chunk 889/2537
+Memory: 5.8 GB, processing chunk 890/2537
+Memory: 5.8 GB, processing chunk 891/2537
+Memory: 5.8 GB, processing chunk 892/2537
+Memory: 5.8 GB, processing chunk 893/2537
+Memory: 5.8 GB, processing chunk 894/2537
+Memory: 5.8 GB, processing chunk 895/2537
+Memory: 5.8 GB, processing chunk 896/2537
+Memory: 5.8 GB, processing chunk 897/2537
+Memory: 5.8 GB, processing chunk 898/2537
+Memory: 5.8 GB, processing chunk 899/2537
+Memory: 5.8 GB, processing chunk 900/2537
+Saving segment 45 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 901/2537
+Memory: 5.8 GB, processing chunk 902/2537
+Memory: 5.8 GB, processing chunk 903/2537
+Memory: 5.8 GB, processing chunk 904/2537
+Memory: 5.8 GB, processing chunk 905/2537
+Memory: 5.8 GB, processing chunk 906/2537
+Memory: 5.8 GB, processing chunk 907/2537
+Memory: 5.8 GB, processing chunk 908/2537
+Memory: 5.8 GB, processing chunk 909/2537
+Memory: 5.8 GB, processing chunk 910/2537
+Memory: 5.8 GB, processing chunk 911/2537
+Memory: 5.8 GB, processing chunk 912/2537
+Memory: 5.8 GB, processing chunk 913/2537
+Memory: 5.8 GB, processing chunk 914/2537
+Memory: 5.8 GB, processing chunk 915/2537
+Memory: 5.8 GB, processing chunk 916/2537
+Memory: 5.8 GB, processing chunk 917/2537
+Memory: 5.8 GB, processing chunk 918/2537
+Memory: 5.8 GB, processing chunk 919/2537
+Memory: 5.8 GB, processing chunk 920/2537
+Saving segment 46 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 921/2537
+Memory: 5.8 GB, processing chunk 922/2537
+Memory: 5.8 GB, processing chunk 923/2537
+Memory: 5.8 GB, processing chunk 924/2537
+Memory: 5.8 GB, processing chunk 925/2537
+Memory: 5.8 GB, processing chunk 926/2537
+Memory: 5.8 GB, processing chunk 927/2537
+Memory: 5.8 GB, processing chunk 928/2537
+Memory: 5.8 GB, processing chunk 929/2537
+Memory: 5.8 GB, processing chunk 930/2537
+Memory: 5.8 GB, processing chunk 931/2537
+Memory: 5.8 GB, processing chunk 932/2537
+Memory: 5.8 GB, processing chunk 933/2537
+Memory: 5.8 GB, processing chunk 934/2537
+Memory: 5.8 GB, processing chunk 935/2537
+Memory: 5.8 GB, processing chunk 936/2537
+Memory: 5.8 GB, processing chunk 937/2537
+Memory: 5.8 GB, processing chunk 938/2537
+Memory: 5.8 GB, processing chunk 939/2537
+Memory: 5.8 GB, processing chunk 940/2537
+Saving segment 47 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 941/2537
+Memory: 5.8 GB, processing chunk 942/2537
+Memory: 5.8 GB, processing chunk 943/2537
+Memory: 5.8 GB, processing chunk 944/2537
+Memory: 5.8 GB, processing chunk 945/2537
+Memory: 5.8 GB, processing chunk 946/2537
+Memory: 5.8 GB, processing chunk 947/2537
+Memory: 5.8 GB, processing chunk 948/2537
+Memory: 5.8 GB, processing chunk 949/2537
+Memory: 5.8 GB, processing chunk 950/2537
+Memory: 5.8 GB, processing chunk 951/2537
+Memory: 5.8 GB, processing chunk 952/2537
+Memory: 5.8 GB, processing chunk 953/2537
+Memory: 5.8 GB, processing chunk 954/2537
+Memory: 5.8 GB, processing chunk 955/2537
+Memory: 5.8 GB, processing chunk 956/2537
+Memory: 5.8 GB, processing chunk 957/2537
+Memory: 5.8 GB, processing chunk 958/2537
+Memory: 5.8 GB, processing chunk 959/2537
+Memory: 5.8 GB, processing chunk 960/2537
+Saving segment 48 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 961/2537
+Memory: 5.8 GB, processing chunk 962/2537
+Memory: 5.8 GB, processing chunk 963/2537
+Memory: 5.8 GB, processing chunk 964/2537
+Memory: 5.8 GB, processing chunk 965/2537
+Memory: 5.8 GB, processing chunk 966/2537
+Memory: 5.8 GB, processing chunk 967/2537
+Memory: 5.8 GB, processing chunk 968/2537
+Memory: 5.8 GB, processing chunk 969/2537
+Memory: 5.8 GB, processing chunk 970/2537
+Memory: 5.8 GB, processing chunk 971/2537
+Memory: 5.8 GB, processing chunk 972/2537
+Memory: 5.8 GB, processing chunk 973/2537
+Memory: 5.8 GB, processing chunk 974/2537
+Memory: 5.8 GB, processing chunk 975/2537
+Memory: 5.8 GB, processing chunk 976/2537
+Memory: 5.8 GB, processing chunk 977/2537
+Memory: 5.8 GB, processing chunk 978/2537
+Memory: 5.8 GB, processing chunk 979/2537
+Memory: 5.8 GB, processing chunk 980/2537
+Saving segment 49 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 981/2537
+Memory: 5.8 GB, processing chunk 982/2537
+Memory: 5.8 GB, processing chunk 983/2537
+Memory: 5.8 GB, processing chunk 984/2537
+Memory: 5.8 GB, processing chunk 985/2537
+Memory: 5.8 GB, processing chunk 986/2537
+Memory: 5.8 GB, processing chunk 987/2537
+Memory: 5.8 GB, processing chunk 988/2537
+Memory: 5.8 GB, processing chunk 989/2537
+Memory: 5.8 GB, processing chunk 990/2537
+Memory: 5.8 GB, processing chunk 991/2537
+Memory: 5.8 GB, processing chunk 992/2537
+Memory: 5.8 GB, processing chunk 993/2537
+Memory: 5.8 GB, processing chunk 994/2537
+Memory: 5.8 GB, processing chunk 995/2537
+Memory: 5.8 GB, processing chunk 996/2537
+Memory: 5.8 GB, processing chunk 997/2537
+Memory: 5.8 GB, processing chunk 998/2537
+Memory: 5.8 GB, processing chunk 999/2537
+Memory: 5.8 GB, processing chunk 1000/2537
+Saving segment 50 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1001/2537
+Memory: 5.8 GB, processing chunk 1002/2537
+Memory: 5.8 GB, processing chunk 1003/2537
+Memory: 5.8 GB, processing chunk 1004/2537
+Memory: 5.8 GB, processing chunk 1005/2537
+Memory: 5.8 GB, processing chunk 1006/2537
+Memory: 5.8 GB, processing chunk 1007/2537
+Memory: 5.8 GB, processing chunk 1008/2537
+Memory: 5.8 GB, processing chunk 1009/2537
+Memory: 5.8 GB, processing chunk 1010/2537
+Memory: 5.8 GB, processing chunk 1011/2537
+Memory: 5.8 GB, processing chunk 1012/2537
+Memory: 5.8 GB, processing chunk 1013/2537
+Memory: 5.8 GB, processing chunk 1014/2537
+Memory: 5.8 GB, processing chunk 1015/2537
+Memory: 5.8 GB, processing chunk 1016/2537
+Memory: 5.8 GB, processing chunk 1017/2537
+Memory: 5.8 GB, processing chunk 1018/2537
+Memory: 5.8 GB, processing chunk 1019/2537
+Memory: 5.8 GB, processing chunk 1020/2537
+Saving segment 51 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1021/2537
+Memory: 5.8 GB, processing chunk 1022/2537
+Memory: 5.8 GB, processing chunk 1023/2537
+Memory: 5.8 GB, processing chunk 1024/2537
+Memory: 5.8 GB, processing chunk 1025/2537
+Memory: 5.8 GB, processing chunk 1026/2537
+Memory: 5.8 GB, processing chunk 1027/2537
+Memory: 5.8 GB, processing chunk 1028/2537
+Memory: 5.8 GB, processing chunk 1029/2537
+Memory: 5.8 GB, processing chunk 1030/2537
+Memory: 5.8 GB, processing chunk 1031/2537
+Memory: 5.8 GB, processing chunk 1032/2537
+Memory: 5.8 GB, processing chunk 1033/2537
+Memory: 5.8 GB, processing chunk 1034/2537
+Memory: 5.8 GB, processing chunk 1035/2537
+Memory: 5.8 GB, processing chunk 1036/2537
+Memory: 5.8 GB, processing chunk 1037/2537
+Memory: 5.8 GB, processing chunk 1038/2537
+Memory: 5.8 GB, processing chunk 1039/2537
+Memory: 5.8 GB, processing chunk 1040/2537
+Saving segment 52 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1041/2537
+Memory: 5.8 GB, processing chunk 1042/2537
+Memory: 5.8 GB, processing chunk 1043/2537
+Memory: 5.8 GB, processing chunk 1044/2537
+Memory: 5.8 GB, processing chunk 1045/2537
+Memory: 5.8 GB, processing chunk 1046/2537
+Memory: 5.8 GB, processing chunk 1047/2537
+Memory: 5.8 GB, processing chunk 1048/2537
+Memory: 5.8 GB, processing chunk 1049/2537
+Memory: 5.8 GB, processing chunk 1050/2537
+Memory: 5.8 GB, processing chunk 1051/2537
+Memory: 5.8 GB, processing chunk 1052/2537
+Memory: 5.8 GB, processing chunk 1053/2537
+Memory: 5.8 GB, processing chunk 1054/2537
+Memory: 5.8 GB, processing chunk 1055/2537
+Memory: 5.8 GB, processing chunk 1056/2537
+Memory: 5.8 GB, processing chunk 1057/2537
+Memory: 5.8 GB, processing chunk 1058/2537
+Memory: 5.8 GB, processing chunk 1059/2537
+Memory: 5.8 GB, processing chunk 1060/2537
+Saving segment 53 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1061/2537
+Memory: 5.8 GB, processing chunk 1062/2537
+Memory: 5.8 GB, processing chunk 1063/2537
+Memory: 5.8 GB, processing chunk 1064/2537
+Memory: 5.8 GB, processing chunk 1065/2537
+Memory: 5.8 GB, processing chunk 1066/2537
+Memory: 5.8 GB, processing chunk 1067/2537
+Memory: 5.8 GB, processing chunk 1068/2537
+Memory: 5.8 GB, processing chunk 1069/2537
+Memory: 5.8 GB, processing chunk 1070/2537
+Memory: 5.8 GB, processing chunk 1071/2537
+Memory: 5.8 GB, processing chunk 1072/2537
+Memory: 5.8 GB, processing chunk 1073/2537
+Memory: 5.8 GB, processing chunk 1074/2537
+Memory: 5.8 GB, processing chunk 1075/2537
+Memory: 5.8 GB, processing chunk 1076/2537
+Memory: 5.8 GB, processing chunk 1077/2537
+Memory: 5.8 GB, processing chunk 1078/2537
+Memory: 5.8 GB, processing chunk 1079/2537
+Memory: 5.8 GB, processing chunk 1080/2537
+Saving segment 54 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1081/2537
+Memory: 5.8 GB, processing chunk 1082/2537
+Memory: 5.8 GB, processing chunk 1083/2537
+Memory: 5.8 GB, processing chunk 1084/2537
+Memory: 5.8 GB, processing chunk 1085/2537
+Memory: 5.8 GB, processing chunk 1086/2537
+Memory: 5.8 GB, processing chunk 1087/2537
+Memory: 5.8 GB, processing chunk 1088/2537
+Memory: 5.8 GB, processing chunk 1089/2537
+Memory: 5.8 GB, processing chunk 1090/2537
+Memory: 5.8 GB, processing chunk 1091/2537
+Memory: 5.8 GB, processing chunk 1092/2537
+Memory: 5.8 GB, processing chunk 1093/2537
+Memory: 5.8 GB, processing chunk 1094/2537
+Memory: 5.8 GB, processing chunk 1095/2537
+Memory: 5.8 GB, processing chunk 1096/2537
+Memory: 5.8 GB, processing chunk 1097/2537
+Memory: 5.8 GB, processing chunk 1098/2537
+Memory: 5.8 GB, processing chunk 1099/2537
+Memory: 5.8 GB, processing chunk 1100/2537
+Saving segment 55 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1101/2537
+Memory: 5.8 GB, processing chunk 1102/2537
+Memory: 5.8 GB, processing chunk 1103/2537
+Memory: 5.8 GB, processing chunk 1104/2537
+Memory: 5.8 GB, processing chunk 1105/2537
+Memory: 5.8 GB, processing chunk 1106/2537
+Memory: 5.8 GB, processing chunk 1107/2537
+Memory: 5.8 GB, processing chunk 1108/2537
+Memory: 5.8 GB, processing chunk 1109/2537
+Memory: 5.8 GB, processing chunk 1110/2537
+Memory: 5.8 GB, processing chunk 1111/2537
+Memory: 5.8 GB, processing chunk 1112/2537
+Memory: 5.8 GB, processing chunk 1113/2537
+Memory: 5.8 GB, processing chunk 1114/2537
+Memory: 5.8 GB, processing chunk 1115/2537
+Memory: 5.8 GB, processing chunk 1116/2537
+Memory: 5.8 GB, processing chunk 1117/2537
+Memory: 5.8 GB, processing chunk 1118/2537
+Memory: 5.8 GB, processing chunk 1119/2537
+Memory: 5.8 GB, processing chunk 1120/2537
+Saving segment 56 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1121/2537
+Memory: 5.8 GB, processing chunk 1122/2537
+Memory: 5.8 GB, processing chunk 1123/2537
+Memory: 5.8 GB, processing chunk 1124/2537
+Memory: 5.8 GB, processing chunk 1125/2537
+Memory: 5.8 GB, processing chunk 1126/2537
+Memory: 5.8 GB, processing chunk 1127/2537
+Memory: 5.8 GB, processing chunk 1128/2537
+Memory: 5.8 GB, processing chunk 1129/2537
+Memory: 5.8 GB, processing chunk 1130/2537
+Memory: 5.8 GB, processing chunk 1131/2537
+Memory: 5.8 GB, processing chunk 1132/2537
+Memory: 5.8 GB, processing chunk 1133/2537
+Memory: 5.8 GB, processing chunk 1134/2537
+Memory: 5.8 GB, processing chunk 1135/2537
+Memory: 5.8 GB, processing chunk 1136/2537
+Memory: 5.8 GB, processing chunk 1137/2537
+Memory: 5.8 GB, processing chunk 1138/2537
+Memory: 5.8 GB, processing chunk 1139/2537
+Memory: 5.8 GB, processing chunk 1140/2537
+Saving segment 57 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1141/2537
+Memory: 5.8 GB, processing chunk 1142/2537
+Memory: 5.8 GB, processing chunk 1143/2537
+Memory: 5.8 GB, processing chunk 1144/2537
+Memory: 5.8 GB, processing chunk 1145/2537
+Memory: 5.8 GB, processing chunk 1146/2537
+Memory: 5.8 GB, processing chunk 1147/2537
+Memory: 5.8 GB, processing chunk 1148/2537
+Memory: 5.8 GB, processing chunk 1149/2537
+Memory: 5.8 GB, processing chunk 1150/2537
+Memory: 5.8 GB, processing chunk 1151/2537
+Memory: 5.8 GB, processing chunk 1152/2537
+Memory: 5.8 GB, processing chunk 1153/2537
+Memory: 5.8 GB, processing chunk 1154/2537
+Memory: 5.8 GB, processing chunk 1155/2537
+Memory: 5.8 GB, processing chunk 1156/2537
+Memory: 5.8 GB, processing chunk 1157/2537
+Memory: 5.8 GB, processing chunk 1158/2537
+Memory: 5.8 GB, processing chunk 1159/2537
+Memory: 5.8 GB, processing chunk 1160/2537
+Saving segment 58 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1161/2537
+Memory: 5.8 GB, processing chunk 1162/2537
+Memory: 5.8 GB, processing chunk 1163/2537
+Memory: 5.8 GB, processing chunk 1164/2537
+Memory: 5.8 GB, processing chunk 1165/2537
+Memory: 5.8 GB, processing chunk 1166/2537
+Memory: 5.8 GB, processing chunk 1167/2537
+Memory: 5.8 GB, processing chunk 1168/2537
+Memory: 5.8 GB, processing chunk 1169/2537
+Memory: 5.8 GB, processing chunk 1170/2537
+Memory: 5.8 GB, processing chunk 1171/2537
+Memory: 5.8 GB, processing chunk 1172/2537
+Memory: 5.8 GB, processing chunk 1173/2537
+Memory: 5.8 GB, processing chunk 1174/2537
+Memory: 5.8 GB, processing chunk 1175/2537
+Memory: 5.8 GB, processing chunk 1176/2537
+Memory: 5.8 GB, processing chunk 1177/2537
+Memory: 5.8 GB, processing chunk 1178/2537
+Memory: 5.8 GB, processing chunk 1179/2537
+Memory: 5.8 GB, processing chunk 1180/2537
+Saving segment 59 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1181/2537
+Memory: 5.8 GB, processing chunk 1182/2537
+Memory: 5.8 GB, processing chunk 1183/2537
+Memory: 5.8 GB, processing chunk 1184/2537
+Memory: 5.8 GB, processing chunk 1185/2537
+Memory: 5.8 GB, processing chunk 1186/2537
+Memory: 5.8 GB, processing chunk 1187/2537
+Memory: 5.8 GB, processing chunk 1188/2537
+Memory: 5.8 GB, processing chunk 1189/2537
+Memory: 5.8 GB, processing chunk 1190/2537
+Memory: 5.8 GB, processing chunk 1191/2537
+Memory: 5.8 GB, processing chunk 1192/2537
+Memory: 5.8 GB, processing chunk 1193/2537
+Memory: 5.8 GB, processing chunk 1194/2537
+Memory: 5.8 GB, processing chunk 1195/2537
+Memory: 5.8 GB, processing chunk 1196/2537
+Memory: 5.8 GB, processing chunk 1197/2537
+Memory: 5.8 GB, processing chunk 1198/2537
+Memory: 5.8 GB, processing chunk 1199/2537
+Memory: 5.8 GB, processing chunk 1200/2537
+Saving segment 60 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1201/2537
+Memory: 5.8 GB, processing chunk 1202/2537
+Memory: 5.8 GB, processing chunk 1203/2537
+Memory: 5.8 GB, processing chunk 1204/2537
+Memory: 5.8 GB, processing chunk 1205/2537
+Memory: 5.8 GB, processing chunk 1206/2537
+Memory: 5.8 GB, processing chunk 1207/2537
+Memory: 5.8 GB, processing chunk 1208/2537
+Memory: 5.8 GB, processing chunk 1209/2537
+Memory: 5.8 GB, processing chunk 1210/2537
+Memory: 5.8 GB, processing chunk 1211/2537
+Memory: 5.8 GB, processing chunk 1212/2537
+Memory: 5.8 GB, processing chunk 1213/2537
+Memory: 5.8 GB, processing chunk 1214/2537
+Memory: 5.8 GB, processing chunk 1215/2537
+Memory: 5.8 GB, processing chunk 1216/2537
+Memory: 5.8 GB, processing chunk 1217/2537
+Memory: 5.8 GB, processing chunk 1218/2537
+Memory: 5.8 GB, processing chunk 1219/2537
+Memory: 5.8 GB, processing chunk 1220/2537
+Saving segment 61 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1221/2537
+Memory: 5.8 GB, processing chunk 1222/2537
+Memory: 5.8 GB, processing chunk 1223/2537
+Memory: 5.8 GB, processing chunk 1224/2537
+Memory: 5.8 GB, processing chunk 1225/2537
+Memory: 5.8 GB, processing chunk 1226/2537
+Memory: 5.8 GB, processing chunk 1227/2537
+Memory: 5.8 GB, processing chunk 1228/2537
+Memory: 5.8 GB, processing chunk 1229/2537
+Memory: 5.8 GB, processing chunk 1230/2537
+Memory: 5.8 GB, processing chunk 1231/2537
+Memory: 5.8 GB, processing chunk 1232/2537
+Memory: 5.8 GB, processing chunk 1233/2537
+Memory: 5.8 GB, processing chunk 1234/2537
+Memory: 5.8 GB, processing chunk 1235/2537
+Memory: 5.8 GB, processing chunk 1236/2537
+Memory: 5.8 GB, processing chunk 1237/2537
+Memory: 5.8 GB, processing chunk 1238/2537
+Memory: 5.8 GB, processing chunk 1239/2537
+Memory: 5.8 GB, processing chunk 1240/2537
+Saving segment 62 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1241/2537
+Memory: 5.8 GB, processing chunk 1242/2537
+Memory: 5.8 GB, processing chunk 1243/2537
+Memory: 5.8 GB, processing chunk 1244/2537
+Memory: 5.8 GB, processing chunk 1245/2537
+Memory: 5.8 GB, processing chunk 1246/2537
+Memory: 5.8 GB, processing chunk 1247/2537
+Memory: 5.8 GB, processing chunk 1248/2537
+Memory: 5.8 GB, processing chunk 1249/2537
+Memory: 5.8 GB, processing chunk 1250/2537
+Memory: 5.8 GB, processing chunk 1251/2537
+Memory: 5.8 GB, processing chunk 1252/2537
+Memory: 5.8 GB, processing chunk 1253/2537
+Memory: 5.8 GB, processing chunk 1254/2537
+Memory: 5.8 GB, processing chunk 1255/2537
+Memory: 5.8 GB, processing chunk 1256/2537
+Memory: 5.8 GB, processing chunk 1257/2537
+Memory: 5.8 GB, processing chunk 1258/2537
+Memory: 5.8 GB, processing chunk 1259/2537
+Memory: 5.8 GB, processing chunk 1260/2537
+Saving segment 63 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1261/2537
+Memory: 5.8 GB, processing chunk 1262/2537
+Memory: 5.8 GB, processing chunk 1263/2537
+Memory: 5.8 GB, processing chunk 1264/2537
+Memory: 5.8 GB, processing chunk 1265/2537
+Memory: 5.8 GB, processing chunk 1266/2537
+Memory: 5.8 GB, processing chunk 1267/2537
+Memory: 5.8 GB, processing chunk 1268/2537
+Memory: 5.8 GB, processing chunk 1269/2537
+Memory: 5.8 GB, processing chunk 1270/2537
+Memory: 5.8 GB, processing chunk 1271/2537
+Memory: 5.8 GB, processing chunk 1272/2537
+Memory: 5.8 GB, processing chunk 1273/2537
+Memory: 5.8 GB, processing chunk 1274/2537
+Memory: 5.8 GB, processing chunk 1275/2537
+Memory: 5.8 GB, processing chunk 1276/2537
+Memory: 5.8 GB, processing chunk 1277/2537
+Memory: 5.8 GB, processing chunk 1278/2537
+Memory: 5.8 GB, processing chunk 1279/2537
+Memory: 5.8 GB, processing chunk 1280/2537
+Saving segment 64 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1281/2537
+Memory: 5.8 GB, processing chunk 1282/2537
+Memory: 5.8 GB, processing chunk 1283/2537
+Memory: 5.8 GB, processing chunk 1284/2537
+Memory: 5.8 GB, processing chunk 1285/2537
+Memory: 5.8 GB, processing chunk 1286/2537
+Memory: 5.8 GB, processing chunk 1287/2537
+Memory: 5.8 GB, processing chunk 1288/2537
+Memory: 5.8 GB, processing chunk 1289/2537
+Memory: 5.8 GB, processing chunk 1290/2537
+Memory: 5.8 GB, processing chunk 1291/2537
+Memory: 5.8 GB, processing chunk 1292/2537
+Memory: 5.8 GB, processing chunk 1293/2537
+Memory: 5.8 GB, processing chunk 1294/2537
+Memory: 5.8 GB, processing chunk 1295/2537
+Memory: 5.8 GB, processing chunk 1296/2537
+Memory: 5.8 GB, processing chunk 1297/2537
+Memory: 5.8 GB, processing chunk 1298/2537
+Memory: 5.8 GB, processing chunk 1299/2537
+Memory: 5.8 GB, processing chunk 1300/2537
+Saving segment 65 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1301/2537
+Memory: 5.8 GB, processing chunk 1302/2537
+Memory: 5.8 GB, processing chunk 1303/2537
+Memory: 5.8 GB, processing chunk 1304/2537
+Memory: 5.8 GB, processing chunk 1305/2537
+Memory: 5.8 GB, processing chunk 1306/2537
+Memory: 5.8 GB, processing chunk 1307/2537
+Memory: 5.8 GB, processing chunk 1308/2537
+Memory: 5.8 GB, processing chunk 1309/2537
+Memory: 5.8 GB, processing chunk 1310/2537
+Memory: 5.8 GB, processing chunk 1311/2537
+Memory: 5.8 GB, processing chunk 1312/2537
+Memory: 5.8 GB, processing chunk 1313/2537
+Memory: 5.8 GB, processing chunk 1314/2537
+Memory: 5.8 GB, processing chunk 1315/2537
+Memory: 5.8 GB, processing chunk 1316/2537
+Memory: 5.8 GB, processing chunk 1317/2537
+Memory: 5.8 GB, processing chunk 1318/2537
+Memory: 5.8 GB, processing chunk 1319/2537
+Memory: 5.8 GB, processing chunk 1320/2537
+Saving segment 66 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1321/2537
+Memory: 5.8 GB, processing chunk 1322/2537
+Memory: 5.8 GB, processing chunk 1323/2537
+Memory: 5.8 GB, processing chunk 1324/2537
+Memory: 5.8 GB, processing chunk 1325/2537
+Memory: 5.8 GB, processing chunk 1326/2537
+Memory: 5.8 GB, processing chunk 1327/2537
+Memory: 5.8 GB, processing chunk 1328/2537
+Memory: 5.8 GB, processing chunk 1329/2537
+Memory: 5.8 GB, processing chunk 1330/2537
+Memory: 5.8 GB, processing chunk 1331/2537
+Memory: 5.8 GB, processing chunk 1332/2537
+Memory: 5.8 GB, processing chunk 1333/2537
+Memory: 5.8 GB, processing chunk 1334/2537
+Memory: 5.8 GB, processing chunk 1335/2537
+Memory: 5.8 GB, processing chunk 1336/2537
+Memory: 5.8 GB, processing chunk 1337/2537
+Memory: 5.8 GB, processing chunk 1338/2537
+Memory: 5.8 GB, processing chunk 1339/2537
+Memory: 5.8 GB, processing chunk 1340/2537
+Saving segment 67 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1341/2537
+Memory: 5.8 GB, processing chunk 1342/2537
+Memory: 5.8 GB, processing chunk 1343/2537
+Memory: 5.8 GB, processing chunk 1344/2537
+Memory: 5.8 GB, processing chunk 1345/2537
+Memory: 5.8 GB, processing chunk 1346/2537
+Memory: 5.8 GB, processing chunk 1347/2537
+Memory: 5.8 GB, processing chunk 1348/2537
+Memory: 5.8 GB, processing chunk 1349/2537
+Memory: 5.8 GB, processing chunk 1350/2537
+Memory: 5.8 GB, processing chunk 1351/2537
+Memory: 5.8 GB, processing chunk 1352/2537
+Memory: 5.8 GB, processing chunk 1353/2537
+Memory: 5.8 GB, processing chunk 1354/2537
+Memory: 5.8 GB, processing chunk 1355/2537
+Memory: 5.8 GB, processing chunk 1356/2537
+Memory: 5.8 GB, processing chunk 1357/2537
+Memory: 5.8 GB, processing chunk 1358/2537
+Memory: 5.8 GB, processing chunk 1359/2537
+Memory: 5.8 GB, processing chunk 1360/2537
+Saving segment 68 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1361/2537
+Memory: 5.8 GB, processing chunk 1362/2537
+Memory: 5.8 GB, processing chunk 1363/2537
+Memory: 5.8 GB, processing chunk 1364/2537
+Memory: 5.8 GB, processing chunk 1365/2537
+Memory: 5.8 GB, processing chunk 1366/2537
+Memory: 5.8 GB, processing chunk 1367/2537
+Memory: 5.8 GB, processing chunk 1368/2537
+Memory: 5.8 GB, processing chunk 1369/2537
+Memory: 5.8 GB, processing chunk 1370/2537
+Memory: 5.8 GB, processing chunk 1371/2537
+Memory: 5.8 GB, processing chunk 1372/2537
+Memory: 5.8 GB, processing chunk 1373/2537
+Memory: 5.8 GB, processing chunk 1374/2537
+Memory: 5.8 GB, processing chunk 1375/2537
+Memory: 5.8 GB, processing chunk 1376/2537
+Memory: 5.8 GB, processing chunk 1377/2537
+Memory: 5.8 GB, processing chunk 1378/2537
+Memory: 5.8 GB, processing chunk 1379/2537
+Memory: 5.8 GB, processing chunk 1380/2537
+Saving segment 69 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1381/2537
+Memory: 5.8 GB, processing chunk 1382/2537
+Memory: 5.8 GB, processing chunk 1383/2537
+Memory: 5.8 GB, processing chunk 1384/2537
+Memory: 5.8 GB, processing chunk 1385/2537
+Memory: 5.8 GB, processing chunk 1386/2537
+Memory: 5.8 GB, processing chunk 1387/2537
+Memory: 5.8 GB, processing chunk 1388/2537
+Memory: 5.8 GB, processing chunk 1389/2537
+Memory: 5.8 GB, processing chunk 1390/2537
+Memory: 5.8 GB, processing chunk 1391/2537
+Memory: 5.8 GB, processing chunk 1392/2537
+Memory: 5.8 GB, processing chunk 1393/2537
+Memory: 5.8 GB, processing chunk 1394/2537
+Memory: 5.8 GB, processing chunk 1395/2537
+Memory: 5.8 GB, processing chunk 1396/2537
+Memory: 5.8 GB, processing chunk 1397/2537
+Memory: 5.8 GB, processing chunk 1398/2537
+Memory: 5.8 GB, processing chunk 1399/2537
+Memory: 5.8 GB, processing chunk 1400/2537
+Saving segment 70 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1401/2537
+Memory: 5.8 GB, processing chunk 1402/2537
+Memory: 5.8 GB, processing chunk 1403/2537
+Memory: 5.8 GB, processing chunk 1404/2537
+Memory: 5.8 GB, processing chunk 1405/2537
+Memory: 5.8 GB, processing chunk 1406/2537
+Memory: 5.8 GB, processing chunk 1407/2537
+Memory: 5.8 GB, processing chunk 1408/2537
+Memory: 5.8 GB, processing chunk 1409/2537
+Memory: 5.8 GB, processing chunk 1410/2537
+Memory: 5.8 GB, processing chunk 1411/2537
+Memory: 5.8 GB, processing chunk 1412/2537
+Memory: 5.8 GB, processing chunk 1413/2537
+Memory: 5.8 GB, processing chunk 1414/2537
+Memory: 5.8 GB, processing chunk 1415/2537
+Memory: 5.8 GB, processing chunk 1416/2537
+Memory: 5.8 GB, processing chunk 1417/2537
+Memory: 5.8 GB, processing chunk 1418/2537
+Memory: 5.8 GB, processing chunk 1419/2537
+Memory: 5.8 GB, processing chunk 1420/2537
+Saving segment 71 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1421/2537
+Memory: 5.8 GB, processing chunk 1422/2537
+Memory: 5.8 GB, processing chunk 1423/2537
+Memory: 5.8 GB, processing chunk 1424/2537
+Memory: 5.8 GB, processing chunk 1425/2537
+Memory: 5.8 GB, processing chunk 1426/2537
+Memory: 5.8 GB, processing chunk 1427/2537
+Memory: 5.8 GB, processing chunk 1428/2537
+Memory: 5.8 GB, processing chunk 1429/2537
+Memory: 5.8 GB, processing chunk 1430/2537
+Memory: 5.8 GB, processing chunk 1431/2537
+Memory: 5.8 GB, processing chunk 1432/2537
+Memory: 5.8 GB, processing chunk 1433/2537
+Memory: 5.8 GB, processing chunk 1434/2537
+Memory: 5.8 GB, processing chunk 1435/2537
+Memory: 5.8 GB, processing chunk 1436/2537
+Memory: 5.8 GB, processing chunk 1437/2537
+Memory: 5.8 GB, processing chunk 1438/2537
+Memory: 5.8 GB, processing chunk 1439/2537
+Memory: 5.8 GB, processing chunk 1440/2537
+Saving segment 72 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1441/2537
+Memory: 5.8 GB, processing chunk 1442/2537
+Memory: 5.8 GB, processing chunk 1443/2537
+Memory: 5.8 GB, processing chunk 1444/2537
+Memory: 5.8 GB, processing chunk 1445/2537
+Memory: 5.8 GB, processing chunk 1446/2537
+Memory: 5.8 GB, processing chunk 1447/2537
+Memory: 5.8 GB, processing chunk 1448/2537
+Memory: 5.8 GB, processing chunk 1449/2537
+Memory: 5.8 GB, processing chunk 1450/2537
+Memory: 5.8 GB, processing chunk 1451/2537
+Memory: 5.8 GB, processing chunk 1452/2537
+Memory: 5.8 GB, processing chunk 1453/2537
+Memory: 5.8 GB, processing chunk 1454/2537
+Memory: 5.8 GB, processing chunk 1455/2537
+Memory: 5.8 GB, processing chunk 1456/2537
+Memory: 5.8 GB, processing chunk 1457/2537
+Memory: 5.8 GB, processing chunk 1458/2537
+Memory: 5.8 GB, processing chunk 1459/2537
+Memory: 5.8 GB, processing chunk 1460/2537
+Saving segment 73 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1461/2537
+Memory: 5.8 GB, processing chunk 1462/2537
+Memory: 5.8 GB, processing chunk 1463/2537
+Memory: 5.8 GB, processing chunk 1464/2537
+Memory: 5.8 GB, processing chunk 1465/2537
+Memory: 5.8 GB, processing chunk 1466/2537
+Memory: 5.8 GB, processing chunk 1467/2537
+Memory: 5.8 GB, processing chunk 1468/2537
+Memory: 5.8 GB, processing chunk 1469/2537
+Memory: 5.8 GB, processing chunk 1470/2537
+Memory: 5.8 GB, processing chunk 1471/2537
+Memory: 5.8 GB, processing chunk 1472/2537
+Memory: 5.8 GB, processing chunk 1473/2537
+Memory: 5.8 GB, processing chunk 1474/2537
+Memory: 5.8 GB, processing chunk 1475/2537
+Memory: 5.8 GB, processing chunk 1476/2537
+Memory: 5.8 GB, processing chunk 1477/2537
+Memory: 5.8 GB, processing chunk 1478/2537
+Memory: 5.8 GB, processing chunk 1479/2537
+Memory: 5.8 GB, processing chunk 1480/2537
+Saving segment 74 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1481/2537
+Memory: 5.8 GB, processing chunk 1482/2537
+Memory: 5.8 GB, processing chunk 1483/2537
+Memory: 5.8 GB, processing chunk 1484/2537
+Memory: 5.8 GB, processing chunk 1485/2537
+Memory: 5.8 GB, processing chunk 1486/2537
+Memory: 5.8 GB, processing chunk 1487/2537
+Memory: 5.8 GB, processing chunk 1488/2537
+Memory: 5.8 GB, processing chunk 1489/2537
+Memory: 5.8 GB, processing chunk 1490/2537
+Memory: 5.8 GB, processing chunk 1491/2537
+Memory: 5.8 GB, processing chunk 1492/2537
+Memory: 5.8 GB, processing chunk 1493/2537
+Memory: 5.8 GB, processing chunk 1494/2537
+Memory: 5.8 GB, processing chunk 1495/2537
+Memory: 5.8 GB, processing chunk 1496/2537
+Memory: 5.8 GB, processing chunk 1497/2537
+Memory: 5.8 GB, processing chunk 1498/2537
+Memory: 5.8 GB, processing chunk 1499/2537
+Memory: 5.8 GB, processing chunk 1500/2537
+Saving segment 75 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1501/2537
+Memory: 5.8 GB, processing chunk 1502/2537
+Memory: 5.8 GB, processing chunk 1503/2537
+Memory: 5.8 GB, processing chunk 1504/2537
+Memory: 5.8 GB, processing chunk 1505/2537
+Memory: 5.8 GB, processing chunk 1506/2537
+Memory: 5.8 GB, processing chunk 1507/2537
+Memory: 5.8 GB, processing chunk 1508/2537
+Memory: 5.8 GB, processing chunk 1509/2537
+Memory: 5.8 GB, processing chunk 1510/2537
+Memory: 5.8 GB, processing chunk 1511/2537
+Memory: 5.8 GB, processing chunk 1512/2537
+Memory: 5.8 GB, processing chunk 1513/2537
+Memory: 5.8 GB, processing chunk 1514/2537
+Memory: 5.8 GB, processing chunk 1515/2537
+Memory: 5.8 GB, processing chunk 1516/2537
+Memory: 5.8 GB, processing chunk 1517/2537
+Memory: 5.8 GB, processing chunk 1518/2537
+Memory: 5.8 GB, processing chunk 1519/2537
+Memory: 5.8 GB, processing chunk 1520/2537
+Saving segment 76 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1521/2537
+Memory: 5.8 GB, processing chunk 1522/2537
+Memory: 5.8 GB, processing chunk 1523/2537
+Memory: 5.8 GB, processing chunk 1524/2537
+Memory: 5.8 GB, processing chunk 1525/2537
+Memory: 5.8 GB, processing chunk 1526/2537
+Memory: 5.8 GB, processing chunk 1527/2537
+Memory: 5.8 GB, processing chunk 1528/2537
+Memory: 5.8 GB, processing chunk 1529/2537
+Memory: 5.8 GB, processing chunk 1530/2537
+Memory: 5.8 GB, processing chunk 1531/2537
+Memory: 5.8 GB, processing chunk 1532/2537
+Memory: 5.8 GB, processing chunk 1533/2537
+Memory: 5.8 GB, processing chunk 1534/2537
+Memory: 5.8 GB, processing chunk 1535/2537
+Memory: 5.8 GB, processing chunk 1536/2537
+Memory: 5.8 GB, processing chunk 1537/2537
+Memory: 5.8 GB, processing chunk 1538/2537
+Memory: 5.8 GB, processing chunk 1539/2537
+Memory: 5.8 GB, processing chunk 1540/2537
+Saving segment 77 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1541/2537
+Memory: 5.8 GB, processing chunk 1542/2537
+Memory: 5.8 GB, processing chunk 1543/2537
+Memory: 5.8 GB, processing chunk 1544/2537
+Memory: 5.8 GB, processing chunk 1545/2537
+Memory: 5.8 GB, processing chunk 1546/2537
+Memory: 5.8 GB, processing chunk 1547/2537
+Memory: 5.8 GB, processing chunk 1548/2537
+Memory: 5.8 GB, processing chunk 1549/2537
+Memory: 5.8 GB, processing chunk 1550/2537
+Memory: 5.8 GB, processing chunk 1551/2537
+Memory: 5.8 GB, processing chunk 1552/2537
+Memory: 5.8 GB, processing chunk 1553/2537
+Memory: 5.8 GB, processing chunk 1554/2537
+Memory: 5.8 GB, processing chunk 1555/2537
+Memory: 5.8 GB, processing chunk 1556/2537
+Memory: 5.8 GB, processing chunk 1557/2537
+Memory: 5.8 GB, processing chunk 1558/2537
+Memory: 5.8 GB, processing chunk 1559/2537
+Memory: 5.8 GB, processing chunk 1560/2537
+Saving segment 78 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1561/2537
+Memory: 5.8 GB, processing chunk 1562/2537
+Memory: 5.8 GB, processing chunk 1563/2537
+Memory: 5.8 GB, processing chunk 1564/2537
+Memory: 5.8 GB, processing chunk 1565/2537
+Memory: 5.8 GB, processing chunk 1566/2537
+Memory: 5.8 GB, processing chunk 1567/2537
+Memory: 5.8 GB, processing chunk 1568/2537
+Memory: 5.8 GB, processing chunk 1569/2537
+Memory: 5.8 GB, processing chunk 1570/2537
+Memory: 5.8 GB, processing chunk 1571/2537
+Memory: 5.8 GB, processing chunk 1572/2537
+Memory: 5.8 GB, processing chunk 1573/2537
+Memory: 5.8 GB, processing chunk 1574/2537
+Memory: 5.8 GB, processing chunk 1575/2537
+Memory: 5.8 GB, processing chunk 1576/2537
+Memory: 5.8 GB, processing chunk 1577/2537
+Memory: 5.8 GB, processing chunk 1578/2537
+Memory: 5.8 GB, processing chunk 1579/2537
+Memory: 5.8 GB, processing chunk 1580/2537
+Saving segment 79 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1581/2537
+Memory: 5.8 GB, processing chunk 1582/2537
+Memory: 5.8 GB, processing chunk 1583/2537
+Memory: 5.8 GB, processing chunk 1584/2537
+Memory: 5.8 GB, processing chunk 1585/2537
+Memory: 5.8 GB, processing chunk 1586/2537
+Memory: 5.8 GB, processing chunk 1587/2537
+Memory: 5.8 GB, processing chunk 1588/2537
+Memory: 5.8 GB, processing chunk 1589/2537
+Memory: 5.8 GB, processing chunk 1590/2537
+Memory: 5.8 GB, processing chunk 1591/2537
+Memory: 5.8 GB, processing chunk 1592/2537
+Memory: 5.8 GB, processing chunk 1593/2537
+Memory: 5.8 GB, processing chunk 1594/2537
+Memory: 5.8 GB, processing chunk 1595/2537
+Memory: 5.8 GB, processing chunk 1596/2537
+Memory: 5.8 GB, processing chunk 1597/2537
+Memory: 5.8 GB, processing chunk 1598/2537
+Memory: 5.8 GB, processing chunk 1599/2537
+Memory: 5.8 GB, processing chunk 1600/2537
+Saving segment 80 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1601/2537
+Memory: 5.8 GB, processing chunk 1602/2537
+Memory: 5.8 GB, processing chunk 1603/2537
+Memory: 5.8 GB, processing chunk 1604/2537
+Memory: 5.8 GB, processing chunk 1605/2537
+Memory: 5.8 GB, processing chunk 1606/2537
+Memory: 5.8 GB, processing chunk 1607/2537
+Memory: 5.8 GB, processing chunk 1608/2537
+Memory: 5.8 GB, processing chunk 1609/2537
+Memory: 5.8 GB, processing chunk 1610/2537
+Memory: 5.8 GB, processing chunk 1611/2537
+Memory: 5.8 GB, processing chunk 1612/2537
+Memory: 5.8 GB, processing chunk 1613/2537
+Memory: 5.8 GB, processing chunk 1614/2537
+Memory: 5.8 GB, processing chunk 1615/2537
+Memory: 5.8 GB, processing chunk 1616/2537
+Memory: 5.8 GB, processing chunk 1617/2537
+Memory: 5.8 GB, processing chunk 1618/2537
+Memory: 5.8 GB, processing chunk 1619/2537
+Memory: 5.8 GB, processing chunk 1620/2537
+Saving segment 81 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1621/2537
+Memory: 5.8 GB, processing chunk 1622/2537
+Memory: 5.8 GB, processing chunk 1623/2537
+Memory: 5.8 GB, processing chunk 1624/2537
+Memory: 5.8 GB, processing chunk 1625/2537
+Memory: 5.8 GB, processing chunk 1626/2537
+Memory: 5.8 GB, processing chunk 1627/2537
+Memory: 5.8 GB, processing chunk 1628/2537
+Memory: 5.8 GB, processing chunk 1629/2537
+Memory: 5.8 GB, processing chunk 1630/2537
+Memory: 5.8 GB, processing chunk 1631/2537
+Memory: 5.8 GB, processing chunk 1632/2537
+Memory: 5.8 GB, processing chunk 1633/2537
+Memory: 5.8 GB, processing chunk 1634/2537
+Memory: 5.8 GB, processing chunk 1635/2537
+Memory: 5.8 GB, processing chunk 1636/2537
+Memory: 5.8 GB, processing chunk 1637/2537
+Memory: 5.8 GB, processing chunk 1638/2537
+Memory: 5.8 GB, processing chunk 1639/2537
+Memory: 5.8 GB, processing chunk 1640/2537
+Saving segment 82 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1641/2537
+Memory: 5.8 GB, processing chunk 1642/2537
+Memory: 5.8 GB, processing chunk 1643/2537
+Memory: 5.8 GB, processing chunk 1644/2537
+Memory: 5.8 GB, processing chunk 1645/2537
+Memory: 5.8 GB, processing chunk 1646/2537
+Memory: 5.8 GB, processing chunk 1647/2537
+Memory: 5.8 GB, processing chunk 1648/2537
+Memory: 5.8 GB, processing chunk 1649/2537
+Memory: 5.8 GB, processing chunk 1650/2537
+Memory: 5.8 GB, processing chunk 1651/2537
+Memory: 5.8 GB, processing chunk 1652/2537
+Memory: 5.8 GB, processing chunk 1653/2537
+Memory: 5.8 GB, processing chunk 1654/2537
+Memory: 5.8 GB, processing chunk 1655/2537
+Memory: 5.8 GB, processing chunk 1656/2537
+Memory: 5.8 GB, processing chunk 1657/2537
+Memory: 5.8 GB, processing chunk 1658/2537
+Memory: 5.8 GB, processing chunk 1659/2537
+Memory: 5.8 GB, processing chunk 1660/2537
+Saving segment 83 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1661/2537
+Memory: 5.8 GB, processing chunk 1662/2537
+Memory: 5.8 GB, processing chunk 1663/2537
+Memory: 5.8 GB, processing chunk 1664/2537
+Memory: 5.8 GB, processing chunk 1665/2537
+Memory: 5.8 GB, processing chunk 1666/2537
+Memory: 5.8 GB, processing chunk 1667/2537
+Memory: 5.8 GB, processing chunk 1668/2537
+Memory: 5.8 GB, processing chunk 1669/2537
+Memory: 5.8 GB, processing chunk 1670/2537
+Memory: 5.8 GB, processing chunk 1671/2537
+Memory: 5.8 GB, processing chunk 1672/2537
+Memory: 5.8 GB, processing chunk 1673/2537
+Memory: 5.8 GB, processing chunk 1674/2537
+Memory: 5.8 GB, processing chunk 1675/2537
+Memory: 5.8 GB, processing chunk 1676/2537
+Memory: 5.8 GB, processing chunk 1677/2537
+Memory: 5.8 GB, processing chunk 1678/2537
+Memory: 5.8 GB, processing chunk 1679/2537
+Memory: 5.8 GB, processing chunk 1680/2537
+Saving segment 84 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1681/2537
+Memory: 5.8 GB, processing chunk 1682/2537
+Memory: 5.8 GB, processing chunk 1683/2537
+Memory: 5.8 GB, processing chunk 1684/2537
+Memory: 5.8 GB, processing chunk 1685/2537
+Memory: 5.8 GB, processing chunk 1686/2537
+Memory: 5.8 GB, processing chunk 1687/2537
+Memory: 5.8 GB, processing chunk 1688/2537
+Memory: 5.8 GB, processing chunk 1689/2537
+Memory: 5.8 GB, processing chunk 1690/2537
+Memory: 5.8 GB, processing chunk 1691/2537
+Memory: 5.8 GB, processing chunk 1692/2537
+Memory: 5.8 GB, processing chunk 1693/2537
+Memory: 5.8 GB, processing chunk 1694/2537
+Memory: 5.8 GB, processing chunk 1695/2537
+Memory: 5.8 GB, processing chunk 1696/2537
+Memory: 5.8 GB, processing chunk 1697/2537
+Memory: 5.8 GB, processing chunk 1698/2537
+Memory: 5.8 GB, processing chunk 1699/2537
+Memory: 5.8 GB, processing chunk 1700/2537
+Saving segment 85 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1701/2537
+Memory: 5.8 GB, processing chunk 1702/2537
+Memory: 5.8 GB, processing chunk 1703/2537
+Memory: 5.8 GB, processing chunk 1704/2537
+Memory: 5.8 GB, processing chunk 1705/2537
+Memory: 5.8 GB, processing chunk 1706/2537
+Memory: 5.8 GB, processing chunk 1707/2537
+Memory: 5.8 GB, processing chunk 1708/2537
+Memory: 5.8 GB, processing chunk 1709/2537
+Memory: 5.8 GB, processing chunk 1710/2537
+Memory: 5.8 GB, processing chunk 1711/2537
+Memory: 5.8 GB, processing chunk 1712/2537
+Memory: 5.8 GB, processing chunk 1713/2537
+Memory: 5.8 GB, processing chunk 1714/2537
+Memory: 5.8 GB, processing chunk 1715/2537
+Memory: 5.8 GB, processing chunk 1716/2537
+Memory: 5.8 GB, processing chunk 1717/2537
+Memory: 5.8 GB, processing chunk 1718/2537
+Memory: 5.8 GB, processing chunk 1719/2537
+Memory: 5.8 GB, processing chunk 1720/2537
+Saving segment 86 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1721/2537
+Memory: 5.8 GB, processing chunk 1722/2537
+Memory: 5.8 GB, processing chunk 1723/2537
+Memory: 5.8 GB, processing chunk 1724/2537
+Memory: 5.8 GB, processing chunk 1725/2537
+Memory: 5.8 GB, processing chunk 1726/2537
+Memory: 5.8 GB, processing chunk 1727/2537
+Memory: 5.8 GB, processing chunk 1728/2537
+Memory: 5.8 GB, processing chunk 1729/2537
+Memory: 5.8 GB, processing chunk 1730/2537
+Memory: 5.8 GB, processing chunk 1731/2537
+Memory: 5.8 GB, processing chunk 1732/2537
+Memory: 5.8 GB, processing chunk 1733/2537
+Memory: 5.8 GB, processing chunk 1734/2537
+Memory: 5.8 GB, processing chunk 1735/2537
+Memory: 5.8 GB, processing chunk 1736/2537
+Memory: 5.8 GB, processing chunk 1737/2537
+Memory: 5.8 GB, processing chunk 1738/2537
+Memory: 5.8 GB, processing chunk 1739/2537
+Memory: 5.8 GB, processing chunk 1740/2537
+Saving segment 87 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1741/2537
+Memory: 5.8 GB, processing chunk 1742/2537
+Memory: 5.8 GB, processing chunk 1743/2537
+Memory: 5.8 GB, processing chunk 1744/2537
+Memory: 5.8 GB, processing chunk 1745/2537
+Memory: 5.8 GB, processing chunk 1746/2537
+Memory: 5.8 GB, processing chunk 1747/2537
+Memory: 5.8 GB, processing chunk 1748/2537
+Memory: 5.8 GB, processing chunk 1749/2537
+Memory: 5.8 GB, processing chunk 1750/2537
+Memory: 5.8 GB, processing chunk 1751/2537
+Memory: 5.8 GB, processing chunk 1752/2537
+Memory: 5.8 GB, processing chunk 1753/2537
+Memory: 5.8 GB, processing chunk 1754/2537
+Memory: 5.8 GB, processing chunk 1755/2537
+Memory: 5.8 GB, processing chunk 1756/2537
+Memory: 5.8 GB, processing chunk 1757/2537
+Memory: 5.8 GB, processing chunk 1758/2537
+Memory: 5.8 GB, processing chunk 1759/2537
+Memory: 5.8 GB, processing chunk 1760/2537
+Saving segment 88 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1761/2537
+Memory: 5.8 GB, processing chunk 1762/2537
+Memory: 5.8 GB, processing chunk 1763/2537
+Memory: 5.8 GB, processing chunk 1764/2537
+Memory: 5.8 GB, processing chunk 1765/2537
+Memory: 5.8 GB, processing chunk 1766/2537
+Memory: 5.8 GB, processing chunk 1767/2537
+Memory: 5.8 GB, processing chunk 1768/2537
+Memory: 5.8 GB, processing chunk 1769/2537
+Memory: 5.8 GB, processing chunk 1770/2537
+Memory: 5.8 GB, processing chunk 1771/2537
+Memory: 5.8 GB, processing chunk 1772/2537
+Memory: 5.8 GB, processing chunk 1773/2537
+Memory: 5.8 GB, processing chunk 1774/2537
+Memory: 5.8 GB, processing chunk 1775/2537
+Memory: 5.8 GB, processing chunk 1776/2537
+Memory: 5.8 GB, processing chunk 1777/2537
+Memory: 5.8 GB, processing chunk 1778/2537
+Memory: 5.8 GB, processing chunk 1779/2537
+Memory: 5.8 GB, processing chunk 1780/2537
+Saving segment 89 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1781/2537
+Memory: 5.8 GB, processing chunk 1782/2537
+Memory: 5.8 GB, processing chunk 1783/2537
+Memory: 5.8 GB, processing chunk 1784/2537
+Memory: 5.8 GB, processing chunk 1785/2537
+Memory: 5.8 GB, processing chunk 1786/2537
+Memory: 5.8 GB, processing chunk 1787/2537
+Memory: 5.8 GB, processing chunk 1788/2537
+Memory: 5.8 GB, processing chunk 1789/2537
+Memory: 5.8 GB, processing chunk 1790/2537
+Memory: 5.8 GB, processing chunk 1791/2537
+Memory: 5.8 GB, processing chunk 1792/2537
+Memory: 5.8 GB, processing chunk 1793/2537
+Memory: 5.8 GB, processing chunk 1794/2537
+Memory: 5.8 GB, processing chunk 1795/2537
+Memory: 5.8 GB, processing chunk 1796/2537
+Memory: 5.8 GB, processing chunk 1797/2537
+Memory: 5.8 GB, processing chunk 1798/2537
+Memory: 5.8 GB, processing chunk 1799/2537
+Memory: 5.8 GB, processing chunk 1800/2537
+Saving segment 90 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1801/2537
+Memory: 5.8 GB, processing chunk 1802/2537
+Memory: 5.8 GB, processing chunk 1803/2537
+Memory: 5.8 GB, processing chunk 1804/2537
+Memory: 5.8 GB, processing chunk 1805/2537
+Memory: 5.8 GB, processing chunk 1806/2537
+Memory: 5.8 GB, processing chunk 1807/2537
+Memory: 5.8 GB, processing chunk 1808/2537
+Memory: 5.8 GB, processing chunk 1809/2537
+Memory: 5.8 GB, processing chunk 1810/2537
+Memory: 5.8 GB, processing chunk 1811/2537
+Memory: 5.8 GB, processing chunk 1812/2537
+Memory: 5.8 GB, processing chunk 1813/2537
+Memory: 5.8 GB, processing chunk 1814/2537
+Memory: 5.8 GB, processing chunk 1815/2537
+Memory: 5.8 GB, processing chunk 1816/2537
+Memory: 5.8 GB, processing chunk 1817/2537
+Memory: 5.8 GB, processing chunk 1818/2537
+Memory: 5.8 GB, processing chunk 1819/2537
+Memory: 5.8 GB, processing chunk 1820/2537
+Saving segment 91 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1821/2537
+Memory: 5.8 GB, processing chunk 1822/2537
+Memory: 5.8 GB, processing chunk 1823/2537
+Memory: 5.8 GB, processing chunk 1824/2537
+Memory: 5.8 GB, processing chunk 1825/2537
+Memory: 5.8 GB, processing chunk 1826/2537
+Memory: 5.8 GB, processing chunk 1827/2537
+Memory: 5.8 GB, processing chunk 1828/2537
+Memory: 5.8 GB, processing chunk 1829/2537
+Memory: 5.8 GB, processing chunk 1830/2537
+Memory: 5.8 GB, processing chunk 1831/2537
+Memory: 5.8 GB, processing chunk 1832/2537
+Memory: 5.8 GB, processing chunk 1833/2537
+Memory: 5.8 GB, processing chunk 1834/2537
+Memory: 5.8 GB, processing chunk 1835/2537
+Memory: 5.8 GB, processing chunk 1836/2537
+Memory: 5.8 GB, processing chunk 1837/2537
+Memory: 5.8 GB, processing chunk 1838/2537
+Memory: 5.8 GB, processing chunk 1839/2537
+Memory: 5.8 GB, processing chunk 1840/2537
+Saving segment 92 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1841/2537
+Memory: 5.8 GB, processing chunk 1842/2537
+Memory: 5.8 GB, processing chunk 1843/2537
+Memory: 5.8 GB, processing chunk 1844/2537
+Memory: 5.8 GB, processing chunk 1845/2537
+Memory: 5.8 GB, processing chunk 1846/2537
+Memory: 5.8 GB, processing chunk 1847/2537
+Memory: 5.8 GB, processing chunk 1848/2537
+Memory: 5.8 GB, processing chunk 1849/2537
+Memory: 5.8 GB, processing chunk 1850/2537
+Memory: 5.8 GB, processing chunk 1851/2537
+Memory: 5.8 GB, processing chunk 1852/2537
+Memory: 5.8 GB, processing chunk 1853/2537
+Memory: 5.8 GB, processing chunk 1854/2537
+Memory: 5.8 GB, processing chunk 1855/2537
+Memory: 5.8 GB, processing chunk 1856/2537
+Memory: 5.8 GB, processing chunk 1857/2537
+Memory: 5.8 GB, processing chunk 1858/2537
+Memory: 5.8 GB, processing chunk 1859/2537
+Memory: 5.8 GB, processing chunk 1860/2537
+Saving segment 93 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1861/2537
+Memory: 5.8 GB, processing chunk 1862/2537
+Memory: 5.8 GB, processing chunk 1863/2537
+Memory: 5.8 GB, processing chunk 1864/2537
+Memory: 5.8 GB, processing chunk 1865/2537
+Memory: 5.8 GB, processing chunk 1866/2537
+Memory: 5.8 GB, processing chunk 1867/2537
+Memory: 5.8 GB, processing chunk 1868/2537
+Memory: 5.8 GB, processing chunk 1869/2537
+Memory: 5.8 GB, processing chunk 1870/2537
+Memory: 5.8 GB, processing chunk 1871/2537
+Memory: 5.8 GB, processing chunk 1872/2537
+Memory: 5.8 GB, processing chunk 1873/2537
+Memory: 5.8 GB, processing chunk 1874/2537
+Memory: 5.8 GB, processing chunk 1875/2537
+Memory: 5.8 GB, processing chunk 1876/2537
+Memory: 5.8 GB, processing chunk 1877/2537
+Memory: 5.8 GB, processing chunk 1878/2537
+Memory: 5.8 GB, processing chunk 1879/2537
+Memory: 5.8 GB, processing chunk 1880/2537
+Saving segment 94 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1881/2537
+Memory: 5.8 GB, processing chunk 1882/2537
+Memory: 5.8 GB, processing chunk 1883/2537
+Memory: 5.8 GB, processing chunk 1884/2537
+Memory: 5.8 GB, processing chunk 1885/2537
+Memory: 5.8 GB, processing chunk 1886/2537
+Memory: 5.8 GB, processing chunk 1887/2537
+Memory: 5.8 GB, processing chunk 1888/2537
+Memory: 5.8 GB, processing chunk 1889/2537
+Memory: 5.8 GB, processing chunk 1890/2537
+Memory: 5.8 GB, processing chunk 1891/2537
+Memory: 5.8 GB, processing chunk 1892/2537
+Memory: 5.8 GB, processing chunk 1893/2537
+Memory: 5.8 GB, processing chunk 1894/2537
+Memory: 5.8 GB, processing chunk 1895/2537
+Memory: 5.8 GB, processing chunk 1896/2537
+Memory: 5.8 GB, processing chunk 1897/2537
+Memory: 5.8 GB, processing chunk 1898/2537
+Memory: 5.8 GB, processing chunk 1899/2537
+Memory: 5.8 GB, processing chunk 1900/2537
+Saving segment 95 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1901/2537
+Memory: 5.8 GB, processing chunk 1902/2537
+Memory: 5.8 GB, processing chunk 1903/2537
+Memory: 5.8 GB, processing chunk 1904/2537
+Memory: 5.8 GB, processing chunk 1905/2537
+Memory: 5.8 GB, processing chunk 1906/2537
+Memory: 5.8 GB, processing chunk 1907/2537
+Memory: 5.8 GB, processing chunk 1908/2537
+Memory: 5.8 GB, processing chunk 1909/2537
+Memory: 5.8 GB, processing chunk 1910/2537
+Memory: 5.8 GB, processing chunk 1911/2537
+Memory: 5.8 GB, processing chunk 1912/2537
+Memory: 5.8 GB, processing chunk 1913/2537
+Memory: 5.8 GB, processing chunk 1914/2537
+Memory: 5.8 GB, processing chunk 1915/2537
+Memory: 5.8 GB, processing chunk 1916/2537
+Memory: 5.8 GB, processing chunk 1917/2537
+Memory: 5.8 GB, processing chunk 1918/2537
+Memory: 5.8 GB, processing chunk 1919/2537
+Memory: 5.8 GB, processing chunk 1920/2537
+Saving segment 96 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1921/2537
+Memory: 5.8 GB, processing chunk 1922/2537
+Memory: 5.8 GB, processing chunk 1923/2537
+Memory: 5.8 GB, processing chunk 1924/2537
+Memory: 5.8 GB, processing chunk 1925/2537
+Memory: 5.8 GB, processing chunk 1926/2537
+Memory: 5.8 GB, processing chunk 1927/2537
+Memory: 5.8 GB, processing chunk 1928/2537
+Memory: 5.8 GB, processing chunk 1929/2537
+Memory: 5.8 GB, processing chunk 1930/2537
+Memory: 5.8 GB, processing chunk 1931/2537
+Memory: 5.8 GB, processing chunk 1932/2537
+Memory: 5.8 GB, processing chunk 1933/2537
+Memory: 5.8 GB, processing chunk 1934/2537
+Memory: 5.8 GB, processing chunk 1935/2537
+Memory: 5.8 GB, processing chunk 1936/2537
+Memory: 5.8 GB, processing chunk 1937/2537
+Memory: 5.8 GB, processing chunk 1938/2537
+Memory: 5.8 GB, processing chunk 1939/2537
+Memory: 5.8 GB, processing chunk 1940/2537
+Saving segment 97 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1941/2537
+Memory: 5.8 GB, processing chunk 1942/2537
+Memory: 5.8 GB, processing chunk 1943/2537
+Memory: 5.8 GB, processing chunk 1944/2537
+Memory: 5.8 GB, processing chunk 1945/2537
+Memory: 5.8 GB, processing chunk 1946/2537
+Memory: 5.8 GB, processing chunk 1947/2537
+Memory: 5.8 GB, processing chunk 1948/2537
+Memory: 5.8 GB, processing chunk 1949/2537
+Memory: 5.8 GB, processing chunk 1950/2537
+Memory: 5.8 GB, processing chunk 1951/2537
+Memory: 5.8 GB, processing chunk 1952/2537
+Memory: 5.8 GB, processing chunk 1953/2537
+Memory: 5.8 GB, processing chunk 1954/2537
+Memory: 5.8 GB, processing chunk 1955/2537
+Memory: 5.8 GB, processing chunk 1956/2537
+Memory: 5.8 GB, processing chunk 1957/2537
+Memory: 5.8 GB, processing chunk 1958/2537
+Memory: 5.8 GB, processing chunk 1959/2537
+Memory: 5.8 GB, processing chunk 1960/2537
+Saving segment 98 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1961/2537
+Memory: 5.8 GB, processing chunk 1962/2537
+Memory: 5.8 GB, processing chunk 1963/2537
+Memory: 5.8 GB, processing chunk 1964/2537
+Memory: 5.8 GB, processing chunk 1965/2537
+Memory: 5.8 GB, processing chunk 1966/2537
+Memory: 5.8 GB, processing chunk 1967/2537
+Memory: 5.8 GB, processing chunk 1968/2537
+Memory: 5.8 GB, processing chunk 1969/2537
+Memory: 5.8 GB, processing chunk 1970/2537
+Memory: 5.8 GB, processing chunk 1971/2537
+Memory: 5.8 GB, processing chunk 1972/2537
+Memory: 5.8 GB, processing chunk 1973/2537
+Memory: 5.8 GB, processing chunk 1974/2537
+Memory: 5.8 GB, processing chunk 1975/2537
+Memory: 5.8 GB, processing chunk 1976/2537
+Memory: 5.8 GB, processing chunk 1977/2537
+Memory: 5.8 GB, processing chunk 1978/2537
+Memory: 5.8 GB, processing chunk 1979/2537
+Memory: 5.8 GB, processing chunk 1980/2537
+Saving segment 99 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 1981/2537
+Memory: 5.8 GB, processing chunk 1982/2537
+Memory: 5.8 GB, processing chunk 1983/2537
+Memory: 5.8 GB, processing chunk 1984/2537
+Memory: 5.8 GB, processing chunk 1985/2537
+Memory: 5.8 GB, processing chunk 1986/2537
+Memory: 5.8 GB, processing chunk 1987/2537
+Memory: 5.8 GB, processing chunk 1988/2537
+Memory: 5.8 GB, processing chunk 1989/2537
+Memory: 5.8 GB, processing chunk 1990/2537
+Memory: 5.8 GB, processing chunk 1991/2537
+Memory: 5.8 GB, processing chunk 1992/2537
+Memory: 5.8 GB, processing chunk 1993/2537
+Memory: 5.8 GB, processing chunk 1994/2537
+Memory: 5.8 GB, processing chunk 1995/2537
+Memory: 5.8 GB, processing chunk 1996/2537
+Memory: 5.8 GB, processing chunk 1997/2537
+Memory: 5.8 GB, processing chunk 1998/2537
+Memory: 5.8 GB, processing chunk 1999/2537
+Memory: 5.8 GB, processing chunk 2000/2537
+Saving segment 100 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2001/2537
+Memory: 5.8 GB, processing chunk 2002/2537
+Memory: 5.8 GB, processing chunk 2003/2537
+Memory: 5.8 GB, processing chunk 2004/2537
+Memory: 5.8 GB, processing chunk 2005/2537
+Memory: 5.8 GB, processing chunk 2006/2537
+Memory: 5.8 GB, processing chunk 2007/2537
+Memory: 5.8 GB, processing chunk 2008/2537
+Memory: 5.8 GB, processing chunk 2009/2537
+Memory: 5.8 GB, processing chunk 2010/2537
+Memory: 5.8 GB, processing chunk 2011/2537
+Memory: 5.8 GB, processing chunk 2012/2537
+Memory: 5.8 GB, processing chunk 2013/2537
+Memory: 5.8 GB, processing chunk 2014/2537
+Memory: 5.8 GB, processing chunk 2015/2537
+Memory: 5.8 GB, processing chunk 2016/2537
+Memory: 5.8 GB, processing chunk 2017/2537
+Memory: 5.8 GB, processing chunk 2018/2537
+Memory: 5.8 GB, processing chunk 2019/2537
+Memory: 5.8 GB, processing chunk 2020/2537
+Saving segment 101 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2021/2537
+Memory: 5.8 GB, processing chunk 2022/2537
+Memory: 5.8 GB, processing chunk 2023/2537
+Memory: 5.8 GB, processing chunk 2024/2537
+Memory: 5.8 GB, processing chunk 2025/2537
+Memory: 5.8 GB, processing chunk 2026/2537
+Memory: 5.8 GB, processing chunk 2027/2537
+Memory: 5.8 GB, processing chunk 2028/2537
+Memory: 5.8 GB, processing chunk 2029/2537
+Memory: 5.8 GB, processing chunk 2030/2537
+Memory: 5.8 GB, processing chunk 2031/2537
+Memory: 5.8 GB, processing chunk 2032/2537
+Memory: 5.8 GB, processing chunk 2033/2537
+Memory: 5.8 GB, processing chunk 2034/2537
+Memory: 5.8 GB, processing chunk 2035/2537
+Memory: 5.8 GB, processing chunk 2036/2537
+Memory: 5.8 GB, processing chunk 2037/2537
+Memory: 5.8 GB, processing chunk 2038/2537
+Memory: 5.8 GB, processing chunk 2039/2537
+Memory: 5.8 GB, processing chunk 2040/2537
+Saving segment 102 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2041/2537
+Memory: 5.8 GB, processing chunk 2042/2537
+Memory: 5.8 GB, processing chunk 2043/2537
+Memory: 5.8 GB, processing chunk 2044/2537
+Memory: 5.8 GB, processing chunk 2045/2537
+Memory: 5.8 GB, processing chunk 2046/2537
+Memory: 5.8 GB, processing chunk 2047/2537
+Memory: 5.8 GB, processing chunk 2048/2537
+Memory: 5.8 GB, processing chunk 2049/2537
+Memory: 5.8 GB, processing chunk 2050/2537
+Memory: 5.8 GB, processing chunk 2051/2537
+Memory: 5.8 GB, processing chunk 2052/2537
+Memory: 5.8 GB, processing chunk 2053/2537
+Memory: 5.8 GB, processing chunk 2054/2537
+Memory: 5.8 GB, processing chunk 2055/2537
+Memory: 5.8 GB, processing chunk 2056/2537
+Memory: 5.8 GB, processing chunk 2057/2537
+Memory: 5.8 GB, processing chunk 2058/2537
+Memory: 5.8 GB, processing chunk 2059/2537
+Memory: 5.8 GB, processing chunk 2060/2537
+Saving segment 103 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2061/2537
+Memory: 5.8 GB, processing chunk 2062/2537
+Memory: 5.8 GB, processing chunk 2063/2537
+Memory: 5.8 GB, processing chunk 2064/2537
+Memory: 5.8 GB, processing chunk 2065/2537
+Memory: 5.8 GB, processing chunk 2066/2537
+Memory: 5.8 GB, processing chunk 2067/2537
+Memory: 5.8 GB, processing chunk 2068/2537
+Memory: 5.8 GB, processing chunk 2069/2537
+Memory: 5.8 GB, processing chunk 2070/2537
+Memory: 5.8 GB, processing chunk 2071/2537
+Memory: 5.8 GB, processing chunk 2072/2537
+Memory: 5.8 GB, processing chunk 2073/2537
+Memory: 5.8 GB, processing chunk 2074/2537
+Memory: 5.8 GB, processing chunk 2075/2537
+Memory: 5.8 GB, processing chunk 2076/2537
+Memory: 5.8 GB, processing chunk 2077/2537
+Memory: 5.8 GB, processing chunk 2078/2537
+Memory: 5.8 GB, processing chunk 2079/2537
+Memory: 5.8 GB, processing chunk 2080/2537
+Saving segment 104 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2081/2537
+Memory: 5.8 GB, processing chunk 2082/2537
+Memory: 5.8 GB, processing chunk 2083/2537
+Memory: 5.8 GB, processing chunk 2084/2537
+Memory: 5.8 GB, processing chunk 2085/2537
+Memory: 5.8 GB, processing chunk 2086/2537
+Memory: 5.8 GB, processing chunk 2087/2537
+Memory: 5.8 GB, processing chunk 2088/2537
+Memory: 5.8 GB, processing chunk 2089/2537
+Memory: 5.8 GB, processing chunk 2090/2537
+Memory: 5.8 GB, processing chunk 2091/2537
+Memory: 5.8 GB, processing chunk 2092/2537
+Memory: 5.8 GB, processing chunk 2093/2537
+Memory: 5.8 GB, processing chunk 2094/2537
+Memory: 5.8 GB, processing chunk 2095/2537
+Memory: 5.8 GB, processing chunk 2096/2537
+Memory: 5.8 GB, processing chunk 2097/2537
+Memory: 5.8 GB, processing chunk 2098/2537
+Memory: 5.8 GB, processing chunk 2099/2537
+Memory: 5.8 GB, processing chunk 2100/2537
+Saving segment 105 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2101/2537
+Memory: 5.8 GB, processing chunk 2102/2537
+Memory: 5.8 GB, processing chunk 2103/2537
+Memory: 5.8 GB, processing chunk 2104/2537
+Memory: 5.8 GB, processing chunk 2105/2537
+Memory: 5.8 GB, processing chunk 2106/2537
+Memory: 5.8 GB, processing chunk 2107/2537
+Memory: 5.8 GB, processing chunk 2108/2537
+Memory: 5.8 GB, processing chunk 2109/2537
+Memory: 5.8 GB, processing chunk 2110/2537
+Memory: 5.8 GB, processing chunk 2111/2537
+Memory: 5.8 GB, processing chunk 2112/2537
+Memory: 5.8 GB, processing chunk 2113/2537
+Memory: 5.8 GB, processing chunk 2114/2537
+Memory: 5.8 GB, processing chunk 2115/2537
+Memory: 5.8 GB, processing chunk 2116/2537
+Memory: 5.8 GB, processing chunk 2117/2537
+Memory: 5.8 GB, processing chunk 2118/2537
+Memory: 5.8 GB, processing chunk 2119/2537
+Memory: 5.8 GB, processing chunk 2120/2537
+Saving segment 106 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2121/2537
+Memory: 5.8 GB, processing chunk 2122/2537
+Memory: 5.8 GB, processing chunk 2123/2537
+Memory: 5.8 GB, processing chunk 2124/2537
+Memory: 5.8 GB, processing chunk 2125/2537
+Memory: 5.8 GB, processing chunk 2126/2537
+Memory: 5.8 GB, processing chunk 2127/2537
+Memory: 5.8 GB, processing chunk 2128/2537
+Memory: 5.8 GB, processing chunk 2129/2537
+Memory: 5.8 GB, processing chunk 2130/2537
+Memory: 5.8 GB, processing chunk 2131/2537
+Memory: 5.8 GB, processing chunk 2132/2537
+Memory: 5.8 GB, processing chunk 2133/2537
+Memory: 5.8 GB, processing chunk 2134/2537
+Memory: 5.8 GB, processing chunk 2135/2537
+Memory: 5.8 GB, processing chunk 2136/2537
+Memory: 5.8 GB, processing chunk 2137/2537
+Memory: 5.8 GB, processing chunk 2138/2537
+Memory: 5.8 GB, processing chunk 2139/2537
+Memory: 5.8 GB, processing chunk 2140/2537
+Saving segment 107 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2141/2537
+Memory: 5.8 GB, processing chunk 2142/2537
+Memory: 5.8 GB, processing chunk 2143/2537
+Memory: 5.8 GB, processing chunk 2144/2537
+Memory: 5.8 GB, processing chunk 2145/2537
+Memory: 5.8 GB, processing chunk 2146/2537
+Memory: 5.8 GB, processing chunk 2147/2537
+Memory: 5.8 GB, processing chunk 2148/2537
+Memory: 5.8 GB, processing chunk 2149/2537
+Memory: 5.8 GB, processing chunk 2150/2537
+Memory: 5.8 GB, processing chunk 2151/2537
+Memory: 5.8 GB, processing chunk 2152/2537
+Memory: 5.8 GB, processing chunk 2153/2537
+Memory: 5.8 GB, processing chunk 2154/2537
+Memory: 5.8 GB, processing chunk 2155/2537
+Memory: 5.8 GB, processing chunk 2156/2537
+Memory: 5.8 GB, processing chunk 2157/2537
+Memory: 5.8 GB, processing chunk 2158/2537
+Memory: 5.8 GB, processing chunk 2159/2537
+Memory: 5.8 GB, processing chunk 2160/2537
+Saving segment 108 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2161/2537
+Memory: 5.8 GB, processing chunk 2162/2537
+Memory: 5.8 GB, processing chunk 2163/2537
+Memory: 5.8 GB, processing chunk 2164/2537
+Memory: 5.8 GB, processing chunk 2165/2537
+Memory: 5.8 GB, processing chunk 2166/2537
+Memory: 5.8 GB, processing chunk 2167/2537
+Memory: 5.8 GB, processing chunk 2168/2537
+Memory: 5.8 GB, processing chunk 2169/2537
+Memory: 5.8 GB, processing chunk 2170/2537
+Memory: 5.8 GB, processing chunk 2171/2537
+Memory: 5.8 GB, processing chunk 2172/2537
+Memory: 5.8 GB, processing chunk 2173/2537
+Memory: 5.8 GB, processing chunk 2174/2537
+Memory: 5.8 GB, processing chunk 2175/2537
+Memory: 5.8 GB, processing chunk 2176/2537
+Memory: 5.8 GB, processing chunk 2177/2537
+Memory: 5.8 GB, processing chunk 2178/2537
+Memory: 5.8 GB, processing chunk 2179/2537
+Memory: 5.8 GB, processing chunk 2180/2537
+Saving segment 109 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2181/2537
+Memory: 5.8 GB, processing chunk 2182/2537
+Memory: 5.8 GB, processing chunk 2183/2537
+Memory: 5.8 GB, processing chunk 2184/2537
+Memory: 5.8 GB, processing chunk 2185/2537
+Memory: 5.8 GB, processing chunk 2186/2537
+Memory: 5.8 GB, processing chunk 2187/2537
+Memory: 5.8 GB, processing chunk 2188/2537
+Memory: 5.8 GB, processing chunk 2189/2537
+Memory: 5.8 GB, processing chunk 2190/2537
+Memory: 5.8 GB, processing chunk 2191/2537
+Memory: 5.8 GB, processing chunk 2192/2537
+Memory: 5.8 GB, processing chunk 2193/2537
+Memory: 5.8 GB, processing chunk 2194/2537
+Memory: 5.8 GB, processing chunk 2195/2537
+Memory: 5.8 GB, processing chunk 2196/2537
+Memory: 5.8 GB, processing chunk 2197/2537
+Memory: 5.8 GB, processing chunk 2198/2537
+Memory: 5.8 GB, processing chunk 2199/2537
+Memory: 5.8 GB, processing chunk 2200/2537
+Saving segment 110 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2201/2537
+Memory: 5.8 GB, processing chunk 2202/2537
+Memory: 5.8 GB, processing chunk 2203/2537
+Memory: 5.8 GB, processing chunk 2204/2537
+Memory: 5.8 GB, processing chunk 2205/2537
+Memory: 5.8 GB, processing chunk 2206/2537
+Memory: 5.8 GB, processing chunk 2207/2537
+Memory: 5.8 GB, processing chunk 2208/2537
+Memory: 5.8 GB, processing chunk 2209/2537
+Memory: 5.8 GB, processing chunk 2210/2537
+Memory: 5.8 GB, processing chunk 2211/2537
+Memory: 5.8 GB, processing chunk 2212/2537
+Memory: 5.8 GB, processing chunk 2213/2537
+Memory: 5.8 GB, processing chunk 2214/2537
+Memory: 5.8 GB, processing chunk 2215/2537
+Memory: 5.8 GB, processing chunk 2216/2537
+Memory: 5.8 GB, processing chunk 2217/2537
+Memory: 5.8 GB, processing chunk 2218/2537
+Memory: 5.8 GB, processing chunk 2219/2537
+Memory: 5.8 GB, processing chunk 2220/2537
+Saving segment 111 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2221/2537
+Memory: 5.8 GB, processing chunk 2222/2537
+Memory: 5.8 GB, processing chunk 2223/2537
+Memory: 5.8 GB, processing chunk 2224/2537
+Memory: 5.8 GB, processing chunk 2225/2537
+Memory: 5.8 GB, processing chunk 2226/2537
+Memory: 5.8 GB, processing chunk 2227/2537
+Memory: 5.8 GB, processing chunk 2228/2537
+Memory: 5.8 GB, processing chunk 2229/2537
+Memory: 5.8 GB, processing chunk 2230/2537
+Memory: 5.8 GB, processing chunk 2231/2537
+Memory: 5.8 GB, processing chunk 2232/2537
+Memory: 5.8 GB, processing chunk 2233/2537
+Memory: 5.8 GB, processing chunk 2234/2537
+Memory: 5.8 GB, processing chunk 2235/2537
+Memory: 5.8 GB, processing chunk 2236/2537
+Memory: 5.8 GB, processing chunk 2237/2537
+Memory: 5.8 GB, processing chunk 2238/2537
+Memory: 5.8 GB, processing chunk 2239/2537
+Memory: 5.8 GB, processing chunk 2240/2537
+Saving segment 112 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2241/2537
+Memory: 5.8 GB, processing chunk 2242/2537
+Memory: 5.8 GB, processing chunk 2243/2537
+Memory: 5.8 GB, processing chunk 2244/2537
+Memory: 5.8 GB, processing chunk 2245/2537
+Memory: 5.8 GB, processing chunk 2246/2537
+Memory: 5.8 GB, processing chunk 2247/2537
+Memory: 5.8 GB, processing chunk 2248/2537
+Memory: 5.8 GB, processing chunk 2249/2537
+Memory: 5.8 GB, processing chunk 2250/2537
+Memory: 5.8 GB, processing chunk 2251/2537
+Memory: 5.8 GB, processing chunk 2252/2537
+Memory: 5.8 GB, processing chunk 2253/2537
+Memory: 5.8 GB, processing chunk 2254/2537
+Memory: 5.8 GB, processing chunk 2255/2537
+Memory: 5.8 GB, processing chunk 2256/2537
+Memory: 5.8 GB, processing chunk 2257/2537
+Memory: 5.8 GB, processing chunk 2258/2537
+Memory: 5.8 GB, processing chunk 2259/2537
+Memory: 5.8 GB, processing chunk 2260/2537
+Saving segment 113 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2261/2537
+Memory: 5.8 GB, processing chunk 2262/2537
+Memory: 5.8 GB, processing chunk 2263/2537
+Memory: 5.8 GB, processing chunk 2264/2537
+Memory: 5.8 GB, processing chunk 2265/2537
+Memory: 5.8 GB, processing chunk 2266/2537
+Memory: 5.8 GB, processing chunk 2267/2537
+Memory: 5.8 GB, processing chunk 2268/2537
+Memory: 5.8 GB, processing chunk 2269/2537
+Memory: 5.8 GB, processing chunk 2270/2537
+Memory: 5.8 GB, processing chunk 2271/2537
+Memory: 5.8 GB, processing chunk 2272/2537
+Memory: 5.8 GB, processing chunk 2273/2537
+Memory: 5.8 GB, processing chunk 2274/2537
+Memory: 5.8 GB, processing chunk 2275/2537
+Memory: 5.8 GB, processing chunk 2276/2537
+Memory: 5.8 GB, processing chunk 2277/2537
+Memory: 5.8 GB, processing chunk 2278/2537
+Memory: 5.8 GB, processing chunk 2279/2537
+Memory: 5.8 GB, processing chunk 2280/2537
+Saving segment 114 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2281/2537
+Memory: 5.8 GB, processing chunk 2282/2537
+Memory: 5.8 GB, processing chunk 2283/2537
+Memory: 5.8 GB, processing chunk 2284/2537
+Memory: 5.8 GB, processing chunk 2285/2537
+Memory: 5.8 GB, processing chunk 2286/2537
+Memory: 5.8 GB, processing chunk 2287/2537
+Memory: 5.8 GB, processing chunk 2288/2537
+Memory: 5.8 GB, processing chunk 2289/2537
+Memory: 5.8 GB, processing chunk 2290/2537
+Memory: 5.8 GB, processing chunk 2291/2537
+Memory: 5.8 GB, processing chunk 2292/2537
+Memory: 5.8 GB, processing chunk 2293/2537
+Memory: 5.8 GB, processing chunk 2294/2537
+Memory: 5.8 GB, processing chunk 2295/2537
+Memory: 5.8 GB, processing chunk 2296/2537
+Memory: 5.8 GB, processing chunk 2297/2537
+Memory: 5.8 GB, processing chunk 2298/2537
+Memory: 5.8 GB, processing chunk 2299/2537
+Memory: 5.8 GB, processing chunk 2300/2537
+Saving segment 115 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2301/2537
+Memory: 5.8 GB, processing chunk 2302/2537
+Memory: 5.8 GB, processing chunk 2303/2537
+Memory: 5.8 GB, processing chunk 2304/2537
+Memory: 5.8 GB, processing chunk 2305/2537
+Memory: 5.8 GB, processing chunk 2306/2537
+Memory: 5.8 GB, processing chunk 2307/2537
+Memory: 5.8 GB, processing chunk 2308/2537
+Memory: 5.8 GB, processing chunk 2309/2537
+Memory: 5.8 GB, processing chunk 2310/2537
+Memory: 5.8 GB, processing chunk 2311/2537
+Memory: 5.8 GB, processing chunk 2312/2537
+Memory: 5.8 GB, processing chunk 2313/2537
+Memory: 5.8 GB, processing chunk 2314/2537
+Memory: 5.8 GB, processing chunk 2315/2537
+Memory: 5.8 GB, processing chunk 2316/2537
+Memory: 5.8 GB, processing chunk 2317/2537
+Memory: 5.8 GB, processing chunk 2318/2537
+Memory: 5.8 GB, processing chunk 2319/2537
+Memory: 5.8 GB, processing chunk 2320/2537
+Saving segment 116 with 40,002 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2321/2537
+Memory: 5.8 GB, processing chunk 2322/2537
+Memory: 5.8 GB, processing chunk 2323/2537
+Memory: 5.8 GB, processing chunk 2324/2537
+Memory: 5.8 GB, processing chunk 2325/2537
+Memory: 5.8 GB, processing chunk 2326/2537
+Memory: 5.8 GB, processing chunk 2327/2537
+Memory: 5.8 GB, processing chunk 2328/2537
+Memory: 5.8 GB, processing chunk 2329/2537
+Memory: 5.8 GB, processing chunk 2330/2537
+Memory: 5.8 GB, processing chunk 2331/2537
+Memory: 5.8 GB, processing chunk 2332/2537
+Memory: 5.8 GB, processing chunk 2333/2537
+Memory: 5.8 GB, processing chunk 2334/2537
+Memory: 5.8 GB, processing chunk 2335/2537
+Memory: 5.8 GB, processing chunk 2336/2537
+Memory: 5.8 GB, processing chunk 2337/2537
+Memory: 5.8 GB, processing chunk 2338/2537
+Memory: 5.8 GB, processing chunk 2339/2537
+Memory: 5.8 GB, processing chunk 2340/2537
+Saving segment 117 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2341/2537
+Memory: 5.8 GB, processing chunk 2342/2537
+Memory: 5.8 GB, processing chunk 2343/2537
+Memory: 5.8 GB, processing chunk 2344/2537
+Memory: 5.8 GB, processing chunk 2345/2537
+Memory: 5.8 GB, processing chunk 2346/2537
+Memory: 5.8 GB, processing chunk 2347/2537
+Memory: 5.8 GB, processing chunk 2348/2537
+Memory: 5.8 GB, processing chunk 2349/2537
+Memory: 5.8 GB, processing chunk 2350/2537
+Memory: 5.8 GB, processing chunk 2351/2537
+Memory: 5.8 GB, processing chunk 2352/2537
+Memory: 5.8 GB, processing chunk 2353/2537
+Memory: 5.8 GB, processing chunk 2354/2537
+Memory: 5.8 GB, processing chunk 2355/2537
+Memory: 5.8 GB, processing chunk 2356/2537
+Memory: 5.8 GB, processing chunk 2357/2537
+Memory: 5.8 GB, processing chunk 2358/2537
+Memory: 5.8 GB, processing chunk 2359/2537
+Memory: 5.8 GB, processing chunk 2360/2537
+Saving segment 118 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2361/2537
+Memory: 5.8 GB, processing chunk 2362/2537
+Memory: 5.8 GB, processing chunk 2363/2537
+Memory: 5.8 GB, processing chunk 2364/2537
+Memory: 5.8 GB, processing chunk 2365/2537
+Memory: 5.8 GB, processing chunk 2366/2537
+Memory: 5.8 GB, processing chunk 2367/2537
+Memory: 5.8 GB, processing chunk 2368/2537
+Memory: 5.8 GB, processing chunk 2369/2537
+Memory: 5.8 GB, processing chunk 2370/2537
+Memory: 5.8 GB, processing chunk 2371/2537
+Memory: 5.8 GB, processing chunk 2372/2537
+Memory: 5.8 GB, processing chunk 2373/2537
+Memory: 5.8 GB, processing chunk 2374/2537
+Memory: 5.8 GB, processing chunk 2375/2537
+Memory: 5.8 GB, processing chunk 2376/2537
+Memory: 5.8 GB, processing chunk 2377/2537
+Memory: 5.8 GB, processing chunk 2378/2537
+Memory: 5.8 GB, processing chunk 2379/2537
+Memory: 5.8 GB, processing chunk 2380/2537
+Saving segment 119 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2381/2537
+Memory: 5.8 GB, processing chunk 2382/2537
+Memory: 5.8 GB, processing chunk 2383/2537
+Memory: 5.8 GB, processing chunk 2384/2537
+Memory: 5.8 GB, processing chunk 2385/2537
+Memory: 5.8 GB, processing chunk 2386/2537
+Memory: 5.8 GB, processing chunk 2387/2537
+Memory: 5.8 GB, processing chunk 2388/2537
+Memory: 5.8 GB, processing chunk 2389/2537
+Memory: 5.8 GB, processing chunk 2390/2537
+Memory: 5.8 GB, processing chunk 2391/2537
+Memory: 5.8 GB, processing chunk 2392/2537
+Memory: 5.8 GB, processing chunk 2393/2537
+Memory: 5.8 GB, processing chunk 2394/2537
+Memory: 5.8 GB, processing chunk 2395/2537
+Memory: 5.8 GB, processing chunk 2396/2537
+Memory: 5.8 GB, processing chunk 2397/2537
+Memory: 5.8 GB, processing chunk 2398/2537
+Memory: 5.8 GB, processing chunk 2399/2537
+Memory: 5.8 GB, processing chunk 2400/2537
+Saving segment 120 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2401/2537
+Memory: 5.8 GB, processing chunk 2402/2537
+Memory: 5.8 GB, processing chunk 2403/2537
+Memory: 5.8 GB, processing chunk 2404/2537
+Memory: 5.8 GB, processing chunk 2405/2537
+Memory: 5.8 GB, processing chunk 2406/2537
+Memory: 5.8 GB, processing chunk 2407/2537
+Memory: 5.8 GB, processing chunk 2408/2537
+Memory: 5.8 GB, processing chunk 2409/2537
+Memory: 5.8 GB, processing chunk 2410/2537
+Memory: 5.8 GB, processing chunk 2411/2537
+Memory: 5.8 GB, processing chunk 2412/2537
+Memory: 5.8 GB, processing chunk 2413/2537
+Memory: 5.8 GB, processing chunk 2414/2537
+Memory: 5.8 GB, processing chunk 2415/2537
+Memory: 5.8 GB, processing chunk 2416/2537
+Memory: 5.8 GB, processing chunk 2417/2537
+Memory: 5.8 GB, processing chunk 2418/2537
+Memory: 5.8 GB, processing chunk 2419/2537
+Memory: 5.8 GB, processing chunk 2420/2537
+Saving segment 121 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2421/2537
+Memory: 5.8 GB, processing chunk 2422/2537
+Memory: 5.8 GB, processing chunk 2423/2537
+Memory: 5.8 GB, processing chunk 2424/2537
+Memory: 5.8 GB, processing chunk 2425/2537
+Memory: 5.8 GB, processing chunk 2426/2537
+Memory: 5.8 GB, processing chunk 2427/2537
+Memory: 5.8 GB, processing chunk 2428/2537
+Memory: 5.8 GB, processing chunk 2429/2537
+Memory: 5.8 GB, processing chunk 2430/2537
+Memory: 5.8 GB, processing chunk 2431/2537
+Memory: 5.8 GB, processing chunk 2432/2537
+Memory: 5.8 GB, processing chunk 2433/2537
+Memory: 5.8 GB, processing chunk 2434/2537
+Memory: 5.8 GB, processing chunk 2435/2537
+Memory: 5.8 GB, processing chunk 2436/2537
+Memory: 5.8 GB, processing chunk 2437/2537
+Memory: 5.8 GB, processing chunk 2438/2537
+Memory: 5.8 GB, processing chunk 2439/2537
+Memory: 5.8 GB, processing chunk 2440/2537
+Saving segment 122 with 40,001 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2441/2537
+Memory: 5.8 GB, processing chunk 2442/2537
+Memory: 5.8 GB, processing chunk 2443/2537
+Memory: 5.8 GB, processing chunk 2444/2537
+Memory: 5.8 GB, processing chunk 2445/2537
+Memory: 5.8 GB, processing chunk 2446/2537
+Memory: 5.8 GB, processing chunk 2447/2537
+Memory: 5.8 GB, processing chunk 2448/2537
+Memory: 5.8 GB, processing chunk 2449/2537
+Memory: 5.8 GB, processing chunk 2450/2537
+Memory: 5.8 GB, processing chunk 2451/2537
+Memory: 5.8 GB, processing chunk 2452/2537
+Memory: 5.8 GB, processing chunk 2453/2537
+Memory: 5.8 GB, processing chunk 2454/2537
+Memory: 5.8 GB, processing chunk 2455/2537
+Memory: 5.8 GB, processing chunk 2456/2537
+Memory: 5.8 GB, processing chunk 2457/2537
+Memory: 5.8 GB, processing chunk 2458/2537
+Memory: 5.8 GB, processing chunk 2459/2537
+Memory: 5.8 GB, processing chunk 2460/2537
+Saving segment 123 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2461/2537
+Memory: 5.8 GB, processing chunk 2462/2537
+Memory: 5.8 GB, processing chunk 2463/2537
+Memory: 5.8 GB, processing chunk 2464/2537
+Memory: 5.8 GB, processing chunk 2465/2537
+Memory: 5.8 GB, processing chunk 2466/2537
+Memory: 5.8 GB, processing chunk 2467/2537
+Memory: 5.8 GB, processing chunk 2468/2537
+Memory: 5.8 GB, processing chunk 2469/2537
+Memory: 5.8 GB, processing chunk 2470/2537
+Memory: 5.8 GB, processing chunk 2471/2537
+Memory: 5.8 GB, processing chunk 2472/2537
+Memory: 5.8 GB, processing chunk 2473/2537
+Memory: 5.8 GB, processing chunk 2474/2537
+Memory: 5.8 GB, processing chunk 2475/2537
+Memory: 5.8 GB, processing chunk 2476/2537
+Memory: 5.8 GB, processing chunk 2477/2537
+Memory: 5.8 GB, processing chunk 2478/2537
+Memory: 5.8 GB, processing chunk 2479/2537
+Memory: 5.8 GB, processing chunk 2480/2537
+Saving segment 124 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2481/2537
+Memory: 5.8 GB, processing chunk 2482/2537
+Memory: 5.8 GB, processing chunk 2483/2537
+Memory: 5.8 GB, processing chunk 2484/2537
+Memory: 5.8 GB, processing chunk 2485/2537
+Memory: 5.8 GB, processing chunk 2486/2537
+Memory: 5.8 GB, processing chunk 2487/2537
+Memory: 5.8 GB, processing chunk 2488/2537
+Memory: 5.8 GB, processing chunk 2489/2537
+Memory: 5.8 GB, processing chunk 2490/2537
+Memory: 5.8 GB, processing chunk 2491/2537
+Memory: 5.8 GB, processing chunk 2492/2537
+Memory: 5.8 GB, processing chunk 2493/2537
+Memory: 5.8 GB, processing chunk 2494/2537
+Memory: 5.8 GB, processing chunk 2495/2537
+Memory: 5.8 GB, processing chunk 2496/2537
+Memory: 5.8 GB, processing chunk 2497/2537
+Memory: 5.8 GB, processing chunk 2498/2537
+Memory: 5.8 GB, processing chunk 2499/2537
+Memory: 5.8 GB, processing chunk 2500/2537
+Saving segment 125 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2501/2537
+Memory: 5.8 GB, processing chunk 2502/2537
+Memory: 5.8 GB, processing chunk 2503/2537
+Memory: 5.8 GB, processing chunk 2504/2537
+Memory: 5.8 GB, processing chunk 2505/2537
+Memory: 5.8 GB, processing chunk 2506/2537
+Memory: 5.8 GB, processing chunk 2507/2537
+Memory: 5.8 GB, processing chunk 2508/2537
+Memory: 5.8 GB, processing chunk 2509/2537
+Memory: 5.8 GB, processing chunk 2510/2537
+Memory: 5.8 GB, processing chunk 2511/2537
+Memory: 5.8 GB, processing chunk 2512/2537
+Memory: 5.8 GB, processing chunk 2513/2537
+Memory: 5.8 GB, processing chunk 2514/2537
+Memory: 5.8 GB, processing chunk 2515/2537
+Memory: 5.8 GB, processing chunk 2516/2537
+Memory: 5.8 GB, processing chunk 2517/2537
+Memory: 5.8 GB, processing chunk 2518/2537
+Memory: 5.8 GB, processing chunk 2519/2537
+Memory: 5.8 GB, processing chunk 2520/2537
+Saving segment 126 with 40,000 entries
+Memory after segment save: 5.8 GB
+Memory: 5.8 GB, processing chunk 2521/2537
+Memory: 5.8 GB, processing chunk 2522/2537
+Memory: 5.8 GB, processing chunk 2523/2537
+Memory: 5.8 GB, processing chunk 2524/2537
+Memory: 5.8 GB, processing chunk 2525/2537
+Memory: 5.8 GB, processing chunk 2526/2537
+Memory: 5.8 GB, processing chunk 2527/2537
+Memory: 5.8 GB, processing chunk 2528/2537
+Memory: 5.8 GB, processing chunk 2529/2537
+Memory: 5.8 GB, processing chunk 2530/2537
+Memory: 5.8 GB, processing chunk 2531/2537
+Memory: 5.8 GB, processing chunk 2532/2537
+Memory: 5.8 GB, processing chunk 2533/2537
+Memory: 5.8 GB, processing chunk 2534/2537
+Memory: 5.8 GB, processing chunk 2535/2537
+Memory: 5.8 GB, processing chunk 2536/2537
+Memory: 5.8 GB, processing chunk 2537/2537
+Saving segment 127 with 32,007 entries
+Memory after segment save: 5.8 GB
+Combining 127 segments into final cache...
+Loading segment 1/127
+Loading segment 2/127
+Loading segment 3/127
+Loading segment 4/127
+Loading segment 5/127
+Memory during final combination: 5.8 GB
+Loading segment 6/127
+Loading segment 7/127
+Loading segment 8/127
+Loading segment 9/127
+Loading segment 10/127
+Memory during final combination: 6.5 GB
+Loading segment 11/127
+Loading segment 12/127
+Loading segment 13/127
+Loading segment 14/127
+Loading segment 15/127
+Memory during final combination: 7.9 GB
+Loading segment 16/127
+Loading segment 17/127
+Loading segment 18/127
+Loading segment 19/127
+Loading segment 20/127
+Memory during final combination: 9.3 GB
+Loading segment 21/127
+Loading segment 22/127
+Loading segment 23/127
+Loading segment 24/127
+Loading segment 25/127
+Memory during final combination: 10.8 GB
+Loading segment 26/127
+Loading segment 27/127
+Loading segment 28/127
+Loading segment 29/127
+Loading segment 30/127
+Memory during final combination: 12.2 GB
+Loading segment 31/127
+Loading segment 32/127
+Loading segment 33/127
+Loading segment 34/127
+Loading segment 35/127
+Memory during final combination: 13.7 GB
+Loading segment 36/127
+Loading segment 37/127
+Loading segment 38/127
+Loading segment 39/127
+Loading segment 40/127
+Memory during final combination: 15.3 GB
+Loading segment 41/127
+Loading segment 42/127
+Loading segment 43/127
+Loading segment 44/127
+Loading segment 45/127
+Memory during final combination: 16.8 GB
+Loading segment 46/127
+Loading segment 47/127
+Loading segment 48/127
+Loading segment 49/127
+Loading segment 50/127
+Memory during final combination: 18.4 GB
+Loading segment 51/127
+Loading segment 52/127
+Loading segment 53/127
+Loading segment 54/127
+Loading segment 55/127
+Memory during final combination: 19.9 GB
+Loading segment 56/127
+Loading segment 57/127
+Loading segment 58/127
+Loading segment 59/127
+Loading segment 60/127
+Memory during final combination: 21.5 GB
+Loading segment 61/127
+Loading segment 62/127
+Loading segment 63/127
+Loading segment 64/127
+Loading segment 65/127
+Memory during final combination: 23.0 GB
+Loading segment 66/127
+Loading segment 67/127
+Loading segment 68/127
+Loading segment 69/127
+Loading segment 70/127
+Memory during final combination: 24.5 GB
+Loading segment 71/127
+Loading segment 72/127
+Loading segment 73/127
+Loading segment 74/127
+Loading segment 75/127
+Memory during final combination: 26.1 GB
+Loading segment 76/127
+Loading segment 77/127
+Loading segment 78/127
+Loading segment 79/127
+Loading segment 80/127
+Memory during final combination: 27.5 GB
+Loading segment 81/127
+Loading segment 82/127
+Loading segment 83/127
+Loading segment 84/127
+Loading segment                                           Memory during final combination: 28.3 GB
+Loading segment 86/127
+Killed
+(base) j@softmax:~/Documents/git/chess-theme-classifier$ python create_full_class_conditional_dataset.py --verbose
+Creating Full Class-Conditional Augmented Dataset (Milestone 2)
+======================================================================
+This will process all 4,956,460 puzzles and create an intelligently
+augmented dataset with improved class balance.
+
+Milestone 1 dependencies found:
+   lichess_db_puzzle.csv.tensors.pt: 1699.6 MB
+   lichess_db_puzzle.csv.themes.json: 0.0 MB
+   lichess_db_puzzle.csv.openings.json: 0.1 MB
+
+Class-Conditional Augmentation Parameters:
+   csv_file: processed_lichess_puzzle_files/lichess_db_puzzle.csv
+   cache_size: 1000
+   class_conditional_augmentation: True
+   augment_with_reflections: False
+   low_memory: True
+   use_cache: True
+   verbose_progress: True
+   rarity_threshold: None
+   full_class_conditional: True
+   test_resume: None
+
+Starting full class-conditional dataset creation...
+Using cache directory: processed_lichess_puzzle_files
+CSV found in processed directory, will create cache files there: processed_lichess_puzzle_files
+Loading CSV data from processed_lichess_puzzle_files/lichess_db_puzzle.csv...
+Loading themes and openings from cache files
+Loading theme co-occurrence data from cache: processed_lichess_puzzle_files/lichess_db_puzzle.csv.cooccurrence.json
+Found 8193 unique label combinations
+Identified 4519 rare combinations below threshold
+Creating conditional tensor cache for 4,956,459 puzzles...
+Found 42 existing segments, resuming from segments...
+Combining 42 segments into final cache...
+Loading segment 1/42
+Loading segment 2/42
+Loading segment 3/42
+Loading segment 4/42
+Loading segment 5/42
+Memory during final combination: 3.8 GB
+Loading segment 6/42
+Loading segment 7/42
+Loading segment 8/42
+Loading segment 9/42
+Loading segment 10/42
+Memory during final combination: 5.4 GB
+Loading segment 11/42
+Loading segment 12/42
+Loading segment 13/42
+Loading segment 14/42
+Loading segment 15/42
+Memory during final combination: 6.9 GB
+Loading segment 16/42
+Loading segment 17/42
+Loading segment 18/42
+Loading segment 19/42
+Loading segment 20/42
+Memory during final combination: 8.5 GB
+Loading segment 21/42
+Loading segment 22/42
+Loading segment 23/42
+Loading segment 24/42
+Loading segment 25/42
+Memory during final combination: 10.0 GB
+Loading segment 26/42
+Loading segment 27/42
+Loading segment 28/42
+Loading segment 29/42
+Loading segment 30/42
+Memory during final combination: 11.6 GB
+Loading segment 31/42
+Loading segment 32/42
+Loading segment 33/42
+Loading segment 34/42
+Loading segment 35/42
+Memory during final combination: 13.1 GB
+Loading segment 36/42
+Loading segment 37/42
+Loading segment 38/42
+Loading segment 39/42
+Loading segment 40/42
+Memory during final combination: 14.7 GB
+Loading segment 41/42
+Loading segment 42/42
+Saving final cache to: processed_lichess_puzzle_files/lichess_db_puzzle.csv.tensors.pt_conditional_full
+Resume completed! Final cache has 1,672,025 entries
+
+Full Class-Conditional Dataset Creation Complete!
+============================================================
+Results:
+   Total time: 0.07 hours (254 seconds)
+   Original dataset: 4,956,459 puzzles
+   Augmented dataset: 1,672,025 samples
+   Augmentation ratio: 0.34x
+   Processing rate: 6574.65 items/second
+   Original samples: 1,672,025
+   Augmented samples: 0
+   Augmentation rate: 0.0%
+
+Generated Cache Files:
+   lichess_db_puzzle.csv.tensors.pt_conditional_full: 11375.1 MB
+   lichess_db_puzzle.csv.tensors.pt_conditional_full.augmented_indices.json: 0.0 MB
+   Total augmented cache size: 11375.1 MB
+
+Verification - Testing sample access:
+   Sample 0: board torch.Size([8, 8]), 4.0 themes (original)
+   Sample 418,006: board torch.Size([8, 8]), 3.0 themes (original)
+   Sample 836,012: board torch.Size([8, 8]), 4.0 themes (original)
+   Sample 1,254,018: board torch.Size([8, 8]), 3.0 themes (original)
+   Sample 1,672,024: board torch.Size([8, 8]), 3.0 themes (original)
+   Reflections in test samples: 0/5
+
+Milestone 2 COMPLETED Successfully!
+The full class-conditionally augmented dataset is ready for training.
+
+Next steps:
+- Use '--full_class_conditional' flag with train.py
+- Compare training performance vs. full dataset and original conditional dataset
+(base) j@softmax:~/Documents/git/chess-theme-classifier$ ls -tlh processed_lichess_puzzle_files/
+total 15G
+-rw-rw-r-- 1 j j     2 Jun 25 12:45 lichess_db_puzzle.csv.tensors.pt_conditional_full.augmented_indices.json
+-rw-rw-r-- 1 j j   12G Jun 25 12:45 lichess_db_puzzle.csv.tensors.pt_conditional_full
+-rw-rw-r-- 1 j j 1015K Jun 24 15:25 lichess_db_puzzle.csv.cooccurrence.json
+-rw-rw-r-- 1 j j  2.5K Jun 24 15:03 README.md
+-rw-rw-r-- 1 j j  1.7G Jun 24 14:32 lichess_db_puzzle.csv.tensors.pt
+-rw-rw-r-- 1 j j   56K Jun 24 14:05 lichess_db_puzzle.csv.openings.json
+-rw-rw-r-- 1 j j   865 Jun 24 14:05 lichess_db_puzzle.csv.themes.json
+-rw-rw-r-- 1 j j  870M Jun 24 13:25 lichess_db_puzzle.csv
+-rw-rw-r-- 1 j j  3.0K Jun 24 13:10 count_cached_tensors.py
+-rw-rw-r-- 1 j j  444M Jun 18 13:53 lichess_db_puzzle.csv.tensors.pt_conditional
+-rw-rw-r-- 1 j j  2.2K Jun 17 14:03 lichess_db_puzzle.csv.tensors.pt_conditional.augmented_indices.json
+-rw-rw-r-- 1 j j   80K Jun 17 14:03 lichess_db_puzzle.csv.class_weights.pt
+(base) j@softmax:~/Documents/git/chess-theme-classifier$ head processed_lichess_puzzle_files/lichess_db_puzzle.csv.tensors.pt_conditional_full.augmented_indices.json 
+(base) j@softmax:~/Documents/git/chess-theme-classifier$ 

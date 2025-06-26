@@ -22,7 +22,7 @@ os.environ['MKL_NUM_THREADS'] = '4'  # Limit MKL threads
 class ChessPuzzleDataset(Dataset):
     def __init__(self, csv_file, cache_size=10000, num_workers=None, augment_with_reflections=False, 
                  class_conditional_augmentation=False, rarity_threshold=None, low_memory=False,
-                 use_cache=False, verbose_progress=False):
+                 use_cache=False, verbose_progress=False, full_class_conditional=False, test_resume=None):
         """
         Args:
             csv_file (str): Path to the CSV file with chess puzzles
@@ -35,6 +35,7 @@ class ChessPuzzleDataset(Dataset):
             low_memory (bool): If True, use fewer workers and smaller chunks to reduce memory usage.
             use_cache (bool): If True, use cache files even if CSV exists and is newer than cache.
             verbose_progress (bool): If True, show detailed progress bars during processing.
+            full_class_conditional (bool): If True, create full class-conditional cache (Milestone 2).
         """
         self.csv_file = csv_file
         self.cache_size = cache_size
@@ -50,6 +51,8 @@ class ChessPuzzleDataset(Dataset):
         self.class_conditional_augmentation = class_conditional_augmentation
         self.use_cache = use_cache  # Store the use_cache parameter
         self.verbose_progress = verbose_progress  # Store verbose progress flag
+        self.full_class_conditional = full_class_conditional  # Store full conditional flag
+        self.test_resume = test_resume  # Store test resume parameter for testing
         self.augmented_indices = set()  # Track which indices were augmented
         
         # Cache file paths
@@ -94,8 +97,14 @@ class ChessPuzzleDataset(Dataset):
             # Add files based on the training mode
             if self.class_conditional_augmentation:
                 essential_cache_files.append(self.label_cooccurrence_file)
-                essential_cache_files.append(f"{self.tensors_cache_file}_conditional")
-                essential_cache_files.append(f"{self.tensors_cache_file}_conditional.augmented_indices.json")
+                if self.full_class_conditional:
+                    # Full class-conditional mode (Milestone 2)
+                    essential_cache_files.append(f"{self.tensors_cache_file}_conditional_full")
+                    essential_cache_files.append(f"{self.tensors_cache_file}_conditional_full.augmented_indices.json")
+                else:
+                    # Original partial class-conditional mode
+                    essential_cache_files.append(f"{self.tensors_cache_file}_conditional")
+                    essential_cache_files.append(f"{self.tensors_cache_file}_conditional.augmented_indices.json")
             else:
                 # If not using class conditional augmentation, just need basic tensors
                 essential_cache_files.append(self.tensors_cache_file)
@@ -144,8 +153,14 @@ class ChessPuzzleDataset(Dataset):
             # Add files based on the training mode
             if self.class_conditional_augmentation:
                 essential_cache_files.append(self.label_cooccurrence_file)
-                essential_cache_files.append(f"{self.tensors_cache_file}_conditional")
-                essential_cache_files.append(f"{self.tensors_cache_file}_conditional.augmented_indices.json")
+                if self.full_class_conditional:
+                    # Full class-conditional mode (Milestone 2)
+                    essential_cache_files.append(f"{self.tensors_cache_file}_conditional_full")
+                    essential_cache_files.append(f"{self.tensors_cache_file}_conditional_full.augmented_indices.json")
+                else:
+                    # Original partial class-conditional mode
+                    essential_cache_files.append(f"{self.tensors_cache_file}_conditional")
+                    essential_cache_files.append(f"{self.tensors_cache_file}_conditional.augmented_indices.json")
             else:
                 # If not using class conditional augmentation, just need basic tensors
                 essential_cache_files.append(self.tensors_cache_file)
@@ -790,8 +805,8 @@ class ChessPuzzleDataset(Dataset):
         otherwise create it by selectively augmenting only the rare label combinations.
         Handles both old (tensors only) and new (tensors and labels) cache formats.
         """
-        # Define cache file with conditional suffix
-        conditional_suffix = '_conditional'
+        # Define cache file with conditional suffix (full or regular)
+        conditional_suffix = '_conditional_full' if self.full_class_conditional else '_conditional'
         tensors_cache_file = f"{self.tensors_cache_file}{conditional_suffix}"
         
         # If CSV doesn't exist, try to use the cache files
@@ -825,6 +840,21 @@ class ChessPuzzleDataset(Dataset):
                         print(f"Including {len(self.augmented_indices)} augmented (reflected) rare samples")
                         if has_labels:
                             print(f"Cache includes label data for use in cache-only mode")
+                        
+                        # Check if cache is empty and force recreation in test mode
+                        if len(self.tensor_cache) == 0 and hasattr(self, 'test_resume') and self.test_resume:
+                            print("Cache is empty and test_resume mode is active, forcing recreation...")
+                            # Remove empty cache files to force recreation
+                            os.remove(tensors_cache_file)
+                            if os.path.exists(augmented_indices_file):
+                                os.remove(augmented_indices_file)
+                            # Clear cache and proceed to creation
+                            self.tensor_cache = None
+                            self.label_cache = None
+                            self.augmented_indices = set()
+                        elif len(self.tensor_cache) == 0:
+                            print("Warning: Cache file exists but is empty")
+                            return
                     else:
                         print(f"Warning: Augmented indices file not found: {augmented_indices_file}")
                         print(f"Continuing with empty augmented indices")
@@ -921,6 +951,15 @@ class ChessPuzzleDataset(Dataset):
                 print(f"Including {len(self.augmented_indices)} augmented (reflected) rare samples")
                 if self.label_cache is not None:
                     print(f"Cache includes label data for use in cache-only mode")
+                
+                # Check if cache is empty and force recreation
+                if len(self.tensor_cache) == 0:
+                    print("Cache is empty, forcing recreation...")
+                    # Remove empty cache files to force recreation
+                    os.remove(tensors_cache_file)
+                    if os.path.exists(augmented_indices_file):
+                        os.remove(augmented_indices_file)
+                    raise Exception("Empty cache detected, forcing recreation")
             except Exception as e:
                 print(f"Error loading tensor cache: {e}")
                 print("Regenerating tensor cache...")
@@ -937,115 +976,323 @@ class ChessPuzzleDataset(Dataset):
         print(f"Creating conditional tensor cache for {len(self.puzzle_data):,} puzzles...")
         start_time = time.time()
         
-        # Get all FENs
-        all_fens = self.puzzle_data['FEN'].tolist()
+        # Check for existing checkpoints/segments to resume from FIRST
+        conditional_suffix = '_conditional_full' if self.full_class_conditional else '_conditional'
+        tensors_cache_file = f"{self.tensors_cache_file}{conditional_suffix}"
         
-        # Create basic tensors first (no augmentation)
-        basic_tensors = self._parallel_batch_conversion(all_fens, augment_with_reflections=False)
+        # Look for existing segment files to resume from
+        import glob
+        existing_segments = glob.glob(f"{tensors_cache_file}.segment_*")
+        existing_chunks = glob.glob(f"/tmp/chess_cache_*/chunk_*.pt")
         
-        # Check if any tensors were successfully created
-        if not basic_tensors:
-            print("⚠️ No basic tensors were created. Using an empty tensor cache.")
-            self.tensor_cache = []
-            self.augmented_indices = set()
+        # Filter out empty chunk files
+        existing_chunks = [chunk for chunk in existing_chunks if os.path.exists(chunk) and os.path.getsize(chunk) > 0]
+        
+        if existing_segments:
+            print(f"Found {len(existing_segments)} existing segments, resuming from segments...")
+            # Skip chunk creation and go directly to segment combination
+            segment_files = sorted(existing_segments)
+            temp_dir = None  # No temp dir needed
+            
+            # Use streaming combination to avoid OOM
+            total_entries = self._stream_combine_segments(segment_files, tensors_cache_file)
+            
+            # Save augmented indices (need to reconstruct for segments resume)
+            augmented_indices_file = f"{tensors_cache_file}.augmented_indices.json"
+            with open(augmented_indices_file, 'w') as f:
+                json.dump(list(self.augmented_indices), f)
+            
+            print(f"Resume completed! Final cache has {total_entries:,} entries")
             return
+        
+        elif existing_chunks:
+            print(f"Found {len(existing_chunks)} existing chunk files, resuming chunk processing...")
+            # Find the temp directory and continue from where we left off
+            temp_dirs = set(os.path.dirname(chunk) for chunk in existing_chunks)
+            if len(temp_dirs) == 1:
+                temp_dir = list(temp_dirs)[0]
+                chunk_files = sorted(existing_chunks)
+                print(f"Resuming with {len(chunk_files)} existing chunks in {temp_dir}")
+                # Skip chunk creation and go to segment processing
+                resume_from_chunks = True
+            else:
+                print("Multiple temp directories found, consolidating all chunks...")
+                # Use all chunks from all directories
+                chunk_files = sorted(existing_chunks)
+                temp_dir = os.path.dirname(chunk_files[0]) if chunk_files else None
+                print(f"Consolidating {len(chunk_files)} chunks from {len(temp_dirs)} directories")
+                resume_from_chunks = True
+        else:
+            # Start fresh
+            import tempfile
+            temp_dir = tempfile.mkdtemp(prefix='chess_cache_')
+            chunk_files = []
+            resume_from_chunks = False
+        
+        # Create basic tensors if not resuming from chunks/segments
+        if not resume_from_chunks and not existing_segments:
+            # Get all FENs
+            all_fens = self.puzzle_data['FEN'].tolist()
             
-        # Make sure we only process as many indices as we have tensors
-        valid_indices = min(len(self.puzzle_data), len(basic_tensors))
-        if valid_indices < len(self.puzzle_data):
-            print(f"⚠️ Warning: Only processed {valid_indices} out of {len(self.puzzle_data)} puzzles.")
+            # Create basic tensors first (no augmentation)
+            basic_tensors = self._parallel_batch_conversion(all_fens, augment_with_reflections=False)
             
-        # Now identify which indices should be augmented (those with rare theme combinations)
-        self.augmented_indices = set()
+            # Check if any tensors were successfully created
+            if not basic_tensors:
+                print("⚠️ No basic tensors were created. Using an empty tensor cache.")
+                self.tensor_cache = []
+                self.augmented_indices = set()
+                return
+                
+            # Make sure we only process as many indices as we have tensors
+            valid_indices = min(len(self.puzzle_data), len(basic_tensors))
+            if valid_indices < len(self.puzzle_data):
+                print(f"⚠️ Warning: Only processed {valid_indices} out of {len(self.puzzle_data)} puzzles.")
+                
+            # Now identify which indices should be augmented (those with rare theme combinations)
+            self.augmented_indices = set()
+        else:
+            # When resuming from chunks, we don't need basic_tensors but we need valid_indices
+            valid_indices = len(self.puzzle_data)
+            basic_tensors = None  # Will not be used when resuming
         
-        # Store both tensors and labels in the cache
-        cache_entries = []
+        # Only proceed with chunk creation if we don't have existing chunks to resume from
+        if not resume_from_chunks:
+            # Map from original index to tensor cache index
+            original_to_cache_idx = {}
+            next_tensor_idx = 0
+            
+            # Process in very small chunks to manage memory
+            chunk_size = 2000  # Process 2K entries at a time
+            current_chunk = 0
+            
+            print("Starting chunk creation from scratch...")
+            
+            # Add progress bar for augmentation process
+            if self.verbose_progress:
+                try:
+                    from tqdm import tqdm
+                    iterator = tqdm(range(valid_indices), desc="Creating augmented dataset")
+                except ImportError:
+                    print("Processing tensors for augmentation...")
+                    iterator = range(valid_indices)
+            else:
+                iterator = range(valid_indices)
+            
+            chunk_tensors = []
+            chunk_labels = []
+            processed_count = 0
+            
+            for idx in iterator:
+                # Create label vector for this item
+                label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
+                
+                # Get themes and opening tags
+                themes = self.puzzle_data.iloc[idx]['Themes'].split()
+                opening_tags = []
+                if pd.notna(self.puzzle_data.iloc[idx]['OpeningTags']):
+                    opening_tags = self.puzzle_data.iloc[idx]['OpeningTags'].split()
+                
+                # Add themes to label vector
+                for theme in themes:
+                    if theme in self.label_to_idx:  # Ensure theme exists in our index
+                        theme_idx = self.label_to_idx[theme]
+                        label_vector[theme_idx] = 1
+                
+                # Add opening tags to label vector
+                for tag in opening_tags:
+                    if tag in self.label_to_idx:
+                        tag_idx = self.label_to_idx[tag]
+                        label_vector[tag_idx] = 1
+                
+                # Add the original tensor and label vector to chunk
+                chunk_tensors.append(basic_tensors[idx])
+                chunk_labels.append(label_vector)
+                original_to_cache_idx[idx] = next_tensor_idx
+                next_tensor_idx += 1
+                processed_count += 1
+                
+                # Check if this puzzle has rare theme combinations that should be augmented
+                # Use only theme labels as the label set
+                theme_labels = frozenset(themes)
+                
+                # If this theme combination is rare, add a reflection
+                if theme_labels in self.rare_combinations:
+                    # Reflect the tensor horizontally
+                    reflected_tensor = self.reflect_tensor_horizontally(basic_tensors[idx])
+                    
+                    # Create label vector for reflection (only include themes, not opening tags)
+                    reflection_label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
+                    for theme in themes:
+                        if theme in self.label_to_idx:
+                            theme_idx = self.label_to_idx[theme]
+                            reflection_label_vector[theme_idx] = 1
+                    
+                    # Add the reflected tensor and label vector to chunk
+                    chunk_tensors.append(reflected_tensor)
+                    chunk_labels.append(reflection_label_vector)
+                    
+                    # Track that this index was augmented
+                    self.augmented_indices.add(idx)
+                    next_tensor_idx += 1
+                    processed_count += 1
+                
+                # Save chunk to disk when it reaches the desired size
+                if len(chunk_tensors) >= chunk_size:
+                    # Save chunk to temporary file
+                    chunk_file = os.path.join(temp_dir, f'chunk_{current_chunk:06d}.pt')
+                    torch.save({
+                        'tensors': chunk_tensors,
+                        'labels': chunk_labels
+                    }, chunk_file)
+                    chunk_files.append(chunk_file)
+                    current_chunk += 1
+                    
+                    # Clear chunk and force garbage collection
+                    chunk_tensors.clear()
+                    chunk_labels.clear()
+                    import gc
+                    gc.collect()
+                    
+                    if self.verbose_progress:
+                        try:
+                            import psutil
+                            memory_usage = psutil.Process().memory_info().rss / 1024 / 1024 / 1024
+                            print(f"Memory usage: {memory_usage:.1f} GB, saved chunk {current_chunk-1}, processed {processed_count:,} entries")
+                        except ImportError:
+                            print(f"Saved chunk {current_chunk-1}, processed {processed_count:,} entries")
+                    
+                    # Test resume: abort after creating some chunks
+                    if self.test_resume == "chunks" and current_chunk >= 10:
+                        print(f"TEST RESUME: Aborting after creating {current_chunk} chunks for testing")
+                        print(f"Chunk files saved in: {temp_dir}")
+                        print("Re-run the script to test chunk resume functionality")
+                        import sys
+                        sys.exit(0)  # Clean exit instead of exception
+            
+            # Save any remaining items in the final chunk
+            if chunk_tensors:
+                chunk_file = os.path.join(temp_dir, f'chunk_{current_chunk:06d}.pt')
+                torch.save({
+                    'tensors': chunk_tensors,
+                    'labels': chunk_labels
+                }, chunk_file)
+                chunk_files.append(chunk_file)
+                chunk_tensors.clear()
+                chunk_labels.clear()
+            
+            # Clear the basic_tensors list to free memory
+            if basic_tensors is not None:
+                basic_tensors.clear()
+        else:
+            # If resuming from existing chunks, clear basic_tensors as well
+            if basic_tensors is not None:
+                basic_tensors.clear()
         
-        # Map from original index to tensor cache index
-        original_to_cache_idx = {}
-        next_tensor_idx = 0
+        # True streaming approach - build final file in segments to avoid memory accumulation
+        print(f"Streaming {len(chunk_files)} chunks directly to final cache file...")
         
-        # Add progress bar for augmentation process
+        # Initialize counters
+        total_entries = 0
+        segment_tensors = []
+        segment_labels = []
+        segment_files = []
+        
+        # Process chunks in very small segments that get saved immediately  
+        segment_size = 10  # Save every 10 chunks (20K entries) to avoid memory buildup
+        
+        for i, chunk_file in enumerate(chunk_files):
+            if self.verbose_progress:
+                try:
+                    import psutil
+                    memory_usage = psutil.Process().memory_info().rss / 1024 / 1024 / 1024
+                    print(f"Memory: {memory_usage:.1f} GB, processing chunk {i+1}/{len(chunk_files)}")
+                except ImportError:
+                    print(f"Processing chunk {i+1}/{len(chunk_files)}")
+            
+            # Load single chunk
+            chunk_data = torch.load(chunk_file, map_location='cpu', weights_only=False)
+            chunk_tensors = chunk_data['tensors']
+            chunk_labels = chunk_data['labels']
+            total_entries += len(chunk_tensors)
+            
+            # Add to current segment
+            segment_tensors.extend(chunk_tensors)
+            segment_labels.extend(chunk_labels)
+            
+            # Clear chunk data immediately
+            del chunk_data, chunk_tensors, chunk_labels
+            
+            # Remove chunk file to save disk space
+            os.remove(chunk_file)
+            
+            # Save segment every segment_size chunks or at the end
+            if (i + 1) % segment_size == 0 or i == len(chunk_files) - 1:
+                segment_num = (i // segment_size) + 1
+                segment_file = f"{tensors_cache_file}.segment_{segment_num:04d}"
+                
+                if self.verbose_progress:
+                    print(f"Saving segment {segment_num} with {len(segment_tensors):,} entries")
+                
+                torch.save({
+                    'tensors': segment_tensors,
+                    'labels': segment_labels,
+                    'segment_num': segment_num,
+                    'format_version': 2
+                }, segment_file)
+                
+                segment_files.append(segment_file)
+                
+                # Clear segment data to free memory
+                segment_tensors.clear()
+                segment_labels.clear()
+                
+                # Force garbage collection
+                import gc
+                gc.collect()
+                
+                if self.verbose_progress:
+                    try:
+                        import psutil
+                        memory_usage = psutil.Process().memory_info().rss / 1024 / 1024 / 1024
+                        print(f"Memory after segment save: {memory_usage:.1f} GB")
+                    except ImportError:
+                        print(f"Segment {segment_num} saved with {total_entries:,} total entries so far")
+                
+                # Test resume: abort after creating some segments
+                if self.test_resume == "segments" and segment_num >= 3:
+                    print(f"TEST RESUME: Aborting after creating {segment_num} segments for testing")
+                    print(f"Segment files: {tensors_cache_file}.segment_*")
+                    print("Re-run the script to test segment resume functionality")
+                    import sys
+                    sys.exit(0)  # Clean exit instead of exception
+        
+        # Use streaming combination to avoid OOM
+        total_entries = self._stream_combine_segments(segment_files, tensors_cache_file)
+        
+        # Final memory report
         if self.verbose_progress:
             try:
-                from tqdm import tqdm
-                iterator = tqdm(range(valid_indices), desc="Creating augmented dataset")
+                import psutil
+                final_memory = psutil.Process().memory_info().rss / 1024 / 1024 / 1024
+                print(f"Streaming combination complete: {final_memory:.1f} GB, {total_entries:,} total entries")
             except ImportError:
-                print("Processing tensors for augmentation...")
-                iterator = range(valid_indices)
-        else:
-            iterator = range(valid_indices)
+                print(f"Streaming combination complete: {total_entries:,} total entries")
         
-        for idx in iterator:
-            # Create label vector for this item
-            label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
-            
-            # Get themes and opening tags
-            themes = self.puzzle_data.iloc[idx]['Themes'].split()
-            opening_tags = []
-            if pd.notna(self.puzzle_data.iloc[idx]['OpeningTags']):
-                opening_tags = self.puzzle_data.iloc[idx]['OpeningTags'].split()
-            
-            # Add themes to label vector
-            for theme in themes:
-                if theme in self.label_to_idx:  # Ensure theme exists in our index
-                    theme_idx = self.label_to_idx[theme]
-                    label_vector[theme_idx] = 1
-            
-            # Add opening tags to label vector
-            for tag in opening_tags:
-                if tag in self.label_to_idx:
-                    tag_idx = self.label_to_idx[tag]
-                    label_vector[tag_idx] = 1
-            
-            # Add the original tensor and label vector
-            cache_entries.append({
-                'tensor': basic_tensors[idx],
-                'labels': label_vector,
-                'is_reflection': False
-            })
-            original_to_cache_idx[idx] = next_tensor_idx
-            next_tensor_idx += 1
-            
-            # Check if this puzzle has rare theme combinations that should be augmented
-            # Use only theme labels as the label set
-            theme_labels = frozenset(themes)
-            
-            # If this theme combination is rare, add a reflection
-            if theme_labels in self.rare_combinations:
-                # Reflect the tensor horizontally
-                reflected_tensor = self.reflect_tensor_horizontally(basic_tensors[idx])
-                
-                # Create label vector for reflection (only include themes, not opening tags)
-                reflection_label_vector = torch.zeros(len(self.all_labels), dtype=torch.float32)
-                for theme in themes:
-                    if theme in self.label_to_idx:
-                        theme_idx = self.label_to_idx[theme]
-                        reflection_label_vector[theme_idx] = 1
-                
-                # Add the reflected tensor and label vector
-                cache_entries.append({
-                    'tensor': reflected_tensor,
-                    'labels': reflection_label_vector,
-                    'is_reflection': True
-                })
-                
-                # Track that this index was augmented
-                self.augmented_indices.add(idx)
-                next_tensor_idx += 1
+        # Test resume: abort just before final save
+        if self.test_resume == "final":
+            print(f"TEST RESUME: Aborting just before saving final cache for testing")
+            print(f"Final tensors ready: {total_entries:,} entries")
+            print("Re-run the script to test final resume functionality")
+            import sys
+            sys.exit(0)  # Clean exit instead of exception
         
-        # Set the tensor cache (just the tensors for backward compatibility)
-        self.tensor_cache = [entry['tensor'] for entry in cache_entries]
-        self.label_cache = [entry['labels'] for entry in cache_entries]
+        # Clean up temporary directory
+        import shutil
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
         
-        # Save to disk
-        tensors_cache_file = f"{self.tensors_cache_file}_conditional"
-        print(f"Saving conditional tensor cache with labels to: {tensors_cache_file}")
-        torch.save({
-            'tensors': self.tensor_cache,
-            'labels': self.label_cache,
-            'format_version': 2  # Add version to indicate the new format
-        }, tensors_cache_file)
+        # Note: Final cache is already saved by _stream_combine_segments method
         
         # Also save the augmented indices for future reference
         augmented_indices_file = f"{tensors_cache_file}.augmented_indices.json"
@@ -1406,16 +1653,21 @@ class ChessPuzzleDataset(Dataset):
                 return label_combinations, rare_combinations
         
         # Analyze co-occurrence patterns
-        # Sample up to MAX_SAMPLES puzzles for co-occurrence analysis to avoid memory issues
-        MAX_SAMPLES = 100000
-        
-        if len(self.puzzle_data) > MAX_SAMPLES:
-            print(f"⚠️ Large dataset detected. Sampling {MAX_SAMPLES:,} out of {len(self.puzzle_data):,} puzzles for co-occurrence analysis.")
-            # Use random sampling without replacement for a representative subset
-            sample_indices = np.random.choice(len(self.puzzle_data), size=MAX_SAMPLES, replace=False)
-            puzzle_subset = self.puzzle_data.iloc[sample_indices]
-        else:
+        # For full class-conditional mode, analyze the entire dataset for accurate rare combination identification
+        if self.full_class_conditional:
+            print(f"🔍 Full class-conditional mode: Analyzing complete dataset of {len(self.puzzle_data):,} puzzles for rare combinations.")
             puzzle_subset = self.puzzle_data
+        else:
+            # Sample up to MAX_SAMPLES puzzles for co-occurrence analysis to avoid memory issues
+            MAX_SAMPLES = 100000
+            
+            if len(self.puzzle_data) > MAX_SAMPLES:
+                print(f"⚠️ Large dataset detected. Sampling {MAX_SAMPLES:,} out of {len(self.puzzle_data):,} puzzles for co-occurrence analysis.")
+                # Use random sampling without replacement for a representative subset
+                sample_indices = np.random.choice(len(self.puzzle_data), size=MAX_SAMPLES, replace=False)
+                puzzle_subset = self.puzzle_data.iloc[sample_indices]
+            else:
+                puzzle_subset = self.puzzle_data
             
         print(f"Analyzing theme co-occurrence patterns for {len(puzzle_subset):,} puzzles...")
         label_combinations = {}
@@ -1553,6 +1805,146 @@ class ChessPuzzleDataset(Dataset):
         print(f"Using rarity threshold: {rarity_threshold}")
         
         return rarity_threshold
+    
+    def _stream_combine_segments(self, segment_files, output_file):
+        """
+        Stream-combine segment files into final cache without loading all data into memory.
+        This avoids OOM issues by writing the final cache incrementally.
+        
+        Args:
+            segment_files (list): List of segment file paths to combine
+            output_file (str): Path where the final combined cache will be saved
+            
+        Returns:
+            int: Total number of entries in the combined cache
+        """
+        print(f"Stream-combining {len(segment_files)} segments into final cache...")
+        
+        # Initialize counters
+        total_entries = 0
+        
+        # Prepare the output data structure
+        combined_data = {
+            'tensors': [],
+            'labels': [],
+            'format_version': 2
+        }
+        
+        # Process segments one by one with minimal memory footprint
+        for i, segment_file in enumerate(segment_files):
+            if self.verbose_progress:
+                print(f"Processing segment {i+1}/{len(segment_files)}: {os.path.basename(segment_file)}")
+            
+            try:
+                # Load segment with minimal memory footprint
+                segment_data = torch.load(segment_file, map_location='cpu', weights_only=False)
+                
+                # Extend the combined data directly (still in memory but more controlled)
+                combined_data['tensors'].extend(segment_data['tensors'])
+                combined_data['labels'].extend(segment_data['labels'])
+                
+                # Update counter
+                segment_size = len(segment_data['tensors'])
+                total_entries += segment_size
+                
+                # Clear segment data immediately
+                del segment_data
+                
+                # Remove segment file to free disk space
+                os.remove(segment_file)
+                
+                # Force garbage collection every segment
+                import gc
+                gc.collect()
+                
+                # Memory monitoring
+                if self.verbose_progress and i % 5 == 0:
+                    try:
+                        import psutil
+                        memory_usage = psutil.Process().memory_info().rss / 1024 / 1024 / 1024
+                        print(f"  Memory usage: {memory_usage:.1f} GB, processed {total_entries:,} entries so far")
+                    except ImportError:
+                        print(f"  Processed {total_entries:,} entries so far")
+                
+            except Exception as e:
+                print(f"Error processing segment {segment_file}: {e}")
+                continue
+        
+        # True streaming: Write in batches to avoid memory accumulation
+        print(f"Writing {total_entries:,} entries in memory-efficient batches...")
+        batch_size = 50000  # Write every 50K entries
+        temp_files = []
+        
+        # Process accumulated data in batches
+        for batch_start in range(0, len(combined_data['tensors']), batch_size):
+            batch_end = min(batch_start + batch_size, len(combined_data['tensors']))
+            batch_tensors = combined_data['tensors'][batch_start:batch_end]
+            batch_labels = combined_data['labels'][batch_start:batch_end]
+            
+            # Convert batch to tensors and save to temp file
+            temp_file = f"{output_file}.temp_{len(temp_files):04d}.pt"
+            batch_data = {
+                'tensors': torch.stack(batch_tensors),
+                'labels': torch.stack(batch_labels),
+                'format_version': 2
+            }
+            torch.save(batch_data, temp_file)
+            temp_files.append(temp_file)
+            
+            if self.verbose_progress:
+                print(f"  Wrote batch {len(temp_files)} with {len(batch_tensors):,} entries")
+            
+            # Clear batch data
+            del batch_tensors, batch_labels, batch_data
+            import gc
+            gc.collect()
+        
+        # Clear the combined data to free memory
+        del combined_data
+        import gc
+        gc.collect()
+        
+        # Now combine temp files using torch.cat for efficient concatenation
+        print(f"Combining {len(temp_files)} temp batches into final cache...")
+        all_tensors = []
+        all_labels = []
+        
+        for i, temp_file in enumerate(temp_files):
+            if self.verbose_progress and i % 5 == 0:
+                try:
+                    import psutil
+                    memory_usage = psutil.Process().memory_info().rss / 1024 / 1024 / 1024
+                    print(f"  Loading temp file {i+1}/{len(temp_files)}, memory: {memory_usage:.1f} GB")
+                except ImportError:
+                    print(f"  Loading temp file {i+1}/{len(temp_files)}")
+            
+            temp_data = torch.load(temp_file, map_location='cpu', weights_only=False)
+            all_tensors.append(temp_data['tensors'])
+            all_labels.append(temp_data['labels'])
+            del temp_data
+            os.remove(temp_file)  # Clean up immediately
+        
+        # Final concatenation
+        print("Final tensor concatenation...")
+        final_tensors = torch.cat(all_tensors, dim=0)
+        final_labels = torch.cat(all_labels, dim=0)
+        del all_tensors, all_labels
+        
+        # Save final cache
+        print(f"Saving final cache to: {output_file}")
+        final_data = {
+            'tensors': final_tensors,
+            'labels': final_labels,
+            'format_version': 2
+        }
+        torch.save(final_data, output_file)
+        
+        # Set instance variables for compatibility
+        self.tensor_cache = final_tensors
+        self.label_cache = final_labels
+        
+        print(f"✅ Stream combination complete: {total_entries:,} entries saved")
+        return total_entries
     
     def create_reflected_boards(self, item):
         """

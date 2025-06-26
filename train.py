@@ -137,6 +137,8 @@ def parse_args(args=None):
                         help='Use lower memory settings for dataset processing')
     parser.add_argument('--full_dataset', action='store_true',
                         help='Use full dataset tensor cache instead of class conditional augmentation')
+    parser.add_argument('--full_class_conditional', action='store_true',
+                        help='Use full class-conditional augmented dataset (Milestone 2)')
     parser.add_argument('--max_steps', type=int, default=None,
                         help='Maximum number of training steps per epoch (useful for testing with large datasets)')
     parser.add_argument('--dataset-id', type=str, default=None,
@@ -281,7 +283,9 @@ def main():
                 "test_mode": args.test_mode,
                 "single_gpu_mode": args.single_gpu,
                 "weighted_loss": args.weighted_loss,
-                "class_conditional_augmentation": True,
+                "full_dataset": args.full_dataset,
+                "full_class_conditional": args.full_class_conditional,
+                "class_conditional_augmentation": args.full_class_conditional or (not args.full_dataset),
             }
         )
         print(f"Initialized Weights & Biases for project {args.project}, run {run_name}")
@@ -517,12 +521,15 @@ def main():
                 )
     
     # Create dataset with memory-saving options
-    # Use full dataset if flag is set, otherwise use class conditional augmentation
-    use_class_conditional = not args.full_dataset
+    # Use full dataset, full class-conditional, or regular class conditional augmentation
     if args.full_dataset:
         if args.is_master:
             print(f"🚀 Using full dataset tensor cache (4.9M samples)")
         dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=False, low_memory=low_memory, use_cache=True)
+    elif args.full_class_conditional:
+        if args.is_master:
+            print(f"⚡ Using full class-conditional augmented dataset (>4.9M samples)")
+        dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=True, low_memory=low_memory, use_cache=True, full_class_conditional=True)
     else:
         if args.is_master:
             print(f"🔄 Using class conditional augmentation (partial dataset)")
@@ -534,7 +541,13 @@ def main():
         print(f"📊 Dataset loaded successfully:")
         print(f"   Dataset size: {len(dataset):,} samples")
         print(f"   Number of unique labels (themes + opening tags): {num_labels}")
-        print(f"   Mode: {'Full dataset cache' if args.full_dataset else 'Class conditional augmentation'}")
+        if args.full_dataset:
+            mode = 'Full dataset cache'
+        elif args.full_class_conditional:
+            mode = 'Full class-conditional augmented dataset'
+        else:
+            mode = 'Class conditional augmentation (partial)'
+        print(f"   Mode: {mode}")
     
     # Create model with the correct number of labels
     # Original hacakthon-winner-3 model config with default nlayers=2.
