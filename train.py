@@ -253,7 +253,8 @@ def main():
             print(f"Using ISC dataset path: {csv_file}")
     else:
         # Use the local path in the dataset directory
-        csv_file = os.path.join('dataset', csv_filename)
+        csv_file = os.path.join('processed_lichess_puzzle_files', csv_filename)
+        print(f"Using local dataset path: {csv_file}")
     
     if args.is_master:
         if args.test_mode:
@@ -664,7 +665,12 @@ def main():
         checkpoint_dir = os.environ["OUTPUT_PATH"]
     else:
         checkpoint_dir = "checkpoints"
-        
+    
+    # Get batch size from args
+    batch_size = args.batch_size
+    if args.is_master:
+        print(f"Using batch size: {batch_size}")
+
     checkpoint_path = os.path.join(checkpoint_dir, "checkpoint_resume.pth")
     if not args.test_mode and os.path.exists(checkpoint_path):
         if args.is_master:
@@ -683,11 +689,6 @@ def main():
         # Get the global step and epoch from the checkpoint
         global_step = checkpoint_info['global_step']
         start_epoch = checkpoint_info['epoch']
-
-        # Get batch size from args
-        batch_size = args.batch_size
-        if args.is_master:
-            print(f"Using batch size: {batch_size}")
         
         # Calculate if we completed the previous epoch
         train_size = int(0.8 * len(dataset))  # Same split as in training
