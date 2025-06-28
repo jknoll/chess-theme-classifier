@@ -71,3 +71,11 @@ Both requirements have been successfully implemented:
 3. **Dynamic axis limits**: Fixed visualization issue where scatter points were invisible by implementing dynamic y-axis limits based on actual precision data range instead of fixed 0.5-1.0 limits.
 
 The PR curve generation now produces high-quality visualizations with visible scatter points, threshold-based coloring, and configurable point density for detailed analysis of model performance across different classification thresholds.
+
+## Recent Updates
+
+[x] **Full axis range display**: Modified the script to always display both precision and recall axes from 0.0 to 1.0, providing complete visibility of the performance space instead of truncating based on data range.
+
+[x] **F1-prefixed filenames**: Changed the output filename format to start with the F1 score (e.g., `0.99_pawnEndgame_pr_curve.png`) for easier identification and sorting of high-performing classes.
+
+[x] **Regenerated curves**: Deleted and regenerated all PR curves from the CSV cache with the new axis scaling and filename format.
