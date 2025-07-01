@@ -57,32 +57,9 @@ def create_pr_curve_plot(class_data, class_name, output_dir):
     ax.set_ylabel('Precision', fontsize=12)
     ax.set_title(f'{class_name} Precision-Recall Curve', fontsize=14, fontweight='bold')
     
-    # Set axis limits - adjust based on data range
-    ax.set_xlim(0, 1)
-    
-    # Handle degenerate cases with limited test data
-    unique_precisions = np.unique(precision)
-    unique_recalls = np.unique(recall)
-    
-    if len(unique_precisions) <= 2 and len(unique_recalls) <= 2:
-        # With very limited data, show full range to make points visible
-        ax.set_ylim(-0.05, 1.05)
-        if len(unique_precisions) == 1 and precision[0] == 1.0:
-            # All points at precision=1.0, show upper range
-            ax.set_ylim(0.9, 1.05)
-    else:
-        # Dynamically set y-limits based on actual data range
-        min_precision = max(0, precision.min() - 0.05)
-        max_precision = min(1, precision.max() + 0.05)
-        
-        # Ensure minimum range for visibility
-        if max_precision - min_precision < 0.1:
-            if max_precision == 1.0:
-                min_precision = 0.9
-            else:
-                max_precision = min_precision + 0.1
-        
-        ax.set_ylim(min_precision, max_precision)
+    # Set axis limits from 0.0 to 1.0 for both axes
+    ax.set_xlim(0.0, 1.0)
+    ax.set_ylim(0.0, 1.0)
     
     # Add grid
     ax.grid(True, alpha=0.3)
@@ -93,9 +70,9 @@ def create_pr_curve_plot(class_data, class_name, output_dir):
     # Tight layout
     plt.tight_layout()
     
-    # Save the plot
+    # Save the plot with F1 score prefix
     safe_class_name = class_name.replace('/', '_').replace(' ', '_')
-    output_path = os.path.join(output_dir, f'{safe_class_name}_pr_curve.png')
+    output_path = os.path.join(output_dir, f'{max_f1_score:.2f}_{safe_class_name}_pr_curve.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
     
@@ -111,8 +88,8 @@ def main():
                        help='Directory to save PR curve plots')
     parser.add_argument('--min_positive_examples', type=int, default=1,
                        help='Minimum number of positive examples to generate PR curve')
-    parser.add_argument('--max_classes', type=int, default=10,
-                       help='Maximum number of classes to process (default: 10, set to None for all classes)')
+    parser.add_argument('--max_classes', type=int, default=None,
+                       help='Maximum number of classes to process (default: None for all classes, set to specific number to limit)')
     parser.add_argument('--verbose', action='store_true',
                        help='Print verbose output')
     
