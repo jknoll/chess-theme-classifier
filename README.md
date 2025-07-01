@@ -47,7 +47,7 @@ python create_full_dataset_cache.py
 
 It should also be possible to place it there and simply instantiate a ChessPuzzleDataset, but the method above is more recently tested.
 
-### Option 2: Download Pre-processed Dataset from S3 (Recommended)
+### Option 2: Download Pre-processed Dataset from  (Recommended)
 The pre-processed dataset includes cached tensors and other derived files which significantly speed up training by avoiding redundant preprocessing.
 
 You'll need to set up AWS credentials with access to the S3 bucket. You can do this in several ways:

@@ -7,8 +7,9 @@ import os
 os.environ['OMP_NUM_THREADS'] = '4'  # Limit OpenMP threads
 os.environ['MKL_NUM_THREADS'] = '4'  # Limit MKL threads
 
-from cycling_utils import TimestampedTimer
+from cycling_utils import TimestampedTimer, AtomicDirectory, atomic_torch_save, InterruptableDistributedSampler
 import time
+import sys
 import argparse
 from torch.utils.tensorboard import SummaryWriter
 from pathlib import Path
@@ -49,102 +50,28 @@ def launch_tensorboard(logdir, port=6006):
 os.makedirs('logs', exist_ok=True)
 os.makedirs('checkpoints', exist_ok=True)
 
-# Initialize distributed process group
-def init_distributed(distributed=None):
-    """
-    Initialize distributed process group based on environment variables or parameter.
-    
-    Args:
-        distributed: If explicitly provided as True/False, will override detection.
-                    If None, will auto-detect based on environment variables.
-    
-    Returns:
-        local_rank: The local rank of the process (0 if running in non-distributed mode)
-        is_distributed: Boolean indicating if running in distributed mode
-    """
-    # Check if we're running with torchrun based on environment variables
-    running_distributed = (
-        'LOCAL_RANK' in os.environ and 
-        'RANK' in os.environ and 
-        'WORLD_SIZE' in os.environ and 
-        int(os.environ.get('WORLD_SIZE', '1')) > 1
-    )
-    
-    # Override detection if explicitly specified
-    if distributed is not None:
-        running_distributed = distributed
 
-    # Initialize for single-process mode
-    if not running_distributed:
-        local_rank = 0
-        return local_rank, False
-    
-    # Running in distributed mode - set up process group
-    # Set default environment variables for distributed training if not already set
-    if 'LOCAL_RANK' not in os.environ:
-        os.environ['LOCAL_RANK'] = '0'
-    if 'RANK' not in os.environ:
-        os.environ['RANK'] = '0'
-    if 'WORLD_SIZE' not in os.environ:
-        os.environ['WORLD_SIZE'] = '1'
-    if 'MASTER_ADDR' not in os.environ:
-        os.environ['MASTER_ADDR'] = 'localhost'
-    if 'MASTER_PORT' not in os.environ:
-        os.environ['MASTER_PORT'] = '12355'
-    
-    local_rank = int(os.environ["LOCAL_RANK"])
-    
-    # Check for GPUs
-    if not torch.cuda.is_available():
-        raise RuntimeError("Distributed training requires GPUs, but none were found.")
-    
-    # Initialize the process group only if it's not already initialized
-    if not dist.is_initialized():
-        dist.init_process_group(backend="nccl")
-    else:
-        print("Process group already initialized, skipping initialization")
-        
-    torch.cuda.set_device(local_rank)
-    return local_rank, True
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description='Train chess puzzle classifier')
-    parser.add_argument('--checkpoint_steps', type=int, default=1000,
-                        help='Number of steps between checkpoints (default: 1000)')
-    parser.add_argument('--test_mode', action='store_true',
-                        help='Run in test mode with a smaller dataset')
-    parser.add_argument('--wandb', action='store_true',
-                        help='Enable Weights & Biases logging')
-    parser.add_argument('--project', type=str, default='chess-theme-classifier',
-                        help='Weights & Biases project name')
-    parser.add_argument('--name', type=str, default=None,
-                        help='Weights & Biases run name')
-    parser.add_argument('--distributed', action='store_true',
-                        help='Force distributed training mode (overrides auto-detection)')
-    parser.add_argument('--local', action='store_true',
-                        help='Force local training mode (overrides auto-detection)')
-    parser.add_argument('--weighted_loss', action='store_true',
-                        help='Use weighted BCE loss for class imbalance')
-    parser.add_argument('--single_gpu', action='store_true',
-                        help='Run in single-GPU mode (replaces train_locally_single_gpu.py)')
-    parser.add_argument('--optimizer', type=str, default='lamb',
-                        help='Optimizer to use: lamb or adam (default: lamb)')
-    parser.add_argument('--batch_size', type=int, default=4,
-                        help='Batch size for training (default: 4)')
-    parser.add_argument('--epochs', type=int, default=None,
-                        help='Number of epochs to train (default: 3 for test mode, 10 for full)')
-    parser.add_argument('--low_memory', action='store_true',
-                        help='Use lower memory settings for dataset processing')
-    parser.add_argument('--full_dataset', action='store_true',
-                        help='Use full dataset tensor cache instead of class conditional augmentation')
-    parser.add_argument('--full_class_conditional', action='store_true',
-                        help='Use full class-conditional augmented dataset (Milestone 2)')
-    parser.add_argument('--max_steps', type=int, default=None,
-                        help='Maximum number of training steps per epoch (useful for testing with large datasets)')
-    parser.add_argument('--dataset-id', type=str, default=None,
-                        help='Dataset ID for ISC training (overrides environment variable)')
+    parser.add_argument('--test_mode', action='store_true', help='Run in test mode with a smaller dataset')
+    parser.add_argument('--wandb', action='store_true', help='Enable Weights & Biases logging')
+    parser.add_argument('--project', type=str, default='chess-theme-classifier', help='Weights & Biases project name')
+    parser.add_argument('--name', type=str, default=None, help='Weights & Biases run name')
+    parser.add_argument('--distributed', action='store_true', help='Force distributed training mode (overrides auto-detection)')
+    parser.add_argument('--local', action='store_true', help='Force local training mode (overrides auto-detection)')
+    parser.add_argument('--weighted_loss', action='store_true', help='Use weighted BCE loss for class imbalance')
+    parser.add_argument('--single_gpu', action='store_true', help='Run in single-GPU mode (replaces train_locally_single_gpu.py)')
+    parser.add_argument('--optimizer', type=str, default='lamb', help='Optimizer to use: lamb or adam (default: lamb)')
+    parser.add_argument('--batch_size', type=int, default=4, help='Batch size for training (default: 4)')
+    parser.add_argument('--epochs', type=int, default=None, help='Number of epochs to train (default: 3 for test mode, 10 for full)')
+    parser.add_argument('--low_memory', action='store_true', help='Use lower memory settings for dataset processing')
+    parser.add_argument('--full_dataset', action='store_true', help='Use full dataset tensor cache instead of class conditional augmentation')
+    parser.add_argument('--full_class_conditional', action='store_true', help='Use full class-conditional augmented dataset (Milestone 2)')
+    parser.add_argument('--max_steps', type=int, default=None, help='Maximum number of training steps per epoch (useful for testing with large datasets)')
+    parser.add_argument('--dataset-id', type=str, default=None, help='Dataset ID for ISC training (overrides environment variable)')
     parser.add_argument("--grad-accum", help="gradient accumulation steps", type=int, default=6)       
-    parser.add_argument("--save-steps", help="saving interval steps", type=int, default=50)           
+    parser.add_argument("--save-steps", help="saving interval steps", type=int, default=1000)           
     parser.add_argument("--model-config", help="model config path", type=Path, default="/root/chess-theme-classifier/model_config.yaml")          
     return parser.parse_args(args)
 
@@ -154,58 +81,18 @@ def main():
 
     # Check for ISC environment
     isc_mode = "LOSSY_ARTIFACT_PATH" in os.environ
-    
-    # Determine distributed mode based on command line args
-    distributed_override = None
-    if args.single_gpu:
-        # Single GPU mode overrides other distributed settings
-        print("Running in single GPU mode (equivalent to train_locally_single_gpu.py)")
-        distributed_override = False
-    elif args.distributed and args.local:
-        print("Warning: Both --distributed and --local flags set. Using --distributed.")
-        distributed_override = True
-    elif args.distributed:
-        distributed_override = True
-    elif args.local:
-        distributed_override = False
-    
-    # Initialize distributed or local training
-    # Special handling for ISC mode to avoid duplicate process group initialization
-    if isc_mode and distributed_override is None:
-        print(f"In cluster mode; NNODES: {os.environ.get('NNODES', '1')}")
-        # Check if process group is already initialized
-        if not dist.is_initialized():
-            dist.init_process_group("nccl")  # Expects RANK set in environment variable
-        
-        rank = int(os.environ["RANK"])  # Rank of this GPU in cluster
-        args.world_size = int(os.environ["WORLD_SIZE"]) # Total number of GPUs in the cluster
-        args.device_id = int(os.environ["LOCAL_RANK"])  # Rank on local node
-        args.is_master = rank == 0  # Master node for saving / reporting
-        torch.cuda.set_device(args.device_id)  # Enables calling 'cuda'
-        
-        # Skip init_distributed since we've already initialized
-        local_rank = args.device_id
-        is_distributed = True
-    else:
-        if isc_mode:
-            print("In ISC mode but using command-line distributed settings override")
-        else:
-            print("In local mode")
-            
-        # Regular initialization path
-        local_rank, is_distributed = init_distributed(distributed_override)
-    
-    # Set device
-    if is_distributed:
-        device = torch.device(f'cuda:{local_rank}')
-    else:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
-    # Add master flag similar to ISC training
-    args.is_master = local_rank == 0
+
+    dist.init_process_group("nccl")
+    rank = int(os.environ["RANK"])
+    args.world_size = int(os.environ["WORLD_SIZE"])
+    args.device_id = int(os.environ["LOCAL_RANK"])
+    args.is_master = rank == 0
+    torch.cuda.set_device(args.device_id)
+    device = torch.device(f'cuda:{args.device_id}')
+    is_distributed = True
     
     if args.is_master:
-        print(f"Using device: {device} with local_rank: {local_rank} (Running in {'distributed' if is_distributed else 'local'} mode)")
+        print(f"Using device: {device} with local_rank: {args.device_id} (Running in {'distributed' if is_distributed else 'local'} mode)")
     torch.autograd.set_detect_anomaly(True)
 
     # Create a timestamp for the run
@@ -264,6 +151,17 @@ def main():
         else:
             print(f"Running with FULL DATASET. This may require significant memory and processing time.")
             
+    # Get batch size from args
+    batch_size = args.batch_size
+    if args.is_master:
+        print(f"Using batch size: {batch_size}")
+
+    # Set number of epochs based on args
+    if args.epochs is not None:
+        max_epochs = args.epochs
+    else:
+        max_epochs = 3 if args.test_mode else 30
+
     # Initialize wandb on the master process if enabled
     # The WANDB_API_KEY environment variable should be set before running
     # or use `wandb login` command beforehand
@@ -598,7 +496,7 @@ def main():
     
     # Wrap model in DDP if running in distributed mode
     if is_distributed:
-        model = DDP(model, device_ids=[local_rank])
+        model = DDP(model, device_ids=[args.device_id])
     # In local mode, we can use DataParallel if multiple GPUs are available
     elif torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs with DataParallel")
@@ -658,72 +556,24 @@ def main():
     
     # Import the checkpoint utilities
     from checkpoint_utils import load_checkpoint, get_checkpoint_info
-    
-    # Check for checkpoint file, but skip if in test mode
-    # Check for ISC environment - use OUTPUT_PATH if available for checkpoint loading
-    if isc_mode and "OUTPUT_PATH" in os.environ:
-        checkpoint_dir = os.environ["OUTPUT_PATH"]
-    else:
-        checkpoint_dir = "checkpoints"
-    
-    # Get batch size from args
-    batch_size = args.batch_size
-    if args.is_master:
-        print(f"Using batch size: {batch_size}")
 
-    checkpoint_path = os.path.join(checkpoint_dir, "checkpoint_resume.pth")
-    if not args.test_mode and os.path.exists(checkpoint_path):
-        if args.is_master:
-            print(f"Loading checkpoint from {checkpoint_path}")
-        
-        # Load the checkpoint using our utility function
-        # Set strict=False to allow loading checkpoints between models with different architectures
-        checkpoint_info = load_checkpoint(
-            checkpoint_path=checkpoint_path,
-            model=model,
-            optimizer=optimizer,
-            device=device,
-            strict=False
-        )
-        
-        # Get the global step and epoch from the checkpoint
-        global_step = checkpoint_info['global_step']
-        start_epoch = checkpoint_info['epoch']
-        
-        # Calculate if we completed the previous epoch
-        train_size = int(0.8 * len(dataset))  # Same split as in training
-        steps_per_epoch = train_size // batch_size
-        completed_epochs = global_step // steps_per_epoch
-        
-        # Check if we completed the current epoch
-        if global_step >= (start_epoch + 1) * steps_per_epoch:
-            # We completed this epoch, start the next one
-            start_epoch += 1
-        
-        # Get detailed checkpoint info for display
-        detailed_info = get_checkpoint_info(checkpoint_path, device)
-        
-        if args.is_master:
-            print(f"Resumed from checkpoint:")
-            print(f"  Epoch: {start_epoch}")
-            print(f"  Global Step: {global_step}")
-            print(f"  Checkpoint format: {detailed_info['format']}")
-            print(f"  Note: Using non-strict loading to handle model architecture differences")
-            
-            # Show loss and metrics if available
-            if 'loss' in detailed_info:
-                print(f"  Loss: {detailed_info['loss']:.8f}")
-            if 'jaccard_loss' in detailed_info:
-                print(f"  Jaccard Loss: {detailed_info['jaccard_loss']:.8f}")
-                
-            # Get learning rate
-            lr_value = detailed_info.get('learning_rate', get_lr(optimizer))
-            print(f"  Learning Rate: {lr_value:.8f}")
-            print(f"  Steps per epoch: {steps_per_epoch}")
-            print(f"  Completed epochs: {completed_epochs}")
-            print(f"  Resuming from epoch: {start_epoch}")
-    elif args.test_mode and args.is_master:
-        print("Test mode enabled, skipping checkpoint loading")
+    output_directory = os.environ.get("CHECKPOINT_ARTIFACT_PATH", "checkpoints")
+    saver = AtomicDirectory(output_directory=output_directory, is_master=args.is_master)
+
+    # set the checkpoint_path if there is one to resume from
+    checkpoint_path = None
+    latest_symlink_file_path = os.path.join(output_directory, saver.symlink_name)
+    if os.path.islink(latest_symlink_file_path):
+        latest_checkpoint_path = os.readlink(latest_symlink_file_path)
+        checkpoint_path = os.path.join(latest_checkpoint_path, "checkpoint.pt")
+
+    if checkpoint_path:
+        timer.report(f"Loading checkpoint from {checkpoint_path}")
+        checkpoint = torch.load(checkpoint_path, map_location=f"cuda:{args.device_id}")
+        model.module.load_state_dict(checkpoint["model"])
+        optimizer.load_state_dict(checkpoint["optimizer"])
+        start_epoch = checkpoint["epoch"]
+        global_step = checkpoint["global_step"]
 
     # Split the dataset into train and test sets
     if args.is_master:
@@ -737,8 +587,8 @@ def main():
     
     # Create samplers based on distributed mode
     if is_distributed:
-        train_sampler = DistributedSampler(train_dataset)
-        test_sampler = DistributedSampler(test_dataset)
+        train_sampler = InterruptableDistributedSampler(train_dataset)
+        test_sampler = InterruptableDistributedSampler(test_dataset)
         
         # Use distributed samplers with DataLoader
         train_dataloader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler)
@@ -977,56 +827,24 @@ def main():
                     log_dict.update(metrics_dict)
                     wandb.log(log_dict)
                 
-                if args.is_master and i % args.checkpoint_steps == 0 and i > 0:
-                    # Import the checkpoint utilities
-                    from checkpoint_utils import save_checkpoint
-                    
-                    # Check for ISC environment - use OUTPUT_PATH if available
-                    if isc_mode and "OUTPUT_PATH" in os.environ:
-                        checkpoint_dir = os.environ["OUTPUT_PATH"]
-                    else:
-                        checkpoint_dir = "checkpoints"
-                    
-                    # Create timestamped filename
-                    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                    checkpoint_filename = f"checkpoint_{timestamp}_{i}.pth"
-                    
-                    # Additional data to include in the checkpoint
-                    additional_data = {
-                        'jaccard_loss': jaccard_loss,
-                        'learning_rate': current_lr,
-                    }
-                    
-                    # Save the checkpoint using our utility function
-                    checkpoint_path = save_checkpoint(
-                        model=model,
-                        optimizer=optimizer,
-                        epoch=epoch,
-                        loss=loss,
-                        global_step=global_step,
-                        output_path=checkpoint_dir,
-                        additional_data=additional_data,
-                        is_master=args.is_master,
-                        filename=checkpoint_filename
-                    )
-                    
-                    # Also save as the resume checkpoint
-                    save_checkpoint(
-                        model=model,
-                        optimizer=optimizer,
-                        epoch=epoch,
-                        loss=loss,
-                        global_step=global_step,
-                        output_path=checkpoint_dir,
-                        additional_data=additional_data,
-                        is_master=args.is_master,
-                        filename="checkpoint_resume.pth"
-                    )
-                    
-                    if writer is not None:
-                        writer.add_text('Checkpoint', f'Saved checkpoint: {checkpoint_path}', global_step)
-                        print(f"Checkpoint saved at step {i} in {checkpoint_path}")
-                        print(f"Resume checkpoint also saved as checkpoint_resume.pth")
+                # Checkpoint saving - following train_chessVision.py reference implementation exactly
+                # Use batch-based triggers like the reference for proper distributed synchronization  
+                batch = i  # Using step counter as batch equivalent for now
+                is_save_batch = (batch + 1) % args.save_steps == 0 # TODO: add is_last_batch to save when last batch of epoch
+                
+                if is_save_batch:
+                    checkpoint_directory = saver.prepare_checkpoint_directory()
+                    if args.is_master:
+                        atomic_torch_save(
+                            {
+                                "model": model.module.state_dict(),
+                                "optimizer": optimizer.state_dict(),
+                                "epoch": epoch,
+                                "global_step": global_step,
+                            },
+                            os.path.join(checkpoint_directory, "checkpoint.pt"),
+                        )
+                    saver.symlink_latest(checkpoint_directory)
             
             global_step += 1
     
@@ -1047,8 +865,8 @@ def main():
         print(f"TRAINING COMPLETED")
         
         # Show different output paths based on environment
-        if isc_mode and "OUTPUT_PATH" in os.environ:
-            print(f"Checkpoints saved to: {os.environ['OUTPUT_PATH']}")
+        if isc_mode and "CHECKPOINT_ARTIFACT_PATH" in os.environ:
+            print(f"Checkpoints saved to: {os.environ['CHECKPOINT_ARTIFACT_PATH']}")
             if "LOSSY_ARTIFACT_PATH" in os.environ:
                 print(f"Logs saved to: {os.environ['LOSSY_ARTIFACT_PATH']}")
         else:

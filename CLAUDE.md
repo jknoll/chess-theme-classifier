@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Using Adam optimizer: `python train.py --optimizer adam`
 - Custom batch size: `python train.py --batch_size 8`
 - Custom epochs: `python train.py --epochs 5`
+- Custom save frequency: `python train.py --save-steps 500` (checkpoints saved every N steps)
 - Legacy single GPU training: `python train_locally_single_gpu.py` (deprecated, use `--single_gpu` flag instead)
 
 ### Model Evaluation
@@ -92,4 +93,4 @@ When performing operations over a large dataset, whether testing, training, eval
 - Add a `--verbose` flag option when you create new scripts. Be sure to put particularly long output behind the verbose flag. `tqdm` output is one example that should be put behind a verbose flag, which you do not invoke unnecessarily for purposes of token efficiency. 
 
 ## Emojis
-Don't use Emojis in code or documentation.
+Do NOT use Emojis in codeDo or documentation, or especially in logs where they may not be decoded properaly by terminals.

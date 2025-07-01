@@ -90,8 +90,9 @@ def save_checkpoint(model, optimizer, epoch, loss, global_step, output_path,
     
     # Save the checkpoint
     checkpoint_path = os.path.join(output_path, filename)
+    logger.info(f"[ATTEMPT] Writing checkpoint to {checkpoint_path}")
     torch.save(checkpoint_data, checkpoint_path)
-    logger.info(f"Checkpoint saved to {checkpoint_path}")
+    logger.info(f"[SUCCESS] Checkpoint successfully saved to {checkpoint_path}")
     
     return checkpoint_path
 
