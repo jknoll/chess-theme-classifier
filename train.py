@@ -75,6 +75,7 @@ def parse_args(args=None):
     parser.add_argument("--save-steps", help="saving interval steps", type=int, default=1000)           
     parser.add_argument("--model-config", help="model config path", type=Path, default="/root/chess-theme-classifier/model_config.yaml")          
     parser.add_argument("--log-on-all-ranks", action='store_true', help="Enable logging on all ranks (default: False)")
+    parser.add_argument("--load-path", help="path to checkpoint.pt file to resume from", type=Path, default="/root/chess-theme-classifier/recover/checkpoint.pt")
     return parser.parse_args(args)
 
 def main():
@@ -610,6 +611,10 @@ def main():
     if os.path.islink(latest_symlink_file_path):
         latest_checkpoint_path = os.readlink(latest_symlink_file_path)
         checkpoint_path = os.path.join(latest_checkpoint_path, "checkpoint.pt")
+    elif args.load_path:
+        # assume user has provided a full path to a checkpoint to resume
+        if os.path.isfile(args.load_path):
+            checkpoint_path = args.load_path
 
     if checkpoint_path:
         timer.report(f"checkpoint-debug: Loading checkpoint from {checkpoint_path}")
