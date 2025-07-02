@@ -1,6 +1,6 @@
 # Model configuration for chess-theme-classifier
 # Based on the winning model architecture from chess-hackathon
-nlayers: 5
+nlayers: 10
 embed_dim: 64
 inner_dim: 320
 attention_dim: 64

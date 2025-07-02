@@ -23,6 +23,7 @@ from metrics import jaccard_similarity, precision_recall_f1, get_classification_
 import wandb
 import torch
 import yaml
+import socket
 
 timer = TimestampedTimer("Imported TimestampedTimer")
 
@@ -73,6 +74,7 @@ def parse_args(args=None):
     parser.add_argument("--grad-accum", help="gradient accumulation steps", type=int, default=6)       
     parser.add_argument("--save-steps", help="saving interval steps", type=int, default=1000)           
     parser.add_argument("--model-config", help="model config path", type=Path, default="/root/chess-theme-classifier/model_config.yaml")          
+    parser.add_argument("--log-on-all-ranks", action='store_true', help="Enable logging on all ranks (default: False)")
     return parser.parse_args(args)
 
 def main():
@@ -90,6 +92,18 @@ def main():
     torch.cuda.set_device(args.device_id)
     device = torch.device(f'cuda:{args.device_id}')
     is_distributed = True
+
+    if args.device_id == 0: # If we are the 0th GPU on the local node (not related to master rank), print the hostname and args
+        hostname = socket.gethostname()
+        print("Hostname:", hostname)
+        print(f"TrainConfig: {args}")
+        print(f"World size: {args.world_size}")
+        print(f"Device ID: {args.device_id}")
+        print(f"Is master: {args.is_master}")
+        print(f"Is distributed: {is_distributed}")
+        print(f"Is single GPU: {args.single_gpu}")
+        print(f"Is test mode: {args.test_mode}")
+        print(f"Is weighted loss: {args.weighted_loss}")
     
     if args.is_master:
         print(f"Using device: {device} with local_rank: {args.device_id} (Running in {'distributed' if is_distributed else 'local'} mode)")
@@ -283,23 +297,23 @@ def main():
             
             if essential_files_exist:
                 if args.is_master:
-                    print(f"✅ Found all essential cache files in {processed_dir}")
+                    print(f"Found all essential cache files in {processed_dir}")
                     
                     # Check optional files for debugging
                     all_monitored_files = truly_essential_files + conditional_aug_files + weighted_loss_files + optional_files
                     missing_optional = [f for f in all_monitored_files if f not in essential_files and not os.path.exists(os.path.join(processed_dir, f))]
                     if missing_optional:
-                        print(f"ℹ️ Some non-essential cache files are missing (this is okay):")
+                        print(f"Some non-essential cache files are missing (this is okay):")
                         for f in missing_optional:
                             print(f"  - {f}")
                     
-                    print(f"⚠️ Training will proceed using pre-processed cache files without CSV")
+                    print(f"Training will proceed using pre-processed cache files without CSV")
                 
                 # Update the csv_file path to use the processed directory
                 csv_file = new_csv_file
                 if args.is_master:
-                    print(f"👉 Using cache files from: {processed_dir}")
-                    print(f"👉 Setting csv_file path to: {csv_file}")
+                    print(f"Using cache files from: {processed_dir}")
+                    print(f"Setting csv_file path to: {csv_file}")
             else:
                 missing_files = [f for f in essential_files if not os.path.exists(os.path.join(processed_dir, f))]
                 
@@ -423,23 +437,23 @@ def main():
     # Use full dataset, full class-conditional, or regular class conditional augmentation
     if args.full_dataset:
         if args.is_master:
-            print(f"🚀 Using full dataset tensor cache (4.9M samples)")
+            print(f"Using full dataset tensor cache (4.9M samples)")
         dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=False, low_memory=low_memory, use_cache=True)
     elif args.full_class_conditional:
         if args.is_master:
-            print(f"⚡ Using full class-conditional augmented dataset (>4.9M samples)")
+            print(f"Using full class-conditional augmented dataset (>4.9M samples)")
         dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=True, low_memory=low_memory, use_cache=True, full_class_conditional=True)
     else:
         if args.is_master:
-            print(f"🔄 Using class conditional augmentation (partial dataset)")
+            print(f"Using class conditional augmentation (partial dataset)")
         dataset = ChessPuzzleDataset(csv_file, class_conditional_augmentation=True, low_memory=low_memory)
     
     # Get the number of labels from the dataset
     num_labels = len(dataset.all_labels)
     if args.is_master:
-        print(f"📊 Dataset loaded successfully:")
-        print(f"   Dataset size: {len(dataset):,} samples")
-        print(f"   Number of unique labels (themes + opening tags): {num_labels}")
+        print(f"Dataset loaded successfully:")
+        print(f" Dataset size: {len(dataset):,} samples")
+        print(f" Number of unique labels (themes + opening tags): {num_labels}")
         if args.full_dataset:
             mode = 'Full dataset cache'
         elif args.full_class_conditional:
@@ -462,15 +476,15 @@ def main():
             if model_config["num_labels"] < num_labels:
                 # If config has fewer labels than dataset, that's a problem
                 if args.is_master:
-                    print(f"⚠️  Warning: num_labels in model_config ({model_config['num_labels']}) is less than dataset ({num_labels})")
-                    print(f"⚠️  Increasing num_labels to match dataset: {num_labels}")
+                    print(f"Warning: num_labels in model_config ({model_config['num_labels']}) is less than dataset ({num_labels})")
+                    print(f"Increasing num_labels to match dataset: {num_labels}")
                 model_config["num_labels"] = num_labels
             elif model_config["num_labels"] > num_labels:
                 # Using larger model (from full dataset) with smaller dataset (test mode)
                 if args.is_master:
-                    print(f"ℹ️  Using full model architecture with {model_config['num_labels']} output labels")
-                    print(f"ℹ️  Current dataset only has {num_labels} labels (likely using test dataset)")
-                    print(f"ℹ️  Extra outputs will be ignored during training")
+                    print(f"Using full model architecture with {model_config['num_labels']} output labels")
+                    print(f"Current dataset only has {num_labels} labels (likely using test dataset)")
+                    print(f"Extra outputs will be ignored during training")
         else:
             # No num_labels in config, use the dataset's value
             model_config["num_labels"] = num_labels
@@ -497,6 +511,7 @@ def main():
     # Wrap model in DDP if running in distributed mode
     if is_distributed:
         model = DDP(model, device_ids=[args.device_id])
+        print(f"checkpoint-debug: Using DDP with device_ids: {args.device_id}")
     # In local mode, we can use DataParallel if multiple GPUs are available
     elif torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs with DataParallel")
@@ -553,34 +568,17 @@ def main():
     def get_lr(optimizer):
         for param_group in optimizer.param_groups:
             return param_group['lr']
-    
-    # Import the checkpoint utilities
-    from checkpoint_utils import load_checkpoint, get_checkpoint_info
 
-    output_directory = os.environ.get("CHECKPOINT_ARTIFACT_PATH", "checkpoints")
-    saver = AtomicDirectory(output_directory=output_directory, is_master=args.is_master)
-
-    # set the checkpoint_path if there is one to resume from
-    checkpoint_path = None
-    latest_symlink_file_path = os.path.join(output_directory, saver.symlink_name)
-    if os.path.islink(latest_symlink_file_path):
-        latest_checkpoint_path = os.readlink(latest_symlink_file_path)
-        checkpoint_path = os.path.join(latest_checkpoint_path, "checkpoint.pt")
-
-    if checkpoint_path:
-        timer.report(f"Loading checkpoint from {checkpoint_path}")
-        checkpoint = torch.load(checkpoint_path, map_location=f"cuda:{args.device_id}")
-        model.module.load_state_dict(checkpoint["model"])
-        optimizer.load_state_dict(checkpoint["optimizer"])
-        start_epoch = checkpoint["epoch"]
-        global_step = checkpoint["global_step"]
+    #########################################################
+    # Dataset and Dataloader setup
+    #########################################################
 
     # Split the dataset into train and test sets
     if args.is_master:
         print("Splitting dataset into train and test sets...")
         
     random_generator = torch.Generator().manual_seed(42)
-    train_dataset, test_dataset = random_split(dataset, [0.8, 0.2], generator=random_generator)
+    train_dataset, test_dataset = random_split(dataset, [0.85, 0.15], generator=random_generator)
     
     if args.is_master:
         timer.report(f"Initialized datasets with {len(train_dataset):,} training and {len(test_dataset):,} test board evaluations.")
@@ -599,6 +597,31 @@ def main():
         test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
         # Define dummy sampler for local mode so we can call set_epoch without errors
         train_sampler = type('DummySampler', (), {'set_epoch': lambda self, epoch: None})()
+
+    #########################################################
+    # Checkpoint loading
+    #########################################################
+    output_directory = os.environ.get("CHECKPOINT_ARTIFACT_PATH", "checkpoints")
+    saver = AtomicDirectory(output_directory=output_directory, is_master=args.is_master)
+
+    # set the checkpoint_path if there is one to resume from
+    checkpoint_path = None
+    latest_symlink_file_path = os.path.join(output_directory, saver.symlink_name)
+    if os.path.islink(latest_symlink_file_path):
+        latest_checkpoint_path = os.readlink(latest_symlink_file_path)
+        checkpoint_path = os.path.join(latest_checkpoint_path, "checkpoint.pt")
+
+    if checkpoint_path:
+        timer.report(f"checkpoint-debug: Loading checkpoint from {checkpoint_path}")
+        checkpoint = torch.load(checkpoint_path, map_location=f"cuda:{args.device_id}")
+        model.module.load_state_dict(checkpoint["model"])
+        optimizer.load_state_dict(checkpoint["optimizer"])
+        train_dataloader.sampler.load_state_dict(checkpoint["train_sampler"])
+        test_dataloader.sampler.load_state_dict(checkpoint["test_sampler"])
+        start_epoch = checkpoint["epoch"]
+        global_step = checkpoint["global_step"]
+        print(f"checkpoint-debug: Loaded checkpoint from {checkpoint_path}")
+        print(f"checkpoint-debug: Starting from epoch {start_epoch} and global step {global_step}")
         
     if args.is_master:
         print(f"Using batch size: {batch_size}")
@@ -615,6 +638,7 @@ def main():
         
     for epoch in range(start_epoch, max_epochs):
         train_sampler.set_epoch(epoch)  # Important for proper shuffling
+        test_dataloader.sampler.set_epoch(epoch)
         
         for i, data in enumerate(train_dataloader, 0):
             # Check if we should stop early for testing with large datasets
@@ -640,12 +664,9 @@ def main():
             # Update learning rate
             for g in optimizer.param_groups:
                 g['lr'] = current_lr
-
-            # Use debug mode for the first batch of the first epoch or first 5 batches
-            debug_mode = (epoch == start_epoch and (i == 0 or i < 5))
             
             # Print detailed info for the very first batch
-            detailed_debug = (epoch == start_epoch and i == 0)
+            detailed_debug = False #(epoch == start_epoch and i == 0)
             
             if detailed_debug:
                 print("\n--------- Detailed Debug Information ---------")
@@ -658,13 +679,7 @@ def main():
                     print(f"Underlying model: {type(model.module).__name__}")
                 
             outputs = model(inputs, debug=detailed_debug)
-            
-            # Debug shape issues
-            if debug_mode:
-                print(f"\nBatch {i}: Model output shape: {outputs.shape}")
-                print(f"Batch {i}: Labels shape: {labels.shape}")
-                print(f"Batch {i}: Batch size: {batch_size}")
-                print(f"Batch {i}: Number of labels: {num_labels}")
+    
             
             # Handle shape issues when using full model with smaller dataset
             if outputs.shape[1] > labels.shape[1]:
@@ -718,10 +733,10 @@ def main():
                 
             # Calculate Jaccard similarity with detailed debugging on first batch of first epoch
             # Force verbose mode for the first few batches regardless of dataset mode
-            debug_jaccard = detailed_debug or (i < 3 and epoch == start_epoch)
+            debug_jaccard = False # detailed_debug or (i < 3 and epoch == start_epoch)
             
             # Add additional diagnostics for the first batch
-            if i == 0 and epoch == start_epoch:
+            if False: # i == 0 and epoch == start_epoch:
                 # Print statistics about the predictions and targets
                 print("\n----- JACCARD SIMILARITY DIAGNOSTICS -----")
                 print(f"Output probabilities - min: {output_probs.min().item():.4f}, max: {output_probs.max().item():.4f}, mean: {output_probs.mean().item():.4f}")
@@ -748,7 +763,11 @@ def main():
                                              adaptive_threshold=True, verbose=debug_jaccard)
             
             # Calculate precision, recall, F1 metrics (every 100 steps to avoid overhead)
-            calculate_detailed_metrics = (i % 10 == 0)
+            
+            #########################################################
+            # Disabled for checkpoint-debug purposes but needed for tensorboard classification graphs
+            #########################################################
+            calculate_detailed_metrics = False #(i % 100 == 0)
             
             loss.backward()
             optimizer.step()
@@ -757,9 +776,9 @@ def main():
             running_loss = loss.item()
             running_jaccard_index = jaccard_loss.item()
             
-            if args.is_master:  # Only log on master process
+            if args.is_master or args.log_on_all_ranks:  # Only log on master process
                 current_lr = get_lr(optimizer)
-                print(f"epoch: {epoch}/{max_epochs-1} step: {i+1} lr: {current_lr:.8f} loss: {running_loss:.8f} jaccard index: {running_jaccard_index:.8f}")
+                print(f"epoch: {epoch}/{max_epochs-1} step: {global_step+1} lr: {current_lr:.8f} loss: {running_loss:.8f} jaccard index: {running_jaccard_index:.8f}")
                 
                 # Calculate precision, recall, F1 periodically (to reduce computational overhead)
                 metrics_dict = {}
@@ -791,19 +810,6 @@ def main():
                         "f1_weighted": f1_weighted
                     }
                     print(f"epoch: {epoch} step: {i} metrics_dict: {metrics_dict}")
-                    
-                    # Generate and log full classification report every 1000 steps
-                    if i % 1000 == 0:
-                        # Get label names for the report
-                        label_names = dataset.all_labels
-                        report = get_classification_report(
-                            output_probs, labels, threshold=0.5, labels=label_names,
-                            verbose=(i == 0 and epoch == start_epoch)  # Verbose on first report
-                        )
-                        print("\nClassification Report:")
-                        print(report)
-                        if writer is not None:
-                            writer.add_text('Classification Report', report, global_step)
                 
                 if writer is not None:
                     writer.add_scalar('Loss/train', running_loss, global_step)
@@ -827,24 +833,47 @@ def main():
                     log_dict.update(metrics_dict)
                     wandb.log(log_dict)
                 
+                #########################################################
+                # Checkpoint saving; all ranks must participate in preparing the checkpoint directory, only master rank saves the checkpoint, then all ranks must finalize.
+                # This is currently behind an is_master flag, which is overridden by log_on_all_ranks. I should refactor to move this out of the presumed logging code,
+                # which is incorrectly also handling checkpoint saving.
+                #########################################################
+
                 # Checkpoint saving - following train_chessVision.py reference implementation exactly
                 # Use batch-based triggers like the reference for proper distributed synchronization  
                 batch = i  # Using step counter as batch equivalent for now
                 is_save_batch = (batch + 1) % args.save_steps == 0 # TODO: add is_last_batch to save when last batch of epoch
-                
+                print(f"checkpoint-debug: is_save_batch: {is_save_batch}")
+
                 if is_save_batch:
+
+                    print(f"checkpoint-debug: calling prepare_checkpoint_directory")
+                    
+                    # prepare the checkpoint directory - called by ALL ranks
                     checkpoint_directory = saver.prepare_checkpoint_directory()
+                    print(f"checkpoint-debug: checkpoint_directory: {checkpoint_directory}")
+                    print(f"checkpoint-debug: prepare_checkpoint_directory done")
+
+                    # saving files to the checkpoint_directory - called by MASTER rank only
                     if args.is_master:
+                        print(f"checkpoint-debug: calling atomic_torch_save")
                         atomic_torch_save(
                             {
                                 "model": model.module.state_dict(),
                                 "optimizer": optimizer.state_dict(),
                                 "epoch": epoch,
+                                "train_sampler": train_dataloader.sampler.state_dict(),
+                                "test_sampler": test_dataloader.sampler.state_dict(),
                                 "global_step": global_step,
                             },
                             os.path.join(checkpoint_directory, "checkpoint.pt"),
                         )
+                        print(f"checkpoint-debug: atomic_torch_save done")    
+                    print(f"checkpoint-debug: calling saver.symlink_latest")
+
+                    # finalizing checkpoint with symlink - called by ALL ranks
                     saver.symlink_latest(checkpoint_directory)
+                    print(f"checkpoint-debug: saver.symlink_latest done")
             
             global_step += 1
     
