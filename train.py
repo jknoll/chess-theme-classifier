@@ -765,9 +765,9 @@ def main():
             # Calculate precision, recall, F1 metrics (every 100 steps to avoid overhead)
             
             #########################################################
-            # Disabled for checkpoint-debug purposes but needed for tensorboard classification graphs
+            # Needed for tensorboard classification performance (F1, Precision, Recall) graphs
             #########################################################
-            calculate_detailed_metrics = False #(i % 100 == 0)
+            calculate_detailed_metrics = (i % 100 == 0)
             
             loss.backward()
             optimizer.step()
@@ -776,6 +776,7 @@ def main():
             running_loss = loss.item()
             running_jaccard_index = jaccard_loss.item()
             
+            # NOTE: log_on_all_ranks is currently required for checkpoint saving to work correctly. We need to detangle logging and checkpoint saving.
             if args.is_master or args.log_on_all_ranks:  # Only log on master process
                 current_lr = get_lr(optimizer)
                 print(f"epoch: {epoch}/{max_epochs-1} step: {global_step+1} lr: {current_lr:.8f} loss: {running_loss:.8f} jaccard index: {running_jaccard_index:.8f}")
@@ -784,18 +785,15 @@ def main():
                 metrics_dict = {}
                 if calculate_detailed_metrics:
                     # Calculate precision, recall, F1 with different averaging methods
-                    # Turn on verbose mode for the first calculation in each epoch
-                    first_in_epoch = (i == 0 and epoch == start_epoch)
                     
-                    # First batch of each epoch uses verbose mode to show progress
                     precision_micro, recall_micro, f1_micro = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='micro', verbose=True, adaptive_threshold=True
+                        output_probs, labels, threshold=0.5, average='micro', verbose=False, adaptive_threshold=True
                     )
                     precision_macro, recall_macro, f1_macro = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='macro', verbose=True, adaptive_threshold=True
+                        output_probs, labels, threshold=0.5, average='macro', verbose=False, adaptive_threshold=True
                     )
                     precision_weighted, recall_weighted, f1_weighted = precision_recall_f1(
-                        output_probs, labels, threshold=0.5, average='weighted', verbose=True, adaptive_threshold=True
+                        output_probs, labels, threshold=0.5, average='weighted', verbose=False, adaptive_threshold=True
                     )
                     
                     metrics_dict = {
@@ -809,7 +807,7 @@ def main():
                         "recall_weighted": recall_weighted,
                         "f1_weighted": f1_weighted
                     }
-                    print(f"epoch: {epoch} step: {i} metrics_dict: {metrics_dict}")
+                    # print(f"epoch: {epoch} step: {i} metrics_dict: {metrics_dict}")
                 
                 if writer is not None:
                     writer.add_scalar('Loss/train', running_loss, global_step)
