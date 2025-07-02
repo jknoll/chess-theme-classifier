@@ -1,6 +1,6 @@
 isc_project_id = "294d3f8b-a3e6-4b1a-8da7-7be1ee611845"
 experiment_name = "chess-theme-classifier-full-conditional"
-gpus = 32
+gpus = 16
 output_path = "/root/outputs/chessThemeClassifier"
 dataset_id_list = ["uds-flicker-ash-stoat-250627"]
 compute_mode = "interruptible"
@@ -8,4 +8,4 @@ command = '''
 source /root/chess-theme-classifier/.chess-theme-classifier/bin/activate && 
 cd /root/chess-theme-classifier/ && 
 torchrun --nnodes=$NNODES --nproc-per-node=$N_PROC --master_addr=$MASTER_ADDR --master_port=$MASTER_PORT --node_rank=$RANK 
-train.py --full_class_conditional --epochs 10 --dataset-id uds-flicker-ash-stoat-250627 --grad-accum 6 --save-steps 1000 --model-config model_config.yaml --log-on-all-ranks'''
+train.py --full_class_conditional --epochs 10 --dataset-id uds-flicker-ash-stoat-250627 --grad-accum 6 --save-steps 50 --model-config model_config.yaml --log-on-all-ranks'''

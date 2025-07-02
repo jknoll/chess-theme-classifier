@@ -763,13 +763,9 @@ def main():
                 for s in range(num_samples):
                     print(f"  Sample {s}: {labels[s, :num_features].cpu().tolist()}")
                 print("-----------------------------------------\n")
-            
-            jaccard_loss = jaccard_similarity(output_probs, labels, threshold=0.5, 
-                                             adaptive_threshold=True, verbose=debug_jaccard)
-            
-            # Calculate precision, recall, F1 metrics (every 100 steps to avoid overhead)
-            
+                   
             #########################################################
+            # Calculate precision, recall, F1 metrics (every 100 steps to avoid overhead)
             # Needed for tensorboard classification performance (F1, Precision, Recall) graphs
             #########################################################
             calculate_detailed_metrics = (i % 100 == 0)
@@ -779,7 +775,12 @@ def main():
 
             # print statistics
             running_loss = loss.item()
-            running_jaccard_index = jaccard_loss.item()
+            running_jaccard_index = 0.0
+            
+            if calculate_detailed_metrics:
+                jaccard_loss = jaccard_similarity(output_probs, labels, threshold=0.5, 
+                                             adaptive_threshold=True, verbose=debug_jaccard)
+                running_jaccard_index = jaccard_loss.item()
             
             # NOTE: log_on_all_ranks is currently required for checkpoint saving to work correctly. We need to detangle logging and checkpoint saving.
             if args.is_master or args.log_on_all_ranks:  # Only log on master process
