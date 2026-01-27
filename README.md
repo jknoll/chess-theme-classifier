@@ -1,299 +1,397 @@
-
+# Chess Theme Classifier
 
 ![CI](https://github.com/jknoll/chess-theme-classifier/actions/workflows/test.yml/badge.svg)
 
-# Introduction
+**Multi-label CNN classifier for chess puzzle themes and openings**
 
-This project implements a deep convolutional neural network to perform multi-label classification on board positions sourced from the lichess puzzles dataset. Each board position is labeled with applicable themes (for example, _back rank mate_, _zugzwang_, _advanced pawn_, etc.) as well as openings, if relevant (for example, _Sicilian Defense_, _The English_, etc.) Instructions are included for training and evaluating the mode, along with a trained checkpoint.
+1,616 labels | ~5M training samples | Best F1: 0.99
 
-The lichess puzzle database snapshot contains about 5M labeled boards as of 2025-06-24. The lichess site itself may have a newer/larger .csv available, but we will defer download and regeneration for now:
-`4956460 processed_lichess_puzzle_files/lichess_db_puzzle.csv`
+---
 
-## Get Started
+## Results
+
+This model classifies chess board positions into themes (tactical patterns, game phases) and openings. Performance varies by category, with game-phase themes achieving near-perfect classification and tactical patterns showing moderate accuracy.
+
+### Theme Classification Performance
+
+| Theme | F1 Score | Support |
+|-------|----------|---------|
+| pawnEndgame | 0.99 | 307 |
+| endgame | 0.98 | 4,795 |
+| middlegame | 0.96 | 4,628 |
+| queenEndgame | 0.95 | 119 |
+| rookEndgame | 0.93 | 550 |
+| opening | 0.88 | 553 |
+| short | 0.69 | 5,237 |
+| bishopEndgame | 0.64 | 127 |
+| queenRookEndgame | 0.63 | 83 |
+| crushing | 0.63 | 3,974 |
+| mate | 0.60 | 2,877 |
+| advantage | 0.54 | 2,957 |
+| backRankMate | 0.44 | 338 |
+| long | 0.41 | 2,497 |
+| mateIn2 | 0.37 | 1,272 |
+
+### Opening Classification Performance
+
+| Opening | F1 Score | Support |
+|---------|----------|---------|
+| Sicilian Defense | 0.32 | 317 |
+| Italian Game | 0.29 | 129 |
+| Ruy Lopez | 0.19 | 70 |
+| Russian Game | 0.17 | 35 |
+| English Opening | 0.15 | 83 |
+| French Defense | 0.13 | 131 |
+| Caro-Kann Defense | 0.13 | 121 |
+| Queens Pawn Game | 0.13 | 126 |
+| Scandinavian Defense | 0.11 | 75 |
+| Kings Indian Defense | 0.08 | 16 |
+
+Opening recognition is more challenging due to the large number of similar variations and the diminishing positional signatures as games progress.
+
+---
+
+## Visualizations
+
+### Theme Performance Chart
+![Theme F1 Scores](analysis/f1/themes_threshold_0_2921_samples_10000_date_20250624-090809_chart.png)
+
+### Opening Performance Chart
+![Opening F1 Scores](analysis/f1/openings_threshold_0_2921_samples_10000_date_20250624-090809_chart.png)
+
+### F1 vs Support Scatter Plot
+![F1 vs Support](analysis/scatter/f1_vs_support_scatter.png)
+
+### Precision-Recall Curves
+
+High-performing themes show near-ideal PR curves:
+
+| pawnEndgame (F1: 0.99) | mate (F1: 0.60) |
+|------------------------|-----------------|
+| ![pawnEndgame PR](analysis/pr-curves/0.99_pawnEndgame_pr_curve.png) | ![mate PR](analysis/pr-curves/0.60_mate_pr_curve.png) |
+
+### Data Augmentation Example
+
+Horizontal reflection is used for class-conditional augmentation:
+
+| Original | Reflected |
+|----------|-----------|
+| ![Original](original_board.png) | ![Reflected](reflected_board.png) |
+
+---
+
+## Model Architecture
+
+**Type:** CNN with Attention and Residual Blocks
+
+| Parameter | Value |
+|-----------|-------|
+| Layers | 10 |
+| Embedding Dimension | 64 |
+| Inner Dimension | 320 |
+| Attention Dimension | 64 |
+| Dropout | 50% |
+| Input | 8x8 board (13 piece vocabulary) |
+| Output | 1,616 labels (sigmoid multi-label) |
+
+The architecture uses dilated convolutions with exponentially increasing receptive fields, interleaved with self-attention layers for capturing long-range piece relationships.
+
+---
+
+## How It Works
+
+### Data Pipeline
+
+1. **FEN parsing**: Chess positions in FEN notation are converted to 8x8 integer tensors (0-12 piece vocabulary)
+2. **Tensor caching**: Preprocessed tensors are cached to disk for fast subsequent access
+3. **Class-conditional augmentation**: Underrepresented themes are augmented via horizontal board reflection
+
+### Multi-Label Classification
+
+Each position can have multiple themes (e.g., "mate", "backRankMate", "short") and one opening. The model outputs independent sigmoid probabilities for each of 1,616 labels.
+
+### Class Imbalance Handling
+
+- **Augmentation**: Selective horizontal flipping for rare theme combinations
+- **Weighted loss**: Optional per-class loss weighting based on frequency
+- **Adaptive thresholding**: Per-class optimal thresholds derived from PR curves
+
+---
+
+## Quick Start
+
+### Installation
+
 ```bash
-apt update && apt install -y python3-dev python3-pip python3-virtualenv git nano
+apt update && apt install -y python3-dev python3-pip python3-virtualenv git
 git clone git@github.com:jknoll/chess-theme-classifier.git
 cd chess-theme-classifier
 ```
 
-## Create Virtualenv
+### Create Virtual Environment
+
 ```bash
 python -m venv .chess-theme-classifier
 source .chess-theme-classifier/bin/activate
 ```
 
-Note: on a non-clean system (i.e. one which already has other dependencies installed) this results in `python not found`, but `python3` is available. Then attempting the `venv create` line above with `python3` results in an error suggesting `apt install python3.10-venv`.
+Note: On systems where `python` is not found but `python3` is available, you may need `apt install python3.10-venv`.
 
-## Install Dependencies
+### Install Dependencies
+
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## Get Lichess Chess Puzzles Dataset
+---
+
+## Dataset
+
+The model is trained on the lichess puzzle database (~5M labeled positions as of 2025-06-24).
 
 ### Option 1: Download and Process Raw Dataset
+
 ```bash
 wget https://database.lichess.org/lichess_db_puzzle.csv.zst
 sudo apt install -y zstd
 unzstd lichess_db_puzzle.csv.zst
 ```
 
-To generate the tensor cache from the downloaded .csv, place it inside `processed_lichess_puzzle_files` and then call:
+To generate the tensor cache from the downloaded CSV:
 
 ```bash
 python create_full_dataset_cache.py
 ```
 
-It should also be possible to place it there and simply instantiate a ChessPuzzleDataset, but the method above is more recently tested.
+### Option 2: Download Pre-processed Dataset from S3 (Recommended)
 
-### Option 2: Download Pre-processed Dataset from  (Recommended)
-The pre-processed dataset includes cached tensors and other derived files which significantly speed up training by avoiding redundant preprocessing.
+The pre-processed dataset includes cached tensors for faster training.
 
-You'll need to set up AWS credentials with access to the S3 bucket. You can do this in several ways:
+**Set up AWS credentials:**
 
-1. Using environment variables:
 ```bash
+# Option A: Environment variables
 export AWS_ACCESS_KEY_ID="your_access_key"
 export AWS_SECRET_ACCESS_KEY="your_secret_key"
-```
 
-2. Using the AWS CLI (if installed):
-```bash
+# Option B: AWS CLI
 pip install awscli
 aws configure
-```
 
-3. Creating a credentials file at `~/.aws/credentials`:
-```
+# Option C: Credentials file (~/.aws/credentials)
 [default]
 aws_access_key_id = your_access_key
 aws_secret_access_key = your_secret_key
 ```
 
-#### Download the Dataset
-Run the provided download script:
+**Download:**
+
 ```bash
 python download_dataset.py
+python download_dataset.py --output-dir custom_directory  # custom location
+python download_dataset.py --threads 8 --verify           # parallel + verify
 ```
 
-This will download all processed dataset files to the `processed_lichess_puzzle_files` directory. You can specify a different output directory:
-```bash
-python download_dataset.py --output-dir custom_directory
-```
+---
 
-Additional options:
-```
---threads N     Use N threads for parallel downloads (default: 4)
---verify        Verify that all critical files were downloaded successfully
-```
+## Training
 
-After downloading, the training scripts will automatically detect and use these pre-processed files.
+### Verify Setup
 
-## Verify Training
-Test the training loop with a small test dataset
+Test the training loop with a small dataset:
+
 ```bash
 python train.py --local --test_mode
 ```
 
-## Training Notes
-### Distributed Training
-To train in DistributedDataParallel mode on a multi-GPU system:
+### Distributed Training (Multi-GPU)
 
-```bash 
+```bash
 torchrun --nproc_per_node=[NUM_GPUs] train.py
 ```
 
-### Local Training (default 10 epochs)
-To train on a single machine (will auto-detect if being run with distributed tools or not):
-```bash 
+### Local Training
+
+```bash
 python train.py
+python train.py --local       # force local mode
+python train.py --distributed # force distributed mode
 ```
 
-### Force Training Mode
-You can force a specific training mode regardless of environment:
-```bash
-# Force local mode (even if run with torchrun)
-python train.py --local
+### Training Arguments
 
-# Force distributed mode (will fail if no GPUs available)
-python train.py --distributed
-```
+| Argument | Description |
+|----------|-------------|
+| `--test_mode` | Run with smaller dataset for testing |
+| `--wandb` | Enable Weights & Biases logging |
+| `--project` | W&B project name (default: chess-theme-classifier) |
+| `--name` | W&B run name |
+| `--checkpoint_steps` | Steps between checkpoints (default: 50000) |
 
-### Additional Training Arguments
-```
---test_mode      Run with a smaller dataset for testing
---wandb          Enable Weights & Biases logging
---project        Weights & Biases project name (default: chess-theme-classifier)
---name           Weights & Biases run name
---checkpoint_steps  Number of steps between saving checkpoints (default: 50000)
-```
+---
 
-The test mode dataset is not specially constructed in any way. It is merely the first _n_ lines of the full dataset. 
+## Evaluation
 
-## Testing Performance
-Generate a co-occurrence matrix for testing with:
-```bash
-$ python3 test.py
-```
+### Recommended: Per-Class Metrics
 
-Optional parameters:
-```
---num_samples Number of samples to test (default: 1000)
---threshold Prediction threshold for classification (default: 0.3)'
---checkpoint Checkpoint file to use for testing
-```
-
-## Tensorized Dataset
-The original dataset is a lichess puzzle CSV file. The training script and dataset class will parse this file and generate a set of board tensors and other dataset cache files. For example, the list of all classes, that is, themes and openings found in the input dataset as separate cache files. If the CSV file is not found, these cache files are found by default in `./processed_chess_puzzle_files`. Then training will run with these as input. 
-
-## Class Imbalance and Corrected Dataset
-The dataset is class-imbalanced by default. There is a long-tail distribution of examples of particular openings (especially specialized branches of rarer openings) and of particular themes. We have generated 
-
-The class balanced version is represented by the file with _conditional suffix: `lichess_db_puzzle_test.csv.tensors.pt_conditional`.
-
-  This file contains the result of applying class-conditional augmentation to address class imbalance in the chess theme classification dataset. The augmentation process selectively applies
-   horizontal flipping only to underrepresented theme combinations, as documented in the class_imbalance_work_breakdown.md file.
-
-  The augmented indices are tracked in the file lichess_db_puzzle_test.csv.tensors.pt_conditional.augmented_indices.json.
-
-  Here's a complete set of commands to run with the class-balanced dataset and weighted loss:
-
-## Complete Loop with Corrected Dataset
-
-### First, activate the virtual environment
-```bash
-source .chess-theme-classifier/bin/activate
-```
-### Generate the class conditional augmentation for the test dataset. This will create the class-balanced tensor cache.
-```bash
-python -c "from dataset import ChessPuzzleDataset; ChessPuzzleDataset('lichess_db_puzzle_test.csv', class_conditional_augmentation=True)"
-```
-
-### Run training with the class-balanced test dataset and weighted loss enabled
-```bash
-python train_locally_single_gpu.py --test_mode --weighted_loss
-```
-
-When running with both the class-balanced dataset and weighted loss, we see very unstable training. For example, Jaccard similarity will drop to zero and then spike up to very high values repeatedly.
-
-### To view the co-occurrence matrices for the class-balanced dataset
-```bash
-python -c 'import json; import pprint; with open("lichess_db_puzzle_test.csv.cooccurrence.json", "r") as f: 
-pprint.pprint(json.load(f))'
-```
-
-This sequence will first generate the conditional augmentation for the small test dataset, then run the training with both class balancing (through the
-conditional augmentation) and cost-sensitive learning (via weighted loss), and finally display the co-occurrence data for analysis.
-
-### Class-Imbalance-Considerate Metrics
-
- Micro Averaging
-
-
-  - Calculation: Aggregates all true positives, false positives, and false negatives across all classes before calculating metrics
-  - Emphasis: Gives equal weight to each sample-class pair, favoring performance on common themes
-  - When to use: Best when you want to assess overall effectiveness across all predictions
-  - Example: If your classifier is great at detecting common themes like "mate" but struggles with rare ones, micro metrics will look good
-
-  Macro Averaging
-
-  - Calculation: Calculates metrics for each class independently, then takes the unweighted average
-  - Emphasis: Each chess theme contributes equally regardless of frequency
-  - When to use: When performance on rare themes is as important as common ones
-  - Example: Lower macro than micro scores indicate your model performs worse on rare chess themes
-
-  Weighted Averaging
-
-  - Calculation: Takes a weighted average of per-class metrics, with weights proportional to class frequency
-  - Emphasis: Balances between micro and macro, giving more influence to common themes
-  - When to use: When you want a balanced view that still reflects dataset distribution
-  - Example: Similar weighted and micro scores but lower macro scores suggest your model performs well overall but struggles with some rare themes
-
-  These averages apply to precision (correct predictions/total predictions), recall (correct predictions/actual positives), and F1 (harmonic mean
-  of precision and recall). In your multi-label chess theme context, they help evaluate how well your model identifies all relevant themes for each 
-  position.
-
-### train.py vs. train-isc.py
-There are currently two separate scripts for training locally versus on the strong Compute ISC. We have undertaken to deduplicate them, and currently `train.py` can be referenced in `chessVision.isc`. Training completes successfully. The train-isc.py script should be considered deprecated. 
-
-### Test Automation
-See ['tests/README.md']('./tests/README.md') for details.
-
-Tests inside /tests run on every push and pull request via github actions, as defined in ['.github/workflows/test.yml']('.github/workflows/test.yml') There are some other tests located in the project root directory, which are preserved for historical purposes. Only those tests within `/tests` should be considered maintained. 
-
-```bash
-python -m pytest /tests
-```
-
-### Model Evaluation
-
-We have several scripts for model evaluation:
-
-#### evaluate_model_metrics.py (Recommended)
-
-This will calculate per class and global adaptive thresholds and save related CSVs in `analysis/f1`. 
+Generate per-class and global adaptive thresholds:
 
 ```bash
 python evaluate_model_metrics.py
 ```
 
-You can follow Up when this run is complete and generate precision-recall curves which will be output in `analysis/pr-curves`
+Generate precision-recall curves (run after metrics):
+
 ```bash
 python evaluate_model_metrics_pr_curves.py
 ```
 
-
-#### evaluate_model_classification.py
-
-This is the primary evaluation script with improved adaptive thresholding, optimized performance, and better token efficiency.
+### Classification Evaluation
 
 ```bash
-# With adaptive thresholding (default)
+# Adaptive thresholding (default)
 python evaluate_model_classification.py --num_samples=100
 
-# With fixed threshold
+# Fixed threshold
 python evaluate_model_classification.py --num_samples=100 --threshold=0.3
 
-# With detailed verbose output
+# Verbose output
 python evaluate_model_classification.py --num_samples=50 --verbose
 
-# Minimize output for token efficiency
+# Minimized output
 python evaluate_model_classification.py --num_samples=100 --quiet
 
-# Use cached tensor files directly instead of test CSV
+# Use cached tensors
 python evaluate_model_classification.py --use_cache
 
-# With specific checkpoint
+# Specific checkpoint
 python evaluate_model_classification.py --checkpoint=checkpoints/my_checkpoint.pth
 ```
 
-#### evaluate_model_fixed.py
+### Other Evaluation Scripts
 
-This script properly maps between training and test dataset indices and supports adaptive thresholding.
+| Script | Purpose |
+|--------|---------|
+| `evaluate_model_fixed.py` | Maps between training/test indices, supports adaptive thresholding |
+| `evaluate_model_simple.py` | Focused on key chess themes |
+| `evaluate_model_cache.py` | Uses cached tensors directly |
 
-```bash
-# With adaptive thresholding
-python evaluate_model_fixed.py --num_samples=50
+See [docs/model_evaluation.md](docs/model_evaluation.md) for detailed documentation.
 
-# With fixed threshold
-python evaluate_model_fixed.py --num_samples=50 --threshold=0.3
+---
+
+## Class Imbalance Handling
+
+### Class-Conditional Augmentation
+
+The augmented dataset uses the `_conditional` suffix:
+
+```
+lichess_db_puzzle_test.csv.tensors.pt_conditional
 ```
 
-#### evaluate_model_simple.py
-
-A simplified evaluation script focused only on key chess themes.
+Generate augmentation for a dataset:
 
 ```bash
-python evaluate_model_simple.py --num_samples=20 --threshold=0.3
+python -c "from dataset import ChessPuzzleDataset; ChessPuzzleDataset('lichess_db_puzzle_test.csv', class_conditional_augmentation=True)"
 ```
 
-#### evaluate_model_cache.py
-
-This script uses cached tensor files directly, bypassing the test CSV completely.
+### Training with Weighted Loss
 
 ```bash
-python evaluate_model_cache.py --num_samples=1000
+python train_locally_single_gpu.py --test_mode --weighted_loss
 ```
 
-See [docs/model_evaluation.md](docs/model_evaluation.md) for detailed information about each evaluation script.
+Note: Combining class-balanced dataset with weighted loss can cause unstable training (Jaccard similarity oscillations).
+
+### View Co-occurrence Matrices
+
+```bash
+python -c 'import json; import pprint; with open("lichess_db_puzzle_test.csv.cooccurrence.json", "r") as f: pprint.pprint(json.load(f))'
+```
+
+---
+
+## Metrics Explanation
+
+### Micro Averaging
+
+- Aggregates all TP, FP, FN across classes before calculating
+- Gives equal weight to each sample-class pair
+- Favors performance on common themes
+
+### Macro Averaging
+
+- Calculates metrics per class, then averages
+- Each theme contributes equally regardless of frequency
+- Use when rare theme performance matters
+
+### Weighted Averaging
+
+- Weighted average of per-class metrics by frequency
+- Balanced view reflecting dataset distribution
+
+---
+
+## Testing
+
+### Unit Tests
+
+```bash
+python -m pytest tests/
+```
+
+Tests run automatically on push/PR via GitHub Actions (see `.github/workflows/test.yml`).
+
+See [tests/README.md](tests/README.md) for details.
+
+---
+
+## Project Structure
+
+```
+chess-theme-classifier/
+|-- train.py                    # Main training script
+|-- model.py                    # CNN architecture
+|-- dataset.py                  # Data loading and caching
+|-- model_config.yaml           # Model hyperparameters
+|-- requirements.txt            # Dependencies
+|-- evaluate_model_*.py         # Evaluation scripts
+|-- create_full_dataset_cache.py
+|-- download_dataset.py
+|
+|-- analysis/
+|   |-- f1/                     # F1 charts and per-class thresholds
+|   |-- pr-curves/              # Precision-recall curves
+|   |-- scatter/                # F1 vs support plots
+|
+|-- checkpoints_pretrained/     # Pre-trained model checkpoints
+|-- processed_lichess_puzzle_files/  # Cached tensors and datasets
+|-- docs/                       # Additional documentation
+|-- tests/                      # Unit tests
+```
+
+---
+
+## Documentation
+
+- [Model Evaluation Guide](docs/model_evaluation.md)
+- [Adaptive Thresholding](docs/adaptive_thresholding.md)
+- [Per-Class Adaptive Thresholding](docs/per-class-adaptive-thresholding.md)
+- [Precision-Recall Curves](docs/precision-recall-curves.md)
+- [Class Imbalance Work](docs/class_imbalance_work_breakdown.md)
+- [Dataset Download from S3](docs/dataset-download-from-s3.md)
+- [Checkpoint Management](docs/loading_and_saving_local_vs_cluster_checkpoints.md)
+
+---
+
+## Notes
+
+### train.py vs train-isc.py
+
+`train.py` supports both local and cluster training. The `train-isc.py` script is deprecated.
+
+### Tensor Cache
+
+The dataset class generates a `.tensors.pt` cache file on first access. Cache validation checks CSV modification time to ensure consistency. Typical speedup is 2-3x for dataset access.
