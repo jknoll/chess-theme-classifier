@@ -134,33 +134,15 @@ This augmentation preserves chess semantics for tactical themes (a mirrored fork
 
 ## Model Architecture
 
-**Type:** CNN with Attention and Residual Blocks
+**Type:** CNN with Attention and Residual Blocks (~3.2M parameters)
 
-![Model Architecture](analysis/model_architecture_diagram.png)
-
-| Parameter | Value |
-|-----------|-------|
-| Layers | 10 |
-| Embedding Dimension | 64 |
-| Inner Dim (Residual) | 320 |
-| Attention Dimension | 64 |
-| Dropout | 50% |
+| Component | Details |
+|-----------|---------|
 | Input | 8x8 board (13 piece vocabulary) |
+| Layers | 10 residual blocks with self-attention |
 | Output | 1,616 labels (sigmoid multi-label) |
 
-### Architecture Details
-
-1. **Input Embedding**: Chess pieces (0-12) are embedded into 64-dimensional vectors
-2. **Residual Blocks**: Each block contains:
-   - 1x1 convolution for channel projection
-   - Batch normalization + ReLU
-   - 3x3 dilated convolution (dilation = 2^layer_index)
-   - Skip connection via 1x1 convolution
-3. **Self-Attention**: After each residual block, a self-attention layer captures long-range piece relationships across the board
-4. **Accumulator**: 8x8 convolution reduces spatial dimensions to 1x1
-5. **Classification Head**: Three fully-connected layers (64->512->256->1616) with dropout
-
-The exponentially increasing dilation (1, 2, 4, 8, ...) allows the model to capture both local piece interactions and global board patterns.
+[View full architecture diagram](docs/model_architecture_diagram.png)
 
 ---
 
