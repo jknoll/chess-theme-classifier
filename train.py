@@ -85,14 +85,32 @@ def main():
     # Check for ISC environment
     isc_mode = "LOSSY_ARTIFACT_PATH" in os.environ
 
-    dist.init_process_group("nccl")
-    rank = int(os.environ["RANK"])
-    args.world_size = int(os.environ["WORLD_SIZE"])
-    args.device_id = int(os.environ["LOCAL_RANK"])
-    args.is_master = rank == 0
-    torch.cuda.set_device(args.device_id)
-    device = torch.device(f'cuda:{args.device_id}')
-    is_distributed = True
+    # Initialize based on single_gpu flag
+    if args.single_gpu:
+        # Single GPU mode - no distributed training
+        is_distributed = False
+        rank = 0
+        args.world_size = 1
+        args.device_id = 0
+        args.is_master = True
+
+        # Use CUDA if available, otherwise CPU
+        if torch.cuda.is_available():
+            torch.cuda.set_device(args.device_id)
+            device = torch.device(f'cuda:{args.device_id}')
+        else:
+            device = torch.device('cpu')
+            print("CUDA not available, using CPU")
+    else:
+        # Distributed training mode
+        dist.init_process_group("nccl")
+        rank = int(os.environ["RANK"])
+        args.world_size = int(os.environ["WORLD_SIZE"])
+        args.device_id = int(os.environ["LOCAL_RANK"])
+        args.is_master = rank == 0
+        torch.cuda.set_device(args.device_id)
+        device = torch.device(f'cuda:{args.device_id}')
+        is_distributed = True
 
     if args.device_id == 0: # If we are the 0th GPU on the local node (not related to master rank), print the hostname and args
         hostname = socket.gethostname()
@@ -105,7 +123,7 @@ def main():
         print(f"Is single GPU: {args.single_gpu}")
         print(f"Is test mode: {args.test_mode}")
         print(f"Is weighted loss: {args.weighted_loss}")
-    
+
     if args.is_master:
         print(f"Using device: {device} with local_rank: {args.device_id} (Running in {'distributed' if is_distributed else 'local'} mode)")
     torch.autograd.set_detect_anomaly(True)
@@ -154,8 +172,20 @@ def main():
         if args.is_master:
             print(f"Using ISC dataset path: {csv_file}")
     else:
-        # Use the local path in the dataset directory
-        csv_file = os.path.join('processed_lichess_puzzle_files', csv_filename)
+        # Try multiple local paths for the dataset
+        possible_paths = [
+            os.path.join('processed_lichess_puzzle_files', csv_filename),
+            os.path.join('dataset', csv_filename),
+            csv_filename,
+        ]
+        csv_file = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                csv_file = path
+                break
+        if csv_file is None:
+            # Default to the first path (will trigger proper error handling in dataset.py)
+            csv_file = possible_paths[0]
         print(f"Using local dataset path: {csv_file}")
     
     if args.is_master:
@@ -508,15 +538,21 @@ def main():
     
     model = Model(**model_config)
     model = model.to(device)
-    
+
     # Wrap model in DDP if running in distributed mode
     if is_distributed:
         model = DDP(model, device_ids=[args.device_id])
         print(f"checkpoint-debug: Using DDP with device_ids: {args.device_id}")
     # In local mode, we can use DataParallel if multiple GPUs are available
-    elif torch.cuda.device_count() > 1:
+    elif torch.cuda.device_count() > 1 and not args.single_gpu:
         print(f"Using {torch.cuda.device_count()} GPUs with DataParallel")
         model = torch.nn.DataParallel(model)
+
+    # Helper to get underlying model (handles DDP, DataParallel, or plain model)
+    def get_model_for_saving(m):
+        if hasattr(m, 'module'):
+            return m.module
+        return m
     
     # Define the loss function and optimizer
     if args.is_master:
@@ -603,7 +639,35 @@ def main():
     # Checkpoint loading
     #########################################################
     output_directory = os.environ.get("CHECKPOINT_ARTIFACT_PATH", "checkpoints")
-    saver = AtomicDirectory(output_directory=output_directory, is_master=args.is_master)
+
+    # Use AtomicDirectory for distributed training, simple saving for single GPU
+    if is_distributed:
+        saver = AtomicDirectory(output_directory=output_directory, is_master=args.is_master)
+    else:
+        # Simple saver for single GPU mode that mimics AtomicDirectory interface
+        class SimpleSaver:
+            def __init__(self, output_dir):
+                self.output_directory = output_dir
+                self.symlink_name = "latest"
+                os.makedirs(output_dir, exist_ok=True)
+
+            def __call__(self):
+                """Context manager that returns a path for saving."""
+                import contextlib
+                @contextlib.contextmanager
+                def save_context():
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+                    save_dir = os.path.join(self.output_directory, f"checkpoint_{timestamp}")
+                    os.makedirs(save_dir, exist_ok=True)
+                    yield save_dir
+                    # Update symlink
+                    symlink_path = os.path.join(self.output_directory, self.symlink_name)
+                    if os.path.islink(symlink_path):
+                        os.unlink(symlink_path)
+                    os.symlink(save_dir, symlink_path)
+                return save_context()
+
+        saver = SimpleSaver(output_directory)
 
     # set the checkpoint_path if there is one to resume from
     checkpoint_path = None
@@ -619,7 +683,7 @@ def main():
     if checkpoint_path:
         timer.report(f"checkpoint-debug: Loading checkpoint from {checkpoint_path}")
         checkpoint = torch.load(checkpoint_path, map_location=f"cuda:{args.device_id}")
-        model.module.load_state_dict(checkpoint["model"])
+        get_model_for_saving(model).load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         train_dataloader.sampler.load_state_dict(checkpoint["train_sampler"])
         test_dataloader.sampler.load_state_dict(checkpoint["test_sampler"])
@@ -643,7 +707,9 @@ def main():
         
     for epoch in range(start_epoch, max_epochs):
         train_sampler.set_epoch(epoch)  # Important for proper shuffling
-        test_dataloader.sampler.set_epoch(epoch)
+        # Only call set_epoch on test sampler if it supports it (distributed mode)
+        if hasattr(test_dataloader.sampler, 'set_epoch'):
+            test_dataloader.sampler.set_epoch(epoch)
         
         for i, data in enumerate(train_dataloader, 0):
             # Check if we should stop early for testing with large datasets
@@ -681,7 +747,7 @@ def main():
                 print(f"Using device: {device}")
                 print(f"Model type: {type(model).__name__}")
                 if hasattr(model, 'module'):
-                    print(f"Underlying model: {type(model.module).__name__}")
+                    print(f"Underlying model: {type(get_model_for_saving(model)).__name__}")
                 
             outputs = model(inputs, debug=detailed_debug)
     
@@ -863,7 +929,7 @@ def main():
                         print(f"checkpoint-debug: calling atomic_torch_save")
                         atomic_torch_save(
                             {
-                                "model": model.module.state_dict(),
+                                "model": get_model_for_saving(model).state_dict(),
                                 "optimizer": optimizer.state_dict(),
                                 "epoch": epoch,
                                 "train_sampler": train_dataloader.sampler.state_dict(),

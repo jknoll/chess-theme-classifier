@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import the modules we want to test
-from train import parse_args, init_distributed
+from train import parse_args
 from dataset import ChessPuzzleDataset
 from model import Model
 
@@ -32,18 +32,28 @@ def test_parse_args():
 
 def test_train_script_runs():
     """Test that the train.py script runs without crashing in test mode"""
+    # Get the project root directory
+    project_root = Path(__file__).parent.parent
+
     # Run the train.py script with --test_mode
-    cmd = [sys.executable, str(Path(__file__).parent.parent / 'train.py'), 
+    cmd = [sys.executable, str(project_root / 'train.py'),
            '--test_mode', '--single_gpu', '--epochs', '1']
-    
+
+    # Set environment variables needed for single GPU mode
+    # Some utilities (like cycling_utils.AtomicDirectory) require RANK even in single GPU mode
+    env = os.environ.copy()
+    env['RANK'] = '0'
+    env['LOCAL_RANK'] = '0'
+    env['WORLD_SIZE'] = '1'
+
     try:
         # Set a timeout to avoid hanging in case of issues
-        # We're not capturing output to avoid making the test log too verbose
-        result = subprocess.run(cmd, timeout=120, capture_output=True)
-        
+        # Run from the project root directory so paths resolve correctly
+        result = subprocess.run(cmd, timeout=120, capture_output=True, cwd=str(project_root), env=env)
+
         # Check that the process completed successfully
         assert result.returncode == 0, f"Process failed with return code {result.returncode}: {result.stderr.decode()}"
-        
+
     except subprocess.TimeoutExpired:
         pytest.fail("Training script timed out after 120 seconds")
 
