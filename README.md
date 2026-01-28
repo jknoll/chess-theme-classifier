@@ -132,17 +132,31 @@ Horizontal reflection is used for class-conditional augmentation to address clas
 
 **Type:** CNN with Attention and Residual Blocks
 
+![Model Architecture](analysis/model_architecture_diagram.png)
+
 | Parameter | Value |
 |-----------|-------|
 | Layers | 10 |
 | Embedding Dimension | 64 |
-| Inner Dimension | 320 |
+| Inner Dim (Residual) | 320 |
 | Attention Dimension | 64 |
 | Dropout | 50% |
 | Input | 8x8 board (13 piece vocabulary) |
 | Output | 1,616 labels (sigmoid multi-label) |
 
-The architecture uses dilated convolutions with exponentially increasing receptive fields, interleaved with self-attention layers for capturing long-range piece relationships.
+### Architecture Details
+
+1. **Input Embedding**: Chess pieces (0-12) are embedded into 64-dimensional vectors
+2. **Residual Blocks**: Each block contains:
+   - 1x1 convolution for channel projection
+   - Batch normalization + ReLU
+   - 3x3 dilated convolution (dilation = 2^layer_index)
+   - Skip connection via 1x1 convolution
+3. **Self-Attention**: After each residual block, a self-attention layer captures long-range piece relationships across the board
+4. **Accumulator**: 8x8 convolution reduces spatial dimensions to 1x1
+5. **Classification Head**: Three fully-connected layers (64->512->256->1616) with dropout
+
+The exponentially increasing dilation (1, 2, 4, 8, ...) allows the model to capture both local piece interactions and global board patterns.
 
 ---
 

@@ -8,6 +8,7 @@ analysis/*
 !analysis/f1/
 !analysis/pr-curves/
 !analysis/scatter/
+!analysis/model_architecture_diagram.png
 
 # API keys and credentials
 .env
