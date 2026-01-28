@@ -54,25 +54,73 @@ Opening recognition is more challenging due to the large number of similar varia
 ## Visualizations
 
 ### Theme Performance Chart
+
+The **F1 score** is the harmonic mean of precision and recall, providing a balanced measure of classification performance:
+
+```
+F1 = 2 * (Precision * Recall) / (Precision + Recall)
+```
+
+Where:
+- **Precision** = TP / (TP + FP) - proportion of positive predictions that are correct
+- **Recall** = TP / (TP + FN) - proportion of actual positives correctly identified
+- **Support** = number of true instances for each label in the test set
+
+This chart shows F1 scores for all 62 chess puzzle themes. Game-phase themes (endgame, middlegame, opening) achieve the highest scores, while tactical patterns like forks and pins show moderate performance.
+
 ![Theme F1 Scores](analysis/f1/themes_threshold_0_2921_samples_10000_date_20250624-090809_chart.png)
 
 ### Opening Performance Chart
-![Opening F1 Scores](analysis/f1/openings_threshold_0_2921_samples_10000_date_20250624-090809_chart.png)
+
+Opening classification is inherently more challenging than theme classification for several reasons:
+1. **High cardinality**: 1,554 distinct opening labels vs. 62 themes
+2. **Positional similarity**: Many openings share similar early positions
+3. **Transpositions**: Different move orders can reach the same position
+4. **Signal decay**: Opening signatures weaken as games progress into middlegame
+
+![Opening F1 Scores (Top 20)](analysis/f1/openings_top20_chart.png)
+
+Full distribution of all 1,554 openings (x-axis labels omitted for clarity):
+
+![Opening F1 Scores (All)](analysis/f1/openings_all_no_labels_chart.png)
 
 ### F1 vs Support Scatter Plot
+
+This scatter plot reveals the relationship between class frequency (support) and model performance (F1 score). Each point represents one of the 1,616 labels.
+
+Key observations:
+- **High-support themes** (>1000 samples) cluster at moderate F1 scores (0.4-0.7)
+- **Endgame themes** achieve high F1 despite varying support levels
+- **Rare openings** (support < 50) typically show F1 near zero
+- The model generalizes best to structurally distinct patterns regardless of frequency
+
 ![F1 vs Support](analysis/scatter/f1_vs_support_scatter.png)
 
 ### Precision-Recall Curves
 
-High-performing themes show near-ideal PR curves:
+Precision-Recall (PR) curves visualize the tradeoff between precision and recall at different classification thresholds. The **Area Under the PR Curve (AUC-PR)** summarizes overall performance.
+
+- **Ideal curve**: Hugs the top-right corner (high precision and recall simultaneously)
+- **Random classifier**: Horizontal line at y = (positive samples / total samples)
+- **Optimal threshold**: Point on curve maximizing F1 score (marked on each plot)
+
+#### Top 9 Performers (3x3 Matrix)
+
+The highest-performing labels show near-ideal PR curves with AUC-PR > 0.9:
+
+![Top 9 PR Curves Matrix](analysis/pr-curves/top_9_pr_curves_matrix.png)
+
+#### Performance Comparison
 
 | pawnEndgame (F1: 0.99) | mate (F1: 0.60) |
 |------------------------|-----------------|
 | ![pawnEndgame PR](analysis/pr-curves/0.99_pawnEndgame_pr_curve.png) | ![mate PR](analysis/pr-curves/0.60_mate_pr_curve.png) |
 
+The pawnEndgame curve maintains >95% precision until 95% recall, while the mate curve shows a steeper precision-recall tradeoff typical of more ambiguous tactical patterns.
+
 ### Data Augmentation Example
 
-Horizontal reflection is used for class-conditional augmentation:
+Horizontal reflection is used for class-conditional augmentation to address class imbalance. This augmentation preserves chess semantics (a mirrored position has identical tactical properties) while effectively doubling samples for underrepresented classes.
 
 | Original | Reflected |
 |----------|-----------|
