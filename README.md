@@ -66,9 +66,9 @@ Where:
 - **Recall** = TP / (TP + FN) - proportion of actual positives correctly identified
 - **Support** = number of true instances for each label in the test set
 
-This chart shows F1 scores for all 62 chess puzzle themes. Game-phase themes (endgame, middlegame, opening) achieve the highest scores, while tactical patterns like forks and pins show moderate performance.
+This chart shows F1 scores for all 58 chess puzzle themes, sorted by performance. Color gradient (red-yellow-green) maps to F1 score. Game-phase themes (endgame, middlegame, opening) achieve the highest scores, while tactical patterns like forks and pins show moderate performance.
 
-![Theme F1 Scores](analysis/f1/themes_threshold_0_2921_samples_10000_date_20250624-090809_chart.png)
+![Theme F1 Scores](analysis/f1/themes_f1_color_gradient_chart.png)
 
 ### Opening Performance Chart
 
