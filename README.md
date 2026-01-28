@@ -98,17 +98,27 @@ Key observations:
 
 ### Precision-Recall Curves
 
-Precision-Recall (PR) curves visualize the tradeoff between precision and recall at different classification thresholds. The **Area Under the PR Curve (AUC-PR)** summarizes overall performance.
+Precision-Recall (PR) curves visualize the tradeoff between precision and recall at different classification thresholds.
 
+**Key metrics:**
+- **AUC-PR (Area Under the PR Curve)**: Summarizes overall classifier performance across all thresholds. Computed as the integral of precision over recall. Higher is better; 1.0 is perfect.
+- **Optimal threshold**: The classification threshold that maximizes F1 score (marked on each plot)
+
+**Interpreting PR curves:**
 - **Ideal curve**: Hugs the top-right corner (high precision and recall simultaneously)
 - **Random classifier**: Horizontal line at y = (positive samples / total samples)
-- **Optimal threshold**: Point on curve maximizing F1 score (marked on each plot)
 
-#### Top 36 Performers (6x6 Matrix)
+#### Adaptive Thresholding
 
-The highest-performing labels show near-ideal PR curves with AUC-PR > 0.9:
+Rather than using a single global threshold for all 1,616 labels, we compute **per-class optimal thresholds** from the PR curves. For each class, the optimal threshold is the point on its PR curve that maximizes F1 score. This adaptive approach significantly improves performance on rare classes that would otherwise be drowned out by a global threshold tuned for common classes.
 
-![Top 36 PR Curves Matrix](analysis/pr-curves/top_36_pr_curves_matrix.png)
+The per-class thresholds are stored in `analysis/f1/per_class_thresholds.csv` and used during evaluation.
+
+#### Top 25 Performers (5x5 Matrix)
+
+The 25 highest-performing labels sorted by F1 score. Top performers show near-ideal PR curves:
+
+![Top 25 PR Curves Matrix](analysis/pr-curves/top_25_pr_curves_matrix.png)
 
 ### Data Augmentation Example
 
