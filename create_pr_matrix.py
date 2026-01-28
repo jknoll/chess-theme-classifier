@@ -64,5 +64,5 @@ def create_pr_matrix(pr_curves_dir, output_path, n_images=9):
 
 if __name__ == '__main__':
     pr_curves_dir = 'analysis/pr-curves'
-    output_path = 'analysis/pr-curves/top_9_pr_curves_matrix.png'
-    create_pr_matrix(pr_curves_dir, output_path, n_images=9)
+    output_path = 'analysis/pr-curves/top_36_pr_curves_matrix.png'
+    create_pr_matrix(pr_curves_dir, output_path, n_images=36)

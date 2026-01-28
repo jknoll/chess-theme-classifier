@@ -104,23 +104,17 @@ Precision-Recall (PR) curves visualize the tradeoff between precision and recall
 - **Random classifier**: Horizontal line at y = (positive samples / total samples)
 - **Optimal threshold**: Point on curve maximizing F1 score (marked on each plot)
 
-#### Top 9 Performers (3x3 Matrix)
+#### Top 36 Performers (6x6 Matrix)
 
 The highest-performing labels show near-ideal PR curves with AUC-PR > 0.9:
 
-![Top 9 PR Curves Matrix](analysis/pr-curves/top_9_pr_curves_matrix.png)
-
-#### Performance Comparison
-
-| pawnEndgame (F1: 0.99) | mate (F1: 0.60) |
-|------------------------|-----------------|
-| ![pawnEndgame PR](analysis/pr-curves/0.99_pawnEndgame_pr_curve.png) | ![mate PR](analysis/pr-curves/0.60_mate_pr_curve.png) |
-
-The pawnEndgame curve maintains >95% precision until 95% recall, while the mate curve shows a steeper precision-recall tradeoff typical of more ambiguous tactical patterns.
+![Top 36 PR Curves Matrix](analysis/pr-curves/top_36_pr_curves_matrix.png)
 
 ### Data Augmentation Example
 
-Horizontal reflection is used for class-conditional augmentation to address class imbalance. This augmentation preserves chess semantics (a mirrored position has identical tactical properties) while effectively doubling samples for underrepresented classes.
+Horizontal reflection is used for class-conditional augmentation to address class imbalance in **theme labels only**. Opening labels are not augmented because opening theory is asymmetric (e.g., 1.e4 positions are fundamentally different from 1.d4 positions, and their mirror images do not preserve opening identity).
+
+This augmentation preserves chess semantics for tactical themes (a mirrored fork is still a fork) while effectively doubling samples for underrepresented theme classes.
 
 | Original | Reflected |
 |----------|-----------|
