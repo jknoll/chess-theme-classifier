@@ -3,7 +3,11 @@
 events.out.tfevents.*
 wandb/
 checkpoints/
-analysis/
+# Analysis outputs (allow visualization subdirectories for README)
+analysis/*
+!analysis/f1/
+!analysis/pr-curves/
+!analysis/scatter/
 
 # API keys and credentials
 .env
